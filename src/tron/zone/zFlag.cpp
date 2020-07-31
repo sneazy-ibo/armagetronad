@@ -325,7 +325,11 @@ bool zFlagZone::Timestep( REAL time )
                 }
             }
         }
-
+    }
+    
+    if(owner_)
+    {
+        ePlayerNetID *player = owner_->Player();
         if (player)
         {
             // check if flag chat blinking is enabled
@@ -649,9 +653,11 @@ void zFlagZone::OnEntry( gCycle * target, REAL time )
 
         // diminish the flag and put it at the original location
         shape->setReferenceTime(lastTime);
+        /*
         shape->SetRotationSpeed( 0 );
         shape->SetRotationAcceleration( 0 );
         shape->RequestSync();
+        */
         positionUpdatePending_ = true;
 
         tColoredString playerName;
