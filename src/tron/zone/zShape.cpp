@@ -308,6 +308,10 @@ REAL zShape::GetCurrentScale() const {
     return scale_.Evaluate(lasttime_ - referencetime_);
 }
 
+void zShape::SetCurrentScale(REAL s) {
+    scale_.SetOffset(s);
+}
+
 tCoord zShape::GetRotation() const {
     REAL currAngle = rotation2.evaluate(lasttime_);
     tCoord rot( cos(currAngle), sin(currAngle) );
