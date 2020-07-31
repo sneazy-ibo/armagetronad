@@ -26,6 +26,3 @@ while not foundModule:
 
 if __name__ == "__main__":
     armabuild.resource.main(sys.argv[1:])
-
-
-    

@@ -12,10 +12,12 @@ test -r ChangeLog || touch -t 198001010000 ChangeLog
 MYDIR=`dirname $0`
 if test -r batch/make/version; then
     echo "Generating version..."
-    echo "m4_define(AUTOMATIC_VERSION,["`sh batch/make/version $MYDIR`"])" > version || exit 1
+    echo "m4_define(AUTOMATIC_VERSION,["`sh batch/make/version $MYDIR`"])" > version.m4 || exit 1
+	sh batch/make/version --verbose $MYDIR | awk '{ print "#define TRUE_ARMAGETRONAD_" $1 " " substr( $0, index( $0, $2 ) ) }' > src/tTrueVersion.h
+    rm -f version
 fi
 echo "Copying license..."
-cp COPYING.txt COPYING
+test -r COPYING || cp COPYING.txt COPYING || exit $?
 echo "Running aclocal..."
 $ACLOCAL || { rm aclocal.m4; exit 1; }
 

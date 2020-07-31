@@ -26,19 +26,6 @@ dist-hook:
 		sed -e "s,#define VERSION.*$$,#define VERSION \"${VERSION}\"," < ${srcdir}/$$f > ${distdir}/$$f;\
 	done
 
-# keep track of true version
-tTrueVersion.h: $(wildcard $(top_srcdir)/*_version) $(wildcard $(top_srcdir)/.svn) $(wildcard $(top_srcdir)/CVS) $(wildcard $(top_srcdir)/.bzr) $(wildcard $(top_srcdir)/batch/make/version) Makefile
-#	if the version generation files exist, use it to define the version. Else, Fallback to the autopackage version.
-	if test -f $(top_srcdir)/src/tFakeVersion.h; then \
-		cp $(top_srcdir)/src/tFakeVersion.h $@; \
-	else \
-		sh $(top_srcdir)/batch/make/version --verbose $(top_srcdir) | awk '{ print "#define TRUE_ARMAGETRONAD_" $$1 " " substr( $$0, index( $$0, $$2 ) ) }' >$@; \
-	fi
-
-# clean up true version
-distclean-local:
-	rm -f tTrueVersion.h
-
 ${srcdir}/tools/tLocale.cpp: ${srcdir}/tools/tVersion.cpp
 ${srcdir}/tools/tVersion.cpp: tTrueVersion.h 
 
@@ -220,12 +207,13 @@ endif
 
 #AM_CXXFLAGS= $(BINRELOC_CFLAGS)
 
-libtools_a_CXXFLAGS  =$(AM_CXXFLAGS) $(CXXFLAGS_OURFILES) -I@srcdir@/tools -I@srcdir@/resource -I@srcdir@/thirdparty/mathexpr -I@srcdir@/thirdparty/utf8 -I@srcdir@/protobuf -Iprotobuf
-libnetwork_a_CXXFLAGS=$(libtools_a_CXXFLAGS)  -I@srcdir@/network
-librender_a_CXXFLAGS =$(libtools_a_CXXFLAGS)  -I@srcdir@/render
-libui_a_CXXFLAGS     =$(librender_a_CXXFLAGS) -I@srcdir@/ui -I@srcdir@/thirdparty/shttpd -I@srcdir@/thirdparty/scrap
-libengine_a_CXXFLAGS =$(libui_a_CXXFLAGS)     -I@srcdir@/network -I@srcdir@/engine -I@srcdir@/engine/sound
-libtron_a_CXXFLAGS   =$(libengine_a_CXXFLAGS) -I@srcdir@/thirdparty/particles -I@srcdir@/tron -I@srcdir@/tron/cockpit
+libtools_a_CPPFLAGS = -iquote @srcdir@/thirdparty/binreloc
+libtools_a_CXXFLAGS  =$(AM_CXXFLAGS) $(CXXFLAGS_OURFILES) -iquote @srcdir@/tools -iquote @srcdir@/tools/values -iquote @srcdir@/resource -iquote @srcdir@/thirdparty/mathexpr -iquote @srcdir@/thirdparty/utf8 -iquote @srcdir@/protobuf -iquote protobuf
+libnetwork_a_CXXFLAGS=$(libtools_a_CXXFLAGS)  -iquote @srcdir@/network
+librender_a_CXXFLAGS =$(libtools_a_CXXFLAGS)  -iquote @srcdir@/render
+libui_a_CXXFLAGS     =$(librender_a_CXXFLAGS) -iquote @srcdir@/ui -iquote @srcdir@/thirdparty/shttpd -iquote @srcdir@/thirdparty/scrap
+libengine_a_CXXFLAGS =$(libui_a_CXXFLAGS)     -iquote @srcdir@/network -iquote @srcdir@/engine -iquote @srcdir@/engine/sound -iquote @srcdir@/engine/sound/sdl_mixer
+libtron_a_CXXFLAGS   =$(libengine_a_CXXFLAGS) -iquote @srcdir@/thirdparty/particles -iquote @srcdir@/tron -iquote @srcdir@/tron/cockpit -iquote @srcdir@/tron/zone
 
 if OS_X_TOOLKIT
 libtools_a_OBJCXXFLAGS  =$(libtools_a_CXXFLAGS)
@@ -308,7 +296,7 @@ armagetronad_main_master_LDADD=libnetwork.a libtools.a protobuf/libprotobuf.a
 
 if BUILDDEDICATED
 armagetronad_serverquery_SOURCES = serverquery/serverquery.cpp serverquery/jsoncpp.cpp serverquery/json/json.h serverquery/json/json-forwards.h
-armagetronad_serverquery_CXXFLAGS = $(AM_CXXFLAGS) -I@srcdir@ -I@srcdir@/serverquery -I@srcdir@/tools -I@srcdir@/network
+armagetronad_serverquery_CXXFLAGS = $(AM_CXXFLAGS) -iquote @srcdir@ -iquote @srcdir@/serverquery -iquote @srcdir@/tools -iquote @srcdir@/network
 armagetronad_serverquery_LDADD = libnetwork.a libtools.a protobuf/libprotobuf.a
 endif
 endif

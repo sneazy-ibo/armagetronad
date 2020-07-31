@@ -620,7 +620,7 @@ class Sensor: public gSensor
         tASSERT( cycle );
 
         // create
-        if ( &(*cycle->chatBot_) == 0 )
+        if ( cycle->chatBot_.get() == 0 )
             cycle->chatBot_.reset( new gCycleChatBot( cycle ) );
 
         return *cycle->chatBot_;
@@ -2562,7 +2562,7 @@ static inline void rotate(eCoord &r,REAL angle){
 }
 
 #ifdef MACOSX
-// Sparks have a large performance problem on Macs. See http://forums.armagetronad.net/viewtopic.php?t=2167
+// Sparks have a large performance problem on Macs. See https://forums3.armagetronad.net/viewtopic.php?t=2167
 bool crash_sparks=false;
 #else
 bool crash_sparks=true;
@@ -4123,6 +4123,15 @@ gCycleWallsDisplayListManager::gCycleWallsDisplayListManager()
     , wallsInDisplayList_(0)
 {
 }
+
+gCycleWallsDisplayListManager::~gCycleWallsDisplayListManager()
+{
+    while(wallList_)
+        wallList_->Remove();
+    while(wallsWithDisplayList_)
+        wallsWithDisplayList_->Remove();
+}
+
 
 bool gCycleWallsDisplayListManager::CannotHaveList( REAL distance, gCycle const * cycle )
 {

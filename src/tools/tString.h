@@ -84,6 +84,7 @@ public:
     WRAP_MUTATING_OPERATOR(=,BASE const &) // assignment from C++ string
 
     tString & operator =( tOutput const & other ); //!< assignment from output collector
+    tString & operator =( tString const & other ) = default;
 
     size_type Size() const;                        //!< Returns the size of the string in characters.
 
@@ -209,6 +210,8 @@ public:
     explicit tColoredString( const CHAR * other );          //!< Constructor from raw C string
     explicit tColoredString( const tOutput & other );       //!< Constructor from output gatherer
 
+    tColoredString & operator=( tColoredString const & other ) = default;
+  
     //! Assignment operators
     WRAP_MUTATING_OPERATOR(=,CHAR const *)    // assignment of C string
     WRAP_MUTATING_OPERATOR(=,BASE const &)    // assignment from C++ string

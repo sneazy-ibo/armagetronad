@@ -98,8 +98,11 @@ public:
 
 
 private:
-    virtual bool DoAnalyze( tCommandLineParser & parser )
+    bool DoAnalyze( tCommandLineParser & parser, int pass ) override
     {
+        if(pass > 0)
+            return false;
+
         if ( parser.GetSwitch( "-fullscreen", "-f" ) )
         {
             fullscreen_=true;
@@ -126,7 +129,7 @@ private:
         return true;
     }
 
-    virtual void DoHelp( std::ostream & s )
+    void DoHelp( std::ostream & s ) override
     {                                      //
 #ifndef DEDICATED
         s << "-f, --fullscreen             : start in fullscreen mode\n";
@@ -639,6 +642,11 @@ class gAutoStringArray
 public:
     ~gAutoStringArray()
     {
+#ifdef HAVE_CLEARENV
+        // Optional. Systems that don't have this function better make copies of putenv() arguments.
+        clearenv();
+#endif
+
         for ( std::vector< char * >::iterator i = strings.begin(); i != strings.end(); ++i )
         {
             free( *i );

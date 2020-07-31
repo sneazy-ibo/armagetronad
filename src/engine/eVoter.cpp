@@ -991,12 +991,22 @@ protected:
 
     virtual tString DoGetDescription() const		// returns the description of the voting item
     {
-        return expired_ ? tString("Expired vote") : description_;
+        return expired_ ? tString( tOutput( "$vote_expired", description_ ) ) : description_;
     }
 
     virtual tString DoGetDetails() const		    // returns the detailed description of the voting item
     {
-        return expired_ ? tString("Expired vote") : details_;
+        return expired_ ? tString( tOutput( "$vote_expired", details_ ) ) : details_;
+    }
+
+    bool Expired() const
+    {
+        return expired_;
+    }
+
+    bool Pending() const
+    {
+        return !expired_;
     }
 protected:
     mutable tString description_;              //!< the description of the vote
@@ -1056,7 +1066,7 @@ static tSettingItem< int > se_kickMinHarmSI( "VOTING_KICK_MINHARM", se_kickMinHa
 
 // reason given on vote kicks
 static tString se_voteKickReason("");
-static tConfItemLine se_voteKickReasonConf( "VOTE_KICK_REASON", se_voteKickReason );
+static tSettingItemLine se_voteKickReasonConf( "VOTE_KICK_REASON", se_voteKickReason );
 
 void se_VoteKickUser( int user )
 {
@@ -1442,12 +1452,12 @@ private:
 
     virtual tString DoGetDescription() const		// returns the description of the voting item
     {
-        return eVoteItemServerControlled::DoGetDescription();
+        return Pending() ?  eVoteItemHarm::DoGetDescription() : eVoteItemServerControlled::DoGetDescription();
     }
 
     virtual tString DoGetDetails() const		// returns the detailed description of the voting item
     {
-        return eVoteItemServerControlled::DoGetDetails();
+        return Pending() ? eVoteItemHarm::DoGetDetails() : eVoteItemServerControlled::DoGetDetails();
     }
 };
 

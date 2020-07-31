@@ -232,7 +232,7 @@ void nServerInfo::CalcScore()
         score -= 400;
     }
 
-    score -= fabsf( this->Version().Max() - sn_MyVersion().Max() ) * 10;
+    score -= abs( this->Version().Max() - sn_MyVersion().Max() ) * 10;
 
     score += scoreBias_;
 }
@@ -2859,7 +2859,7 @@ void nServerInfoBase::ReadSync( Network::SmallServerInfoBase const & info,
 // message will figure the IP out on its own.
 static tString net_dns("");
 
-static tConfItemLine sn_sbtip_official("SERVER_DNS", net_dns);
+static tSettingItemLine sn_sbtip_official("SERVER_DNS", net_dns);
 
 bool SortHelperNoop(nServerInfoBase const * server)
 {

@@ -11,6 +11,9 @@
 #include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app.manifest"
+
+/////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
@@ -67,8 +70,8 @@ LANGUAGE LANG_SPANISH, SUBLANG_SPANISH_MODERN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION MAJOR_VERSION
- PRODUCTVERSION MAJOR_VERSION
+ FILEVERSION TRUE_ARMAGETRONAD_MAJOR_VERSION
+ PRODUCTVERSION TRUE_ARMAGETRONAD_MAJOR_VERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS VS_FF_PRERELEASE | VS_FF_DEBUG//0x1L

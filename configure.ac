@@ -1,8 +1,8 @@
-dnl I would like to do this to generate the version number...
+/dnl I would like to do this to generate the version number...
 dnl AC_DEFUN([AUTOMATIC_VERSION],syscmd([sh batch/make/version .]))
 
 dnl but have to do this with version generated in bootstrap.sh instead for some reason
-m4_include(version)
+m4_include(version.m4)
 
 dnl Comment this out to disable autoconf custom directories:
 m4_include(accustomdir.m4)
@@ -45,14 +45,14 @@ dnl check whether m4 is available for documentation processing
 AC_CHECK_PROG(HAVE_M4,m4,true,false)
 AM_CONDITIONAL(HAVE_M4, test $HAVE_M4 = true)
 
-dnl check whether date accepts -r to refer to a file
-AM_CONDITIONAL(DATE_R, date +"%Y" -r $0 > /dev/null 2>&1)
+dnl dirty trick to allow verbatim output to Makefile.in -> Makefile
+dnl source: http://gnu-automake.7480.n7.nabble.com/ifdef-endif-issue-td2662.html
+AC_SUBST([protect], [""])
 
 dnl export version
 version=$VERSION
 AC_SUBST(version)
 
-AC_ARG_VAR(XML2_CONFIG,[Configuration script of libxml2 to use, defaults to xml2-config])
 AC_ARG_VAR(SDL_CONFIG,[Configuration script of SDL to use, defaults to sdl-config])
 AC_ARG_VAR(SDL2_CONFIG,[Configuration script of SDL to use, defaults to sdl2-config])
 AC_ARG_VAR(FREETYPE_CONFIG,[Configuration script of freetype to use, defaults to freetype-config])
@@ -71,6 +71,8 @@ AC_ARG_VAR(ARMAGETRONAD_OS_X_TOOLKIT, [Path to the OS X toolkit directory.])
 
 dnl a modern autoconf is required to process this
 AC_PREREQ(2.50)
+
+PKG_PROG_PKG_CONFIG
 
 build_regular=true
 default_enable_sysinstall=yes
@@ -170,7 +172,7 @@ AM_CONDITIONAL(BUILDMAIN, test x$armamain = xtrue)
 
 # flag to set when mockup versions of the executables should be built to save
 # compile time when testing the release process
-AM_CONDITIONAL(BUILDFAKERELEASE, test "$ARMAGETRONAD_FAKERELEASE" != "")
+AM_CONDITIONAL(BUILDFAKERELEASE, test "$ARMAGETRONAD_FAKERELEASE" != "" && test "$ARMAGETRONAD_FAKERELEASE" != "false" && test "$ARMAGETRONAD_FAKERELEASE" != "no")
 
 # set replacement variables for dedicated server
 progtitle_serverorclient=" Client"
@@ -544,7 +546,6 @@ dnl		])
 dnl	])
 dnl])
 
-
 if test $CODELEVEL -ge 1; then
     CXXFLAGS="$CXXFLAGS -Wall"
     
@@ -556,8 +557,19 @@ if test $CODELEVEL -ge 1; then
         AX_CXXFLAGS_GCC_OPTION(-Wno-error=maybe-uninitialized)
     fi
     
+    dnl protobuf deprecated MessageLite::ByteSize(), not sure if we can already switch safely to ByteSizeLong()
+    AX_CXXFLAGS_GCC_OPTION(-Wno-error=deprecated-declarations)
+    
     dnl dropped out of support
     dnl AX_CXXFLAGS_GCC_OPTION(-Wno-mismatched-tags)
+
+    dnl this one is from GCC 7 (change to 1 or 2 in the future,
+    dnl leave at default and use [[fallthrough]] (std C++ 17)
+    dnl we're using both here; hopefully, old compilers ignore the [[fallthrough]].
+    AX_CXXFLAGS_GCC_OPTION(-Wimplicit-fallthrough=1)
+
+    dnl Well, they don't, GCC 5.7 warns about them; silence it.
+    AX_CXXFLAGS_GCC_OPTION(-Wno-attributes)
 fi
 
 dnl test $CODELEVEL -ge 2 && CXXFLAGS="$CXXFLAGS -Wshadow -Wpointer-arith -Wfloat-equal -W -Wcast-qual -Wcast-align -Wconversion -Wunreachable-code --pedantic -Winline"
@@ -572,6 +584,23 @@ if test $CODELEVEL -ge 1 && test $DEBUGLEVEL -ge 1; then
     AX_CXXFLAGS_GCC_OPTION(-Wno-unused-variable)
     AX_CXXFLAGS_GCC_OPTION(-Wno-unused-private-field)
 fi
+
+dnl Strip pedantic flags from general CXXFLAGS and put them into a separate variable
+CXXFLAGS_OURFILES=''
+
+if echo ${CXXFLAGS} | grep -- '-Werror[^=]' > /dev/null; then
+  CXXFLAGS_OURFILES="${CXXFLAGS_OURFILES} -Werror"
+fi
+
+if echo ${CXXFLAGS} | grep -- '--pedantic' > /dev/null; then
+  CXXFLAGS_OURFILES="${CXXFLAGS_OURFILES} --pedantic"
+fi
+
+CXXFLAGS="`echo ${CXXFLAGS} | sed -e 's,-Werror[^=],,g' | sed -e 's,--pedantic,,g'`"
+
+dnl CXX flags for our own hand-written files. Can be pedantic.
+AC_SUBST(CXXFLAGS_OURFILES)
+
 
 dnl determine whether "games" should be put into paths: not if it was
 dnl requested with --disable-games or if "games" is already included
@@ -836,30 +865,10 @@ dnl         libxml2
 dnl *************************************************
 
 if test x$armamain = xtrue; then
-
-test -z "$XML2_CONFIG" && XML2_CONFIG=xml2-config
-
-if ! $XML2_CONFIG --libs > /dev/null; then
-  AC_MSG_ERROR([Fatal error: the libxml2 configuration script $XML2_CONFIG does not work/exist.])
-fi
-
-# if test x$armamain = xtrue; then
-AC_CHECK_LIB(xml2,xmlParseMemory,
-CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags`"
-LIBS="`$XML2_CONFIG --libs` $LIBS"
-AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the xml2 library (-lxml2).]),
-AC_MSG_ERROR([You need the library xml2 to compile ${progtitle}. Read the file documentation/installation.txt.])
-,`$XML2_CONFIG --libs`)
-
-AC_CHECK_FUNC(xmlParserInputBufferCreateFilenameDefault,
-,
-AC_MSG_ERROR([
-	Your xml2 library is obsolete!
-	Please upgrade to 2.6.11 or later
-])
-)
-
-# fi
+  PKG_CHECK_MODULES([XML2], [libxml-2.0 >= 2.6.11])
+  CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
+  LIBS="$LIBS $XML2_LIBS"
+  AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
 
 dnl *************************************************
 dnl         Threading
@@ -1174,7 +1183,7 @@ if test -z "$ARMAGETRONAD_OS_X_TOOLKIT"; then
 
 	# `pkg-config ftgl --cflags` doesn't reliably give the include path to FTGL itself, we are on our own finding the includes in some cases.
 	# look for FTGL headers in default system header locations and the prefixes of the libraries that do have a -config script
-	FTGL_HEADERS="/usr/include/FTGL /usr/local/include/FTGL `$FREETYPE_CONFIG --prefix`/include/FTGL `$SDL_CONFIG --prefix`/include/FTGL `$XML2_CONFIG --prefix/`include/FTGL ${prefix}/include/FTGL "
+	FTGL_HEADERS="/usr/include/FTGL /usr/local/include/FTGL `$FREETYPE_CONFIG --prefix`/include/FTGL `$SDL_CONFIG --prefix`/include/FTGL ${prefix}/include/FTGL "
 
 	AC_ARG_WITH(ftgl,
 	    AC_HELP_STRING([--with-ftgl],
@@ -1323,8 +1332,9 @@ AC_C_CONST
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(select)
-AC_CHECK_FUNCS(atan2f sinf cosf tanf sqrtf logf expf fabsf floorf pow10 pow10f)
+AC_CHECK_FUNCS(atan2f sinf cosf tanf sqrtf logf expf fabsf floorf pow10 pow10f exp10 exp10f)
 AC_CHECK_FUNCS(wmemset)
+AC_CHECK_FUNCS(clearenv)
 
 # if the compiler is GCC -Os produces faulty code (exceptions cause crashes), at least on AMD64. Replace it with -O2.
 test -z "`$CXX --version | grep '(GCC)'`" || CXXFLAGS="`echo $CXXFLAGS | sed -e 's,-Os,-O2,g' `" CFLAGS="`echo $CFLAGS | sed -e 's,-Os,-O2,g' `"
@@ -1469,21 +1479,8 @@ AC_SUBST_UNIVERSAL(relocatable)
 AC_USE_SUBST_UNIVERSAL
 AC_AA_REPLACEPATHS
 
-dnl Strip pedantic flags from general CXXFLAGS and put them into a separate variable
-CXXFLAGS_OURFILES=''
-
-if echo ${CXXFLAGS} | grep -- '-Werror' > /dev/null; then
-  CXXFLAGS_OURFILES="${CXXFLAGS_OURFILES} -Werror"
-fi
-
-if echo ${CXXFLAGS} | grep -- '--pedantic' > /dev/null; then
-  CXXFLAGS_OURFILES="${CXXFLAGS_OURFILES} --pedantic"
-fi
-
-CXXFLAGS="`echo ${CXXFLAGS} | sed -e 's,-Werror,,g' | sed -e 's,--pedantic,,g'`"
-
-dnl CXX flags for our own hand-written files. Can be pedantic.
-AC_SUBST(CXXFLAGS_OURFILES)
+# all include directories added via -I so far should be system level inlcudes, divide them from those added by individual makefiles
+# CPPFLAGS="-I- $CPPFLAGS"
 
 export CFLAGS
 export CPPFLAGS
@@ -1515,7 +1512,12 @@ desktop/armagetronad-armagetronad.desktop
 desktop/armagetronad-armagetronad-handler.desktop
 desktop/armagetronad-link.xml
 desktop/armagetronad.protocol
+desktop/armagetronad.appdata.xml
 desktop/os-x/Info.plist
+docker/build/Makefile
+docker/build/setup_ci_test.sh
+docker/build/context/version.sh
+docker/deploy/targets.sh
 )
 
 # m4_define(FULLEVAL,stage1=`eval echo $1`; stage2

@@ -386,14 +386,6 @@ bool nVersion::operator == ( const nVersion& other )
     return this->max_ == other.max_ && this->min_ == other.min_;
 }
 
-nVersion& nVersion::operator = ( const nVersion& other )
-{
-    this->min_ = other.min_;
-    this->max_ = other.max_;
-
-    return *this;
-}
-
 nMessage& operator >> ( nMessage& m, nVersion& ver )
 {
     int min,max;
@@ -434,7 +426,7 @@ std::ostream& operator << ( std::ostream& s, const nVersion& ver )
 
 nVersionFeature::nVersionFeature( int min, int max ) // creates a feature that is supported from version min to max; values of -1 indicate no bordera
 {
-    tASSERT( min_ >= sn_MyVersion().Min() );
+    tASSERT( min >= sn_MyVersion().Min() );
     tASSERT( max < 0 || max <= sn_MyVersion().Max() );
 
     min_ = min;
@@ -1407,6 +1399,13 @@ void first_fill_ids();
 // from nServerInfo.cpp
 extern bool sn_AcceptingFromMaster;
 
+#ifndef DEDICATED
+static bool sn_showOwnIP = false;
+static tConfItem<bool> sn_showOwnIPConf("SHOW_OWN_IP",sn_showOwnIP);
+#else
+static constexpr bool sn_showOwnIP = true;
+#endif
+
 static void sn_LoginAcceptedHandler( Network::LoginAccepted const & accepted, nSenderInfo const & sender )
 {
     // accepted.PrintDebugString();
@@ -1498,7 +1497,10 @@ static void sn_LoginAcceptedHandler( Network::LoginAccepted const & accepted, nS
             {
                 if ( sn_myAddress != address )
                 {
-                    con << "Got address " << address << ".\n";
+                    if(sn_showOwnIP)
+                        con << "Got address " << address << ".\n";
+                    else
+                        con << "Got address.\n";
                 }
                 sn_myAddress = address;
             }
@@ -2741,7 +2743,7 @@ static void rec_peer(unsigned int peer){
                 catch(nIgnore const &){
                     // well, do nothing.
                 }
-                catch(nKillHim)
+                catch(nKillHim const &)
                 {
                     con << "nKillHim signal caught: ";
                     sn_DisconnectUser(id, "$network_kill_error");
@@ -3108,7 +3110,8 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
     case Login_Protobuf:
         // switch server connection to protobuf capable version
         sn_Connections[0].version = sn_myVersion;
-        [[fallthrough]];
+        // [[fallthrough]];
+        // fallthrough on purpose
     case Login_Pre0252:
         // just write a protobuf message. In pre-0.2.5.2 mode, it'll get converted
         // to a stream message correctly.
@@ -3591,14 +3594,14 @@ void sn_Receive(){
     switch (current_state){
     case nSERVER:
         {
-            memset( &peers[0], 0, sizeof(sockaddr) );
+	    peers[0] = nAddress{};
 
             // listen on all sockets
             nSocketListener const & listener = sn_BasicNetworkSystem.GetListener();
             for ( nSocketListener::iterator i = listener.begin(); i != listener.end(); ++i )
             {
                 // clear peer info used for receiving
-                memset( &peers[MAXCLIENTS+1], 0, sizeof(sockaddr) );
+                peers[MAXCLIENTS+1] = nAddress{};
 
                 // copy socket info over to [MAXCLIENTS+1] and receive. The copy
                 // step is important, nAuthentication.cpp relies on the socket being set.

@@ -102,8 +102,8 @@ cycle_rubber_legacy_help      Restauriert das alte, von der Darstellungsgeschwin
 cycle_rubber_timebased_help   Die Rate, mit der sich das Rubber-Meter füllt, wird von der Geschwindigkeit des Vehikels bestimmt, wenn diese Variable 0 ist. Bei einem Wert von 0 ist ist die Rate konstant. Zwischenwerte und Werte außerhalb von 0 und 1 sind ebenfalls erlaubt.
 cycle_rubber_speed_help       Maximale logarithmische Annäherungsgeschwindigket an Wände, wenn Kollisionstoleranz aktiv ist (pro Sekunde kann das Vehikel der Wand nur um den Faktor ca. 0.4^{dieser Wert} näher kommen)
 cycle_rubber_mindistance_help Die Kollisionstoleranz hält Vehikel mindestens in diesem Abstand zu Wänden
-cycle_rubber_mindistance_gap_help Wenn dies auf einen positiven Wert gesetzt wird, dann wirkt es als maximalwert für CYCLE_RUBBER_MINDISTANCE: Wenn ein kleines Loch der Breite x sichtbar ist, wird der effektive Wert von _MINDISTANCE nicht größer als x * CYCLE_RUBBER_MINDISTANCE_GAP. Nützlich für "offenes" Spiel.
-cycle_rubber_mindistance_gap_backdoor_help Wenn > 0, wird CYCLE_RUBBER_MINDISTANCE in der Anwendung niemals größer als dieser Wert mal der Größe aller wahrnehmbaren Hintertürlücken, durch die das Vehikel schlüpfen könnte. Für "Open"-Gameplay. Wenn = 0, gilt CYCLE_RUBBER_MINDISTANCE_GAP auch für Hintertüren.
+cycle_rubber_mindistance_gap_help Wenn dies auf einen positiven Wert gesetzt wird, dann wirkt es als Maximalwert für CYCLE_RUBBER_MINDISTANCE: Wenn ein kleines Loch der Breite x sichtbar ist, wird der effektive Wert von _MINDISTANCE nicht größer als x * CYCLE_RUBBER_MINDISTANCE_GAP. Nützlich für "offenes" Spiel.
+cycle_rubber_mindistance_gap_backdoor_help Wie CYCLE_RUBBER_MINDISTANCE_GAP, bezieht sich aber nur auf Öffnungen, die zur Flucht nach hinten verwendet werden können. Wenn es auf 0 gesetzt bleibt, gilt dafür einfach CYCLE_RUBBER_MINDISTANCE_GAP. 
 cycle_rubber_mindistance_gap_side_help Löcher für CYCLE_RUBBER_MINDISTANCE_GAP werden links und rechts in diesem Abstand gesucht.
 cycle_rubber_mindistance_ratio_help Zusatzwert zu CYCLE_RUBBER_MINDISTANCE, wächst mit der Länge der Wand an
 cycle_rubber_mindistance_reservoir_help Zusatzwert zu CYCLE_RUBBER_MINDISTANCE, der bei leerem Rubber-Meter voll und zum tragen kommt und mit steigendem Füllstand langsam ausgeblendet wird.
@@ -351,13 +351,13 @@ player_chat_wait_teamleader_help Setze dies auf 1, wenn nur Teamchefs eine Spiel
 wait_for_external_script_help Lässt den Server zwischen zwei Runden auf ein externes Script warten, bis das Script den Wert wieder auf 0 setzt.
 wait_for_external_script_timeout_help Maximale Zeit in Sekunden, die der Server über WAIT_FOR_EXTERNAL_SCRIPT pausiert werden kann. Wenn die Zeit abgelaufen ist, startet die nächste Runde auch so.
 
-spawn_script_help             Führt ein externes Skript vom scripts/-Unterordner im Datenpfad aus.
-respawn_script_help           Führt ein externes Skript vom scripts/-Unterordner im Datenpfad aus, wenn keine bereits laufende Instanz gefunden worden ist.
-force_respawn_script_help     Führt ein externes Skript vom scripts/-Unterordner im Datenpfad aus, nachdem andere möglicherweise laufende Instanzen beendet worden sind.
-kill_script_help              Beendet ein Skript. Das Argument muss zu dem von SPAWN_SCRIPT passen
+spawn_script_help             Startet ein externes Skript aus dem Verzeichnis scripts/ im Datenpfad.
+respawn_script_help           Startet ein externes Skript aus dem Verzeichnis scripts/ im Datenpfad, falls es nicht schon läuft.
+force_respawn_script_help     Startet ein externes Skript aus dem Verzeichnis scripts/ im Datenpfad, bricht vorher eine eventuell schon laufende Instanz ab.
+kill_script_help              Bricht ein Skript ab. Das Argument muss genau dem von *SPAWN_SCRIPT entsprechen.
 check_script_help             Sollen die Skript-Kommandos Sicherheitschecks unterzogen werden? Es wird sehr dringend empfohlen, diese Einstellung so beizubehalten, wie sie ist.
-list_scripts_help             Listet die aktiven Skripte auf.
-script_env_help               Stellt benutzerdefinierte Umgebungsvariablen für Skripte ein. Anwendung: SCRIPT_ENV <Name der Variabel> <Wert>
+list_scripts_help             Zeigt die gerade laufenden Skripte an.
+script_env_help               Setzt Umgebungsvariablen für Skripte. Verwendung: SCRIPT_ENV <Variabeln-Name> <Wert>
 
 chatter_remove_time_help      Zeit in Sekunden im Chatbot-Zustand, nach der ein Spieler aus dem Spiel geworfen wird
 idle_remove_time_help         Zeit in Sekunden ohne Steuerungsbefehl, nach der ein Spieler aus dem Spiel geworfen wird
@@ -546,9 +546,11 @@ votes_cancel_help             Bricht alle laufenden Abstimmungen a.
 max_votes_per_voter_help      Maximalzahl der Abstimmungen von jedem Stimmberechtigten, die gleichzeitig laufen könnnen.
 voting_start_decay_help       Nach sovielen Sekunden wird begonnen, die Enthaltungen in einer Abstimmung zu ignorieren; es kommt dadurch auch bei nicht absoluten Mehrheiten zu einem Ergebnis.
 voting_decay_help             Alle soviele Sekunden wird eine Enthaltung mehr ignoriert.
-voting_bias_help              fügt so viele virtuelle Wähler hinzu, die sich gegen jede Veränderung aussprechen.
-voting_bias_kick_help         fügt so viele virtuelle Wähler hinzu, die sich gegen jeden Rauswurf aussprechen.
-voting_bias_suspend_help      fügt so viele virtuelle Wähler hinzu, die sich gegen jede Suspendierung stellen.
+voting_bias_help              Fügt so viele virtuelle Wähler hinzu, die sich gegen jede Veränderung aussprechen.
+voting_bias_kick_help         Fügt so viele virtuelle Wähler hinzu, die sich gegen jeden Rauswurf aussprechen.
+voting_bias_suspend_help      Fügt so viele virtuelle Wähler hinzu, die sich gegen jede Suspendierung stellen.
+voting_bias_silence_help      Fügt so viele virtuelle Wähler hinzu, die sich gegen jede Stummschaltung stellen.
+voting_bias_voice_help        Fügt so viele virtuelle Wähler hinzu, die sich gegen jede Aufhebung einer Stummschaltung stellen.
 voting_bias_include_help      fügt so viele virtuelle Wähler hinzu, die sich gegen jede Include-Abstimmung stellen.
 voting_bias_command_help      fügt so viele virtuelle Wähler hinzu, die sich gegen jede Kommando-Abstimmung stellen.
 
@@ -591,7 +593,7 @@ recording_debuglevel_help     Niveau der zusätzlichen Informationen, die zur Feh
 fast_forward_maxstep_help     Maximale Zeit in aufgezeichneten Sekunden, die zwischen Renderschritten im schnellen Vorlauf liegt
 fast_forward_maxstep_real_help Maximale Zeit in echten Sekunden, die zwischen Renderschritten im schnellen Vorlauf liegt
 fast_forward_maxstep_rel_help Maximale Zeit gemessen in der Zeit bis zum Vorspulziel, die zwischen Renderschritten liegt
-stop_recording_help           Stoppt eine momentan laufende Aufnahme um Resourcen zu sparen. Danach muss wieder von vorne angefangen werden, man kann sie nicht einfach vom letzten Stopp aus fortsetzen.
+stop_recording_help           Stoppt eine laufende Debug-Aufzeichnung, um resourcen zu sparen. Eine Wiederaufnahme ist nicht möglich.
 
 #********************************************
 #********************************************
@@ -698,7 +700,7 @@ dedicated_idle_help           Nach dieser Zeit (in Stunden) beendet sich der Ded
 dedicated_fps_help            Maximale Zahl der Simulationsschritte pro Sekunde, die der Server ausführen soll
 dedicated_fps_idle_factor_help Maximale Zahl der Simulationsschritte pro Sekunde, die der Server ausführen soll, währent gerade kein eingehender Netzwerkverkehr vorliegt
 talk_to_master_help           Soll dieser Server im Internet bekannt gemacht werden?
-add_master_server_help        Kündige diesen Server einem anderen Master Server an. Anwendung: ADD_MASTER_SERVER host port(optional, Standard=4533).
+add_master_server_help        Macht diesen Server einem weiterem Master-Server bekannt. Verwendung: ADD_MASTER_SERVER <server IP/DNS-Name> <port>(optional, standard=4533).
 max_out_rate_help             Maximale Netzwerkbandbreite (Ausgabe)
 max_in_rate_help              Maximale Netzwerkbandbreite (Eingabe)
 message_cache_size_help       Größe des Netzwerk-Nachrichten-Caches in Nachrichten.
@@ -760,6 +762,7 @@ cockpit_file_help             Datei, die Informationen zur Berechnung der Cockpi
 forbid_hud_map                Verbiete Clients das Zeigen der HUD Minikarte?
 forbid_cockpit_data_help      Durch Doppelpunkte unterteilte Liste von Cockpitdatenquellen, die Clients nicht für ihre Cockpits verwenden dürfen (z.B. der Rubber ihrer Gegner)
 cm_locy_help                  Vertikale Position der Zentralnachrichten vom Server
+hud_cache_threshold_help      Update-Schwelle für HUD-Anzeigen, wenn Display-Listen-Optimierung aktiv ist. Erst, wenn die Änderung der Anzeigen eine durch diesen Wert bestimmte Schwelle überschreiten, werden sie neu gezeichnet.
 
 #floor
 grid_size_help                Abstand zwischen Rasterlinien
@@ -925,7 +928,7 @@ software_renderer_help        Ist der OpenGL Renderer nicht Hadware-Beschleunigt
 use_displaylists_help         Sollen display lists für die Vehikel verwendet werden?
 
 #walls
-simple_trail_help             Wenn auf 1, werden die Lichtwände für mehr Leistung einfacher gerendert.
+simple_trail_help             Wenn dies auf 1 gesetzt wird, werden die Wände der Vehikel nur vereinfacht dargestellt. Für sehr alte Rechner.
 
 #********************************************
 #********************************************
@@ -1039,6 +1042,7 @@ player_list_search            \1: Suchmuster "\n" passt auf:\n
 player_list_search_no_results \1: Suchmuster "\2" liefert keine Treffer.\n
 player_list_search_end        \1: Ende der Suchergebnisse (\2 Treffer).\n
 player_list_end               \1: \2 Spieler.\n
+player_list_disconnected      Kürzlich vom Server gegangene Spieler und ihre letzten Äußerungen.
 
 admins_help                   Gibt eine Liste der Administratoren. Siehe auch /admins and /listadmins chat commands.
 
@@ -1100,6 +1104,7 @@ input_items_global            Sondertasten
 
 # used for listing key bindings
 input_or                      oder
+tooltip_how_to_get_rid_of     Oder sieh dir die Tastaturbelegung im Menu "Spieler Konfigurieren/Einstellungen für Spieler 1/Spiel-Tasten" an.
 
 #********************************************
 #********************************************
@@ -1201,15 +1206,8 @@ input_cycle_turn_right_help   Macht eine scharfe Rechtskurve
 
 input_cycle_turn_left_tooltip Drücke \1 um nach links zu wenden.
 input_cycle_turn_left_text    Biege links ab
-input_cycle_turn_left_help    Macht eine 90-Grad-Drehung nach links
+input_cycle_turn_left_help    Macht eine scharfe Linkskurve
 
-#ORIGINAL TEXT:               Turn left
-#TRANSLATION deutsch          Biege links ab
-#input_cycle_turn_left_text   UNTRANSLATED
-
-#ORIGINAL TEXT:               Makes a 90 degrees turn to the left
-#TRANSLATION deutsch          Macht eine 90-Grad-Drehung nach links
-#input_cycle_turn_left_help   UNTRANSLATED
 input_joy_left_text           Joystick links
 input_joy_left_help           Lässt das Vehikel nach links wenden, abhängig vom momentanen Blickwinkel
 input_joy_right_text          Joystick rechts
@@ -1281,7 +1279,7 @@ input_look_right_help         Dreht die Kamera nach rechts (falls das erlaubt is
 input_look_left_text          Linksdrehung
 input_look_left_help          Dreht die Kamera nach links (falls das erlaubt ist) oder bewegt sie nach rechts
 
-input_switch_view_tooltip     Drücke \1 um den Kameramodus zu wechseln.
+input_switch_view_tooltip     Drücke \1, um den Kameramodus zu wechseln.
 input_switch_view_text        Umschalten
 input_switch_view_help        Verändert den Kameramodus. Zur Verfügung stehen: Schlaue extene Kamera (Voreinstellung), dumme extene Kamera sowie freie Kamera und interne Kamera.
 
@@ -1342,7 +1340,7 @@ input_music_volume_down_help  Verringert die Lautstärke der Musik
 #********************************************
 #********************************************
 
-console_repetition            (\1 Male)\n
+console_repetition            (\1 mal)\n
 
 #********************************************
 #********************************************
@@ -1440,7 +1438,7 @@ game_menu_disconnect_help     Trennt die Verbindung zum Server und führt wieder 
 #********************************************
 version_info_title            Über diese Installation von \g
 version_info_version          Version von \g: \1
-version_info_misc_stuff       \n0xff8888Offizielle Website:0xRESETT http://armagetronad.net/\n0xff8888Offizielles Forum:0xRESETT http://forums.armagetronad.net/\n0xff8888Wiki (Strategie, Turniere, Dokumentation, ...):0xRESETT http://wiki.armagetronad.net/\n0xff8888Projektverwalter:0xRESETT z-man, Tank Program (guru3), Lucifer
+version_info_misc_stuff       \n0xff8888Offizielle Website:0xRESETT http://armagetronad.net/\n0xff8888Offizielles Forum:0xRESETT https://forums3.armagetronad.net/\n0xff8888Wiki (Strategie, Turniere, Dokumentation, ...):0xRESETT http://wiki.armagetronad.net/\n0xff8888Projektverwalter:0xRESETT z-man, Tank Program (guru3), Lucifer
 
 path_info_user_cfg            Pfad zu user.cfg:
 path_info_config              Konfigurationsverzeichnisse:
@@ -2007,8 +2005,8 @@ player_police_help            Hier kann man andere Spieler stummschalten oder vo
 player_police_silence_text    Stummschaltung
 player_police_silence_help    Hier kann man andere Spieler zum schweigen bringen ( nur lokal ).
 
-silence_player_help           Wenn dieser Menupunkt aktiviert ist, dann werden alle Nachrichten von diesem Spieler ignoriert.
-silence_player_text           Ignoriere \1 :
+ignore_player_help            Wenn dieser Menupunkt aktiviert ist, dann werden alle Nachrichten von diesem Spieler ignoriert.
+ignore_player_text            Ignoriere \1 :
 
 player_police_kick_text       Rausschmiss
 player_police_kick_help       Hier kann man vorschlagen, andere Spieler vom Server zu verweisen.
@@ -2024,6 +2022,11 @@ referee_player_details_text   Wenn akzeptiert, wird \1 zum Referee ernannt: Er d
 referee_player_text           Mache \1 zum Referee
 demotereferee_player_details_text Wenn akzeptiert, wird \1 kein referee mehr sein: Er wird keine Teams mehr verwalten dürfen.
 demotereferee_player_text     1\ wird der Referee-Posten aberkannt
+silence_player_details_text   Wenn dieser Vorschlag akzeptiert wird, dann wird \1 stumm geschaltet.
+silence_player_text           Schalte \1 stumm
+
+voice_player_details_text     Wenn dieser Vorschlag akzeptiert wird, dann wird \1 seine Stimme zurückgegeben.
+voice_player_text             Stummschaltung für \1 aufheben
 
 vote_include_details_text     Wenn dieser Vorschlag akzeptiert wird, wird die Konfigurationsdatei \1 geladen.
 vote_include_text             Lade \1
@@ -2059,6 +2062,8 @@ vote_reject_help              Damit lehnst du den Vorschlag ab.
 
 vote_details_help             Dieser Menupunkt bestimmt deine Stimmabgabe. Details: \1
 vote_submitter_text           Dieser Vorschlag kommt von \1.
+
+vote_expired                  \1 (Bereits gelöst)
 
 #*************************************
 #*************************************
@@ -2102,7 +2107,7 @@ player_teamname_text          Teamname:
 player_teamname_help          Zur Navigation verwende <left>/<right>, Entf, Rücktaste und all die anderen Tasten.
 
 player_global_id_text         Globale ID:
-player_global_id_help         Falls vorhanden, kannst du deine Globale ID hier eintragen. We sie aussieht, hängt von deinem Melteamt ab. Bist du auf forums.armagetronad.net angemeltet, ist sie z.B. dein Benutzername dort, gefolgt von "@forums".
+player_global_id_help         Falls vorhanden, kannst du deine Globale ID hier eintragen. We sie aussieht, hängt von deinem Melteamt ab. Bist du auf forums3.armagetronad.net angemeltet, ist sie z.B. dein Benutzername dort, gefolgt von "@forums".
 
 player_input_text             Spiel-Tasten
 player_input_help             Stellt die Tastaturbelegung für die Steuerung der Vehikel ein
@@ -2442,8 +2447,8 @@ detail_floor_mirror_ow_help   eingentlich alles, was im Spiel momentan vorkommt.
 detail_floor_mirror_ev_text   Alles
 detail_floor_mirror_ev_help   (Kein Unterschied zu "Objekte und Wände")
 
-detail_simple_trail_text      Einfache Lichtwände:
-detail_simple_trail_help      Wenn aktiviert, werden die Lichtwände in einer einfacheren Form dargestellt, ohne die Entwicklungsstufen direkt hinter dem Vehikel.
+detail_simple_trail_text      Einfache Wände
+detail_simple_trail_help      Wenn das hier aktiviert ist, werden die Wände der Vehikel nur auf extrem einfache Art dargestellt. In einem Fall half das, einen Absturz im Grafiktreiber zu umgehen.
 
 detail_dither_text            Rasterung:
 detail_dither_help            Wenn die derzeitigen Einstellungen eine Farbe nicht darstellen können wird sie durch Mischung simuliert. In niedrigen Auflösungen sieht das allerdings nicht gut aus. Auf manchen Systemen erhöht das abschalten die Geschwindigkeit.
@@ -2609,10 +2614,10 @@ welcome_message_2             Gleich wirst du das reguläre Hauptmenü sehen. Du k
 #********************************************
 
 first_setup                   Ersteinstellung
-first_game_title              Spiel
+first_game_title              Erstes Spiel
 
-first_setup_color             Farbe
-first_setup_color_help        Wählt die Farbe deines Vehikels, indem du Pfeil nach links/rechts drückst. Später kannst du es im Spieler-Menü detaillierter anpassen.
+first_setup_color             Farbe:
+first_setup_color_help        Wählt die Farbe des Vehikels. Später kann man sie noch feiner einstellen.
 first_setup_color_red         0xff0000Rot0xRESETT
 first_setup_color_green       0x00ff00Grün0xRESETT
 first_setup_color_blue        0x0000ffBlau0xRESETT
@@ -2624,8 +2629,8 @@ first_setup_color_cyan        0x00ffffTürkis0xRESETT
 first_setup_color_white       0xffffffWeiß0xRESETT
 first_setup_color_dark        0x000000Dunkel0xRESETT
 
-first_setup_leave             Lass die Finger davon!
-first_setup_leave_help        Verändere dies nicht.
+first_setup_leave             Unverändert lassen
+first_setup_leave_help        Nichts verändern
 
 first_setup_keys              Keyboard-Einstellungen
 first_setup_keys_help         Wähle hier deine Tastatureinstellungen. Sie können später angepasst werden, individuelle Tastenbelegungen können geändert werden. Wähle mit linker oder rechter Pfeiltaste aus.
@@ -2641,7 +2646,7 @@ first_setup_keys_zqsd_help    Steuere dein Motorrad mit den Tasten Q, S und D so
 #first_setup_keys_both_help  Turn and look left with your left hand, turn and look right with the right hand. Good for ambidextrous people who don't want to use the mouse in any way and never play with a second player in split-screen.
 first_setup_keys_x            Traditionell
 first_setup_keys_x_help       Die automatische Einstellung in alten Versionen des Spiels. X lenkt nach rechts, die Taste links davon lenkt nach links. Nur für ältere Spieler empfohlen.
-first_setup_keys_leave        Lass die Finger davon!
+first_setup_keys_leave        Unverändert lassen
 
 first_setup_net               Verbindung:
 first_setup_net_help          Wähle hier den ungefähren Typ deiner Internetverbindung.
@@ -2938,7 +2943,7 @@ help_commands_pp_shortdesc    Polizeikommandos
 help_commands_pp_text         0x88ff88/players [<Suchmuster>]0xffff88: Gibt dir eine Liste aller Spieler und Zusatzinfos. Das optionale Suchmuster schränkt die Liste auf die Spieler ein, deren Name das Suchmuster enthält.\n0x88ff88/admins [<Zugriffslevel> [<Zugriffslevel>]]0xffff88: Gibt dir eine Liste aller Administratoren. Wenn nur das erste Argument gegeben wird, werden nur Administratoren auf genau diesem Level gelistet. Mit beiden Argumenten werden alle Administratoren mit Zugriffslevel in diesem Bereich gelistet.\n0x88ff88/vote kick|suspend <Spieler>0xffff88: Regt eine Abstimmung zum Rauswurf oder zur Suspendierung eines Spielers an.
 
 help_commands_auth_shortdesc  Authentifizierungskommandos
-help_commands_auth_text       0x88ff88/login [<Benutzer>]@<Meldeamt>0xffff88: Authentfiziert dich über das angegebene Meldeamt. Mit einem Account auf http://forums.armagetronad.net/ ist 'forums' dein Meldeamt.\n0x88ff88/logout0xffff88: Hebt die Authentifizierung auf.\n0x88ff88/vote include <Datei>0xffff88: Regt eine Abstimmung zum Einbinden einer Konfigurationsdatei an.\n0x88ff88/vote command <Kommando>0xffff88: Regt eine Abstimmung zum ausführen eines Kommandos an.\n0x88ff88/admin <Kommando>0xffff88: Führt ein Kommando aus, falls dein Zugriffslevel hoch genug ist.\n0x88ff88/op <Spieler> [+|-]<Zugriffslevel>0xffff88: Gibt einem anderen Spieler einen höheren oder niedrigeren Zugriffslevel; standardmässig wird der Level eins under deinem Level genommen, was auch der maximale Level ist.\n0x88ff88/deop <Spieler>0xffff88: Kehrt /op um.
+help_commands_auth_text       0x88ff88/login [<Benutzer>]@<Meldeamt>0xffff88: Authentfiziert dich über das angegebene Meldeamt. Mit einem Account auf https://forums3.armagetronad.net/ ist 'forums' dein Meldeamt.\n0x88ff88/logout0xffff88: Hebt die Authentifizierung auf.\n0x88ff88/vote include <Datei>0xffff88: Regt eine Abstimmung zum Einbinden einer Konfigurationsdatei an.\n0x88ff88/vote command <Kommando>0xffff88: Regt eine Abstimmung zum ausführen eines Kommandos an.\n0x88ff88/admin <Kommando>0xffff88: Führt ein Kommando aus, falls dein Zugriffslevel hoch genug ist.\n0x88ff88/op <Spieler> [+|-]<Zugriffslevel>0xffff88: Gibt einem anderen Spieler einen höheren oder niedrigeren Zugriffslevel; standardmässig wird der Level eins under deinem Level genommen, was auch der maximale Level ist.\n0x88ff88/deop <Spieler>0xffff88: Kehrt /op um.
 help_commands_auth_levels_shortdesc Liste aller Zugriffslevel
 help_commands_auth_levels_text 0x88ff880 (Besitzer)0xffff88: Der Serverbesitzer. Konsolenkommandos laufen mit diesen Rechten.\n0x88ff881 (Administrator)0xffff88: Ein Serveradministrator. Kann fast alles, was auch der Besitzer kann.\n0x88ff882 (Moderator)0xffff88: Ein Moderator. Kann normalerweise nur Spielermanagement-Kommandos ausführen.\n0x88ff887 (Team-Anführer)0xffff88: Anführer eines Teams. Hat normalerweise keine Sonderrechte, kann auf Turnierservern aber für Teammanagement verantwortlich gemacht werden.\n0x88ff888 (Teammitglied)0xffff88: Mitglied eines Teams. Locale Team-Accounts begommen diesen Zugriffslevel.\n0x88ff8812 (Localer Benutzer)0xffff88: Spieler mit einem lokalen Account auf diesem Server bekommen diesen Level.\n0x88ff8815 (Frember)0xffff88: Spieler mit Accounts von Meldeämtern bekommen diesen Level.\n0x88ff8816 (Missbilligt)0xffff88: In Ungnade gefallene Spieler.\n0x88ff8817 (Ausgestoßen)0xffff88: Genauso, nur noch schlimmer :)\n0x88ff8819 (Eingeloggt)0xffff88: Minimaler Level für authentifizierte Spieler.\n0x88ff8820 (Programm)0xffff88: Nicht eingeloggter Spieler.
 
@@ -2995,7 +3000,8 @@ player_scoretable_pingcharity Ping-Spende:
 player_scoretable_nobody      Niemand da.\n
 player_scoretable_inactive    nicht aktiv
 
-
+own_ip_in_players             deine
+show_own_ip_help              Soll die öffentliche IP-Adresse beim Verbindungsaufbau mit den Master-Servern angezeigt werden?
 
 #********************************************
 #********************************************
@@ -3098,7 +3104,7 @@ network_kill_maxidgrabber     Keine ObjektIDs mehr frei; Dein Client hatte die m
 network_kill_maxiduser        Keine ObjektIDs mehr frei; Dein Client hatte die meisten davon belegt ( Bug? ).
 network_kill_cheater          Du hast den Cheater-Alarm ausgelöst. Wenn das nicht gerechtfertigt war, sende bitte einen Bug-Report.
 network_kill_error            Beim Bearbeiten eines Netzwerkpakets von Deinem Client wurde ein Fehler festgestellt. Vermutlich gibt es entweder im Server oder im Client einen Bug.
-network_kill_servercomplete   Transfer der Serverlisten vollständig.
+network_kill_servercomplete   Übertragung der Serverliste abgeschlossen.
 network_kill_timeout          Dein Client hat zu lange nicht geantwortet.
 network_kill_logout           Du hast dich ausgeloggt.
 network_kill_incompatible     Die Version deines Clients passt nicht zum Server.
@@ -3225,7 +3231,7 @@ classification_maps           Benutzerdefinierte Karte
 
 resource_not_cached           Datei \1 befindet sich nicht im lokalen Speicher. Bitte etwas Geduld, sie wird heruntergeladen...\n
 resource_downloading          Lade \1 herunter ...\n
-resource_fetcherror_noconnect FEHLER: Der host von URI \1 ist nicht erreichbar. Das kann ein DNS Namensauflösungsfehler sein. Falls es sich um das Hauptlager für Resourcen (http://resource.armagetronad.net/resource/) handelt, melde dies bitte auf http://forums.armagetronad.net/.\n
+resource_fetcherror_noconnect FEHLER: Der host von URI \1 ist nicht erreichbar. Das kann ein DNS Namensauflösungsfehler sein. Falls es sich um das Hauptlager für Resourcen (http://resource.armagetronad.net/resource/) handelt, melde dies bitte auf https://forums3.armagetronad.net/.\n
 resource_fetcherror_404       FEHLER 404 : Datei nicht gefunden.\n
 resource_fetcherror           FEHLER \1 != 200.\n
 resource_no_filename          FEHLER: Leerer Dateiname.\n
@@ -3451,6 +3457,7 @@ access_level_play_sliders_help Der Zugriffslevel, der zum Spielen nötig ist, wir
 access_level_play_changed     Zum Spielen benötigter Zugriffslevel von \1 auf \2 verschoben.\n
 
 access_level_vote_suspend_help Minimaler Zugriffslevel, um Suspendierungsabstimmungen starten zu dürfen.
+access_level_vote_silence_help Minimaler Zugriffslevel, um Abstimmungen über das Rederecht anderer starten zu dürfen.
 access_level_vote_kick_help   Minimaler Zugriffslevel, um Rauschmissabstimmungen starten zu dürfen.
 access_level_vote_include_help Minimaler Zugriffslevel, um Konfigurationseinbindungsabstimmungen starten zu dürfen.
 access_level_vote_include_execute_help Minimaler Zugriffslevel, auf dem erfolgreiche Konfigurationseinbindungsabstimmungen ausgeführt werden.
@@ -3481,6 +3488,8 @@ rtfm_denied                   Um andere zu belehren, ist es erforderlich, eingel
 
 access_level_list_admins_help Minimaler Zugriffslevel, um das /admins-Kommando benutzen zu dürfen.
 access_level_list_admins_see_everyone_help Benutzer mit diesem oder besserem Zugriffslevel dürfen unabhängig von ADMIN_LIST_MIN_ACCESS_LEVEL jeden Administrator sehen.
+
+access_level_announce_login_help Höchster Zugriffslevel, für den bei einem Spieler die Ein/Ausloggvorgänge öffentlich angekündigt werden.
 
 intercept_commands_help       Liste von Chat-Kommandos, die angenommen und in der Standardausgabe geloggt werden sollen.
 intercept_unknown_commands_help Wenn dies 1 ist, so werden alle unbekannten Chat-Kommandos angenommen und geloggt.

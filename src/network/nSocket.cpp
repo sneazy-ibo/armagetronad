@@ -1883,8 +1883,13 @@ int nSocket::Create( void )
     // initialize networking at OS level
     sn_InitOSNetworking();
 
+    int socktype = socktype_;
+#ifndef WIN32
+    socktype |= SOCK_CLOEXEC;
+#endif
+
     // open new socket
-    socket_ = socket( family_, socktype_, protocol_ );
+    socket_ = socket( family_, socktype, protocol_ );
     if ( socket_ < 0 )
         return -1;
 
@@ -1903,8 +1908,8 @@ int nSocket::Create( void )
 #endif    
 
     // unblock it
-    bool _true = true;
-    return ioctl (socket_, FIONBIO, reinterpret_cast<char *>(&_true)) == -1;
+    unsigned long _true = true;
+    return ioctl (socket_, FIONBIO, &_true) == -1;
 }
 
 // archives the binding procedure

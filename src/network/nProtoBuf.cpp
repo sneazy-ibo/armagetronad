@@ -468,7 +468,19 @@ void nProtoBufMessageBase::OnRead( unsigned char const * & buffer, unsigned char
 
 int nProtoBufMessageBase::Size() const
 {
-    return GetProtoBuf().ByteSize() + 5;
+#ifndef GOOGLE_PROTOBUF_VERSION
+#error protobuf version not defined
+#endif
+    auto rawByteSize = [&]()
+    {
+#if GOOGLE_PROTOBUF_VERSION >= 3001000
+        return GetProtoBuf().ByteSizeLong();
+#else
+        return GetProtoBuf().ByteSize();
+#endif
+    };
+
+    return rawByteSize() + 5;
 }
 
 nMessageTranslatorBase::nMessageTranslatorBase(){}
@@ -1204,16 +1216,20 @@ void nNetObjectDescriptorBase::PostCheck( nNetObject * object, nSenderInfo sende
       con << "Received object " << str << "\n";
     */
 #endif
-            
-    if ( sn_GetNetState()==nSERVER && !object->AcceptClientSync() )
+
+    if(!object)
+        return;
+
+    if (sn_GetNetState()==nSERVER && !object->AcceptClientSync())
     {
-        object->Release();
-        Cheater( sender.SenderID() ); // cheater!
-    }
-    else if ( static_cast< nNetObject* >( sn_netObjects[ object->ID() ] ) != object )
-    {
-        // object was unable to be registered
-        object->Release(); // silently delete it.
+#ifdef DEBUG
+        tERR_WARN("AcceptClientSync was supposed to be checked earler.");
+#endif
+        Cheater(sender.SenderID());
+
+        // deregister
+        if(sn_netObjects[ object->ID() ].operator->() == object)
+            sn_netObjects[ object->ID() ] = NULL;
     }
 }
 
