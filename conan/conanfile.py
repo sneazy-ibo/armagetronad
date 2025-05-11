@@ -13,6 +13,7 @@ class Pkg(ConanFile):
             "PkgConfigDeps"
 
     requires = \
+            "boost/[>=1.33.1]", \
             "libcurl/[>=7]", \
             "sdl_ttf/[>2.0]", \
             "sdl_image/[>2.0]", \
