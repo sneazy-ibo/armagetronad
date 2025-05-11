@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.files import copy
 from conan.tools.env import VirtualRunEnv
+import shutil
 import os
 
 # activate with
@@ -22,7 +23,8 @@ class Pkg(ConanFile):
             "libxml2/[>=2.9.10]"
 
     default_options = {
-        "sdl/*:x11": False,
+        "*/*:with_iconv": False,
+        "*/*:iconv": False,
         "sdl/*:pulseaudio": False,
         "sdl_mixer/*:flac": False,
         "sdl_mixer/*:opus": False,
@@ -70,6 +72,10 @@ class Pkg(ConanFile):
 
         # copy libraries
         libs_path = os.path.join(self.build_folder, "lib")
+        try:
+            shutil.rmtree(libs_path)
+        except:
+            pass # ignore errors, we just want to have a clean start
         for dep_name, dep in self.dependencies.items():
             dirs = dep.cpp_info.libdirs + dep.cpp_info.bindirs
             for dir in dirs:
