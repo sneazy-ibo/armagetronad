@@ -24,6 +24,8 @@ class Pkg(ConanFile):
             "libxml2/[>=2.9.10]"
 
     default_options = {
+        "*/*:with_bzip2": False,
+        "*/*:bzip2": False,
         "*/*:with_iconv": False,
         "*/*:iconv": False,
         "sdl/*:pulseaudio": False,
