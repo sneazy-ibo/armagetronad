@@ -64,6 +64,10 @@ class Pkg(ConanFile):
         "libxml2/*:shared": True
     }
 
+    tool_requires = {
+        "cmake/[<4.0]"
+    }
+
     keep_imports = True
 
     def requirements(self):
