@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <iostream>
 #include <deque>
 #include <algorithm>
+#include <random>
 #include "rRender.h"
 #include "rFont.h"
 #include "rSysdep.h"
@@ -64,7 +65,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "eLadderLog.h"
 #include <climits>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 #include "ePlayer.pb.h"
+
+#pragma GCC diagnostic pop
 
 int se_lastSaidMaxEntries = 8;
 static void se_SaveToChatLog( const ePlayerNetID *player, const tString & message );
@@ -2839,7 +2845,8 @@ static void handle_chat_admin_commands( ePlayerNetID * p, tString const & comman
     {
         // Really, there's no reason one would log in and log out all the time
         spam.factor_ = 1;
-        if ( spam.Block() )
+        // check spam only first; .Block also checks for access level, which is wrong here
+        if (spam.CheckSpamOnly() && spam.Block())
         {
             return;
         }
@@ -3446,8 +3453,8 @@ static void se_ChatMsg( ePlayerNetID * p, std::istream & s, eChatSpamTester & sp
             // log locally
             sn_ConsoleOut(toServer,0);
 
-            // log to sender's console
-            sn_ConsoleOut(toServer, p->Owner());
+            // send back to sender
+            se_SendPrivateMessage(p, receiver, p, msg_core);
 
             // send to receiver
             if ( p->Owner() != receiver->Owner() )
@@ -5517,13 +5524,13 @@ void ePlayerNetID::RemoveFromGame()
     }
 
     se_PlayerNetIDs.Remove(this, listID);
-
-    if ( sn_GetNetState() == nCLIENT )
+    if( (sn_GetNetState() == nCLIENT) && (currentTeam || nextTeam) )
     {
         SetTeamWish( NULL );
+        SetTeam( NULL );
+        UpdateTeam();
+        currentTeam = NULL;
     }
-    SetTeam( NULL );
-    UpdateTeam();
     ControlObject( NULL );
 
     if( logLeave )
@@ -7686,26 +7693,36 @@ void ePlayerNetID::Update(){
             sn_pingCharityServer = se_pingCharityMax;
         }
 
+        int minHalfPing = 9999;
         for(i=se_PlayerNetIDs.Len()-1;i>=0;i--){
             ePlayerNetID *pni=se_PlayerNetIDs(i);
             pni->UpdateName();
-            int new_ps=pni->pingCharity;
-            new_ps+=int(pni->ping*500);
+            int halfPing = pni->ping * 500;
+            int new_ps = pni->pingCharity + halfPing;
 
             // only take ping charity into account for non-spectators
-            if ( sn_GetNetState() != nSERVER || pni->currentTeam || pni->nextTeam )
+            if (sn_GetNetState() != nSERVER ||
+                ((pni->currentTeam || pni->nextTeam) && pni->IsHuman()))
+            {
                 if (new_ps < sn_pingCharityServer)
                     sn_pingCharityServer=new_ps;
+                if (halfPing < minHalfPing)
+                    minHalfPing = halfPing;
+            }
         }
-        if (sn_pingCharityServer<0)
-            sn_pingCharityServer=0;
 
         // set configurable minimum
         if ( se_pingCharityServerControlled.Supported() )
         {
+            // the player with the lowest ping essentially dominates ping charity
+            sn_pingCharityServer -= minHalfPing;
+
             if ( sn_pingCharityServer < se_pingCharityMin )
                 sn_pingCharityServer = se_pingCharityMin;
         }
+
+        if (sn_pingCharityServer < 0)
+            sn_pingCharityServer = 0;
 
         if (old_c!=sn_pingCharityServer)
         {
@@ -8074,8 +8091,11 @@ void ePlayerNetID::ScrambleTeams()
     ePlayerNetID::Scramble = false;
     sn_CenterMessage("$gamestate_scramble_teams_center");
 
+    static std::random_device rd;
+    std::mt19937 g(rd());
+
     ePlayerNetID::Update();
-    std::random_shuffle(ScramblePlayerIDs.begin(), ScramblePlayerIDs.end());
+    std::shuffle(ScramblePlayerIDs.begin(), ScramblePlayerIDs.end(), g);
 
     for ( int i = ScramblePlayerIDs.size()-1; i>=0; i--)
     {

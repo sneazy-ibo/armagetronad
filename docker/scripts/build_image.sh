@@ -8,14 +8,20 @@ set -x
 
 sd=`dirname "$0"`
 id="${sd}/../images"
-${sd}/ensure_image.sh "$1" -d || exit $?
 
+. ${id}/epoch.sh || exit $?
 . ${id}/digest.sh "$1" || exit $?
+. ${id}/prefer_podman.sh "$1" || exit $?
 
 touch ${id}/$2.digest.local || exit $?
 
 BASE=$1
-echo ${BASE} | grep ':' > /dev/null || BASE=${REGISTRY}$1${REFERENCE}
+if ! echo ${BASE} | grep ':i\|/' > /dev/null; then
+    ${sd}/ensure_image.sh "$1" -d || exit $?
+    . ${id}/digest.sh "$1" || exit $?
+
+    BASE=${REGISTRY}$1${REFERENCE}
+fi
 
 IMAGE=$2
 
@@ -32,10 +38,13 @@ while test -r ${lock} && ps -eo pid | grep "[\^ ]`cat ${lock}`\$"; do
 done
 echo $$ > ${lock}
 
+result=0
 if echo FROM ${BASE} AS base > Dockerfile; then
     if cat Dockerfile.proto >> Dockerfile; then
-	if docker image build . -t "${REGISTRY}${IMAGE}:${EPOCH}" $*; then
+	if docker image build . -t "${REGISTRY}${IMAGE}:${EPOCH}" "$@"; then
 	    echo "Done!"
+    else
+        result=$?
 	fi
     fi
 fi
@@ -43,3 +52,5 @@ fi
 rm -f ${lock}
 
 popd
+
+exit ${result}

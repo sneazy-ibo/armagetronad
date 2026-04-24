@@ -11,7 +11,8 @@ EXIT=0
 gpg --import secrets/pub.gpg || EXIT=$?
 gpg --allow-secret-key-import --import secrets/sec.gpg || EXIT=$?
 rm -rf secrets/*
-test ${EXIT} = 0 || exit ${EXIT}
+test ${EXIT} = 0 || test ${EXIT} = 2 || exit ${EXIT}
+EXIT=0
 
 set -x
 
@@ -30,7 +31,7 @@ fi
 
 # remove all signatures
 for f in ${CHANGED}; do
-     0launch -o -c 'http://0install.net/2006/interfaces/0publish' $f -u || true
+     0launch -o -c 'https://apps.0install.net/0install/0publish.xml' $f -u || true
 done
 
 # commit and push
@@ -41,13 +42,13 @@ if ! test ${STAGING} == true; then
     git push || exit $?
 fi
 
-# upload only relevant files
-CHANGED="${CHANGED} ${PACKAGE_NAME_BASE}-${ZI_SERIES}.xml"
+# upload all files
+CHANGED=`ls *.xml`
 CHANGED_XML="${CHANGED}"
 
-# sign XML files
+# sign XML files:
 for f in ${CHANGED_XML}; do
-     0launch -o -c 'http://0install.net/2006/interfaces/0publish' $f -x || exit $?
+     0launch -o -c 'https://apps.0install.net/0install/0publish.xml' $f -x || exit $?
 done
 
 # DEPLOY

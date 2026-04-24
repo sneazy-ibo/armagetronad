@@ -38,7 +38,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "nServerInfo.h"
 #include "nProtoBuf.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "nAuthentication.pb.h"
+#pragma GCC diagnostic pop
 
 #include <memory>
 #include <string>
@@ -583,7 +586,7 @@ bool nLoginProcess::FetchInfoFromAuthorityRemote()
         std::stringstream answer;
         int rc = nKrawall::FetchURL( fullAuthority, "?query=methods", answer );
 
-        if ( rc == -1 )
+        if (rc < 0)
         {
             return ReportAuthorityError( tOutput( "$login_error_invalidurl_notfound", authority ) );
         }
@@ -630,7 +633,7 @@ bool nLoginProcess::FetchInfoFromAuthorityRemote()
         
         if ( rc != 200 )
         {
-            if ( rc == -1 )
+            if (rc < 0)
             {
                 return ReportAuthorityError( tOutput( "$login_error_invalidurl_notfound", authority ) );
             }

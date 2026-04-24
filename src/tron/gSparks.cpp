@@ -237,8 +237,8 @@ void gSpark::Render(const eCamera *cam){
 }
 
 /*
-void gSpark::SoundMix(Uint8 *dest,unsigned int len,
-                      int viewer,REAL rvol,REAL lvol){
+void gSpark::SoundMix(Sint16 *dest,unsigned int len,
+                      int viewer,REAL rvol,REAL lvol, REAL dopplerPitch){
     //  sound.Mix(dest,len,viewer,rvol*.5,lvol*.5,4);
 }*/
 #endif

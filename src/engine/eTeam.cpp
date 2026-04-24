@@ -36,7 +36,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <climits>
 
 #include "nProtoBuf.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "eTeam.pb.h"
+#pragma GCC diagnostic pop
+
 #include "aa_config.h"
 
 tString & operator << ( tString &s, const eTeam * team)
@@ -894,7 +899,6 @@ void eTeam::Enforce( int minTeams, int maxTeams, int maxImbalance)
         int    maxColorID = 0;
 
         int numTeams = 0;
-        int numHumanTeams = 0;
 
         int i;
         for ( i = teams.Len()-1; i>=0; --i )
@@ -907,9 +911,7 @@ void eTeam::Enforce( int minTeams, int maxTeams, int maxImbalance)
 
                 numTeams++;
 
-                if ( humans > 0 )
-                    numHumanTeams++;
-                else
+                if ( humans <= 0 )
                     ai = t;
 
                 if ( humans > maxP )

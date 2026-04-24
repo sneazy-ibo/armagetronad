@@ -1,94 +1,101 @@
-ARG BASE_BUILD_SMALL=registry.gitlab.com/armagetronad/armagetronad/armalpine_32:028_0
-ARG BASE_BUILD_FULL=registry.gitlab.com/armagetronad/armagetronad/armabuild_64:028_0
-ARG BASE_LINUX=i386/alpine:3.7
-ARG PROGRAM_NAME=armagetronad-unk
-ARG PROGRAM_TITLE="Armagetron UNK"
+ARG BASE=docker.io/ubuntu:22.04
+ARG CONFIGURE_ARGS=""
 ARG FAKERELEASE=false
-ARG BRANCH=master-fix-unknown-bug
+ARG PROGNAME="armagetronad"
+ARG PROGTITLE="Armagetron Advanced"
 
 ########################################
 
-# bootstrap source
-FROM ${BASE_BUILD_FULL} AS bootstrap
-MAINTAINER Manuel Moos <z-man@users.sf.net>
+# runtime prerequisites
+FROM ${BASE} AS runtime_base
+LABEL maintainer="Manuel Moos <z-man@users.sf.net>"
 
-ENV SOURCE_DIR /home/docker/armagetronad
-ENV BUILD_DIR /home/docker/build
+ARG PROGNAME
 
-COPY --chown=docker . ${SOURCE_DIR}
-RUN chmod 755 ${SOURCE_DIR}
-WORKDIR ${SOURCE_DIR}
-# these files are in .dockerignore, but if they're in git, restore them.
-RUN test -d .git && git checkout .dockerignore .gitlab-ci.yml Dockerfile
-RUN git status
-#RUN ./batch/make/version .
-#RUN false
-RUN test -r configure || ./bootstrap.sh
-RUN cat version.m4
-#RUN false
+RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install \
+bash \
+libboost-thread1.74.0 \
+libxml2 \
+libprotobuf23 \
+runit \
+-y
+
+# use libprotobuf32 from ubuntu 23.04 onward
+
+WORKDIR /
 
 ########################################
 
-# build tarball
-FROM bootstrap AS configured
+# development prerequisites
+FROM runtime_base AS builder
 
-#ARG PROGRAM_NAME
-#ARG PROGRAM_TITLE
+# build dependencies
+RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install \
+autoconf \
+automake \
+libboost-all-dev \
+patch \
+bash \
+bison \
+bzip2 \
+g++ \
+make \
+libtool \
+libxml2-dev \
+protobuf-compiler \
+pkg-config \
+python3 \
+wget \
+-y
+
+########################################
+
+# build
+FROM builder as build
+
+ARG CONFIGURE_ARGS
 ARG FAKERELEASE
-ARG BRANCH
+ARG PROGNAME
+ARG PROGTITLE
+
+ENV SOURCE_DIR /root/${PROGNAME}
+ENV BUILD_DIR /root/build
+
+COPY . ${SOURCE_DIR}
+WORKDIR ${SOURCE_DIR}
+
+RUN (test -r configure && test -f missing) || (./bootstrap.sh && cat version.m4)
 
 RUN mkdir -p ${BUILD_DIR} && chmod 755 ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
-RUN . ../armagetronad/docker/scripts/brand.sh . && ARMAGETRONAD_FAKERELEASE=${FAKERELEASE} ../armagetronad/configure --prefix=/usr/local --disable-glout --disable-sysinstall --disable-desktop progname="${PROGRAM_NAME}" progtitle="${PROGRAM_TITLE}"
-RUN make -j$(nproc) dist && make -C docker/build tag.gits
-RUN if [ ${FAKERELEASE} = true ]; then cp ../armagetronad/docker/build/fakerelease_proto.sh docker/build/fakerelease.sh; fi
+RUN ARMAGETRONAD_FAKERELEASE=${FAKERELEASE} progname="${PROGNAME}" progtitle="${PROGTITLE}" \
+${SOURCE_DIR}/configure --prefix=/usr/local --disable-glout --disable-sysinstall --disable-useradd \
+    --disable-master --disable-uninstall --disable-desktop \
+    ${CONFIGURE_ARGS} && \
+make -j `nproc` && \
+DESTDIR=/root/destdir make install && \
+rm -rf ${SOURCE_DIR} ${BUILD_DIR}
 
 ########################################
 
-# build server
-FROM bootstrap AS build_server
+# finish runtime
+FROM runtime_base AS runtime
 
-ARG PROGRAM_NAME
-ARG PROGRAM_TITLE
+# pack
+FROM runtime AS run_server
 
-RUN bash ./configure --prefix=/usr/local --disable-glout --disable-sysinstall --disable-desktop progname="${PROGRAM_NAME}" progtitle="${PROGRAM_TITLE}"
-RUN make -j$(nproc)
-RUN DESTDIR=/home/docker/destdir make install
+ARG PROGNAME
 
-########################################
+COPY --chown=root --from=build /root/destdir /
+COPY batch/docker-entrypoint.sh.in /usr/local/bin/docker-entrypoint.sh
 
-# build client
-FROM bootstrap AS build_client
+RUN bash /usr/local/share/games/*-dedicated/scripts/sysinstall install /usr/local && \
+sed -i /usr/local/bin/docker-entrypoint.sh -e "s/@progname@/${PROGNAME}/g" && \
+chmod 755 /usr/local/bin/docker-entrypoint.sh
 
-ARG PROGRAM_NAME
-ARG PROGRAM_TITLE
+USER nobody
 
-RUN bash ./configure --prefix=/usr/local --disable-sysinstall --disable-desktop progname="${PROGRAM_NAME}" progtitle="${PROGRAM_TITLE}"
-RUN make -j$(nproc)
-RUN DESTDIR=/home/docker/destdir make install
-
-########################################
-
-FROM ${BASE_LINUX} AS run_server_base
-MAINTAINER Manuel Moos <z-man@users.sf.net>
-
-# runtime dependencies
-RUN apk add \
-boost-thread \
-libxml2 \
-protobuf \
-python \
-shadow \
---no-cache
-
-########################################
-
-FROM run_server_base AS run_server
-MAINTAINER Manuel Moos <z-man@users.sf.net>
-
-ARG PROGRAM_NAME
-
-WORKDIR /
-COPY --chown=root --from=build_server /home/docker/destdir/ /
-RUN sh /usr/local/share/games/${PROGRAM_NAME}-dedicated/scripts/sysinstall install /usr/local
-
+VOLUME ["/var/${PROGNAME}"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+#ENTRYPOINT ["bash"]
+EXPOSE 4534/udp

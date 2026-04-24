@@ -77,7 +77,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 static int sg_cycleDebugPrintLevel = 0;
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 #include "gCycle.pb.h"
+
+#pragma GCC diagnostic pop
 
 eCoord   gCycleMovement::deathPosition_;                     //!< the position the last move let a cylce die on
 bool     gCycleMovement::stoppedMovement_ = false;           //!< true if (extrapolating) movement should be stopped
@@ -1369,11 +1374,11 @@ void gCycleMovement::OnDropTempWall( gPlayerWall * wall, eCoord const & pos, eCo
 gDestination * gCycleMovement::GetDestinationBefore( const SyncData & sync, gDestination * first )
 {
     // message IDs smaller than 16 don't exist
-    if ( sync.messageID != 1 )
+    if ( sync.messageID != 1 && !tRecorder::DesyncedPlayback())
     {
         gDestination * ret = first;
 
-        // deterimine last passed destination by the message ID
+        // determine last passed destination by the message ID
         while ( ret && ret->messageID != sync.messageID )
             ret = ret->next;
 
@@ -1427,7 +1432,9 @@ gDestination * gCycleMovement::GetDestinationBefore( const SyncData & sync, gDes
             }
 
             // see if brake status and driving direction match; this is a must
-            if ( eCoord::F( run->direction, sync.dir ) > .9*sync.dir.NormSquared() && run->braking == ( sync.braking != 0 ) )
+            if ( eCoord::F( run->direction, sync.dir ) > .9*sync.dir.NormSquared() &&
+                 run->braking == ( sync.braking != 0 ) &&
+                 (!tRecorder::DesyncedPlayback() || !sync.turns || sync.turns == run->turns))
             {
                 if ( !bestMatch || distance < bestMatchDistance )
                 {
@@ -2165,7 +2172,7 @@ bool gCycleMovement::Timestep( REAL currentTime )
     // clear out dangerous info when we're done
     gMaxSpaceAheadHitInfoClearer hitInfoClearer( maxSpaceHit_ );
 
-    // clamp stuff to finite values
+    // clamp stuff to std::isfinite values
     clamp( rubber, 0, sg_rubberCycle );
 
     // keep this cycle alive
@@ -2384,7 +2391,17 @@ bool gCycleMovement::Timestep( REAL currentTime )
                         eCoord dirTurn = (currentDestination->position - pos);
 
                         // see witch of the alternatives comes closer to the desired direction
-                        turnTo = ( ( fabs( dirMinus * dirTurn ) - .1 * eCoord::F( dirMinus, dirTurn ) )/dirTurn.NormSquared() < ( fabs( dirPlus * dirTurn ) - .1 * eCoord::F( dirPlus, dirTurn ) )/dirTurn.NormSquared() ) ? -1 : +1;
+                        REAL dirTurnNormSquared = dirTurn.NormSquared();
+                        if ( dirTurnNormSquared < EPS )
+                        {
+                            // avoid NaN when destination equals current position; use destination direction instead.
+                            eCoord dirRef = currentDestination->direction;
+                            turnTo = ( ( dirMinus - dirRef ).NormSquared() < ( dirPlus - dirRef ).NormSquared() ) ? -1 : +1;
+                        }
+                        else
+                        {
+                            turnTo = ( ( fabs( dirMinus * dirTurn ) - .1 * eCoord::F( dirMinus, dirTurn ) )/dirTurnNormSquared < ( fabs( dirPlus * dirTurn ) - .1 * eCoord::F( dirPlus, dirTurn ) )/dirTurnNormSquared ) ? -1 : +1;
+                        }
                     }
                     else
                     {
@@ -2864,7 +2881,7 @@ void gCycleMovement::CopyFrom( const gCycleMovement & other )
     windingNumber_          = other.windingNumber_;
     windingNumberWrapped_   = other.windingNumberWrapped_;
 
-    tASSERT(isfinite(distance));
+    tASSERT(std::isfinite(distance));
 
     // std::cout << "copy: " << brakingReservoir << ":" << braking << "\n";
 
@@ -2909,7 +2926,7 @@ void gCycleMovement::CopyFrom( const SyncData & sync, const gCycleMovement & oth
     brakingReservoir= sync.brakingReservoir;
     // std::cout << "fromsync: " << brakingReservoir << ":" << braking << "\n";
 
-    tASSERT(isfinite(distance));
+    tASSERT(std::isfinite(distance));
 
     // reset winding number and acceleration
     this->SetWindingNumberWrapped( Grid()->DirectionWinding(dirDrive) );
@@ -2963,12 +2980,12 @@ void gCycleMovement::CopyFrom( const SyncData & sync, const gCycleMovement & oth
 void gCycleMovement::InitAfterCreation( void )
 {
 #ifdef DEBUG
-    if (!isfinite(verletSpeed_))
+    if (!std::isfinite(verletSpeed_))
         st_Breakpoint();
 #endif
     eNetGameObject::InitAfterCreation();
 #ifdef DEBUG
-    if (!isfinite(verletSpeed_))
+    if (!std::isfinite(verletSpeed_))
         st_Breakpoint();
 #endif
     MyInitAfterCreation();
@@ -3725,7 +3742,7 @@ bool gCycleMovement::TimestepCore( REAL currentTime, bool calculateAcceleration 
     clamp(ts, -10, 10);
 
     REAL step=verletSpeed_*ts;
-    tASSERT(isfinite(step));
+    tASSERT(std::isfinite(step));
 
     int numTries = 0;
     bool emergency = false;
@@ -4079,8 +4096,8 @@ bool gCycleMovement::TimestepCore( REAL currentTime, bool calculateAcceleration 
         }
 #endif
 
-        tASSERT(isfinite(distance));
-        tASSERT(isfinite(step));
+        tASSERT(std::isfinite(distance));
+        tASSERT(std::isfinite(step));
         distance += step;
         lastTimeAlive_ = currentTime;
     }
@@ -4150,9 +4167,9 @@ bool gCycleMovement::TimestepCore( REAL currentTime, bool calculateAcceleration 
                 rubber = rubber_granted;
 
                 // update distance to include the really covered space
-                tASSERT(isfinite(distance));
+                tASSERT(std::isfinite(distance));
                 distance += eCoord::F( dirDrive, pos - lastPos )/dirDrive.NormSquared();
-                tASSERT(isfinite(distance));
+                tASSERT(std::isfinite(distance));
 
                 DieWhileMoving( deathPosition_ );
                 return true;
@@ -4264,7 +4281,7 @@ bool gCycleMovement::TimestepCore( REAL currentTime, bool calculateAcceleration 
     if ( !sg_verletIntegration.Supported() )
         this->ApplyAcceleration( ts );
 
-    tASSERT(isfinite(distance));
+    tASSERT(std::isfinite(distance));
 
     tASSERT( rubber >= 0 );
 
@@ -4336,7 +4353,7 @@ void gCycleMovement::MyInitAfterCreation( void )
 
     lastTimeAlive_ = lastTime;
 
-    if (!isfinite(verletSpeed_)){
+    if (!std::isfinite(verletSpeed_)){
         st_Breakpoint();
         verletSpeed_ = 1;
     }

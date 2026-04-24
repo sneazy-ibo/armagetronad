@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "eTimer.h"
 #include "eWall.h"
 #include "eGameObject.h"
+#include "eSoundMixer.h"
 #include "eCamera.h"
 
 #include "tMath.h"
@@ -730,7 +731,7 @@ ePoint * eGrid::DrawLine(ePoint *start, const eCoord &end, eWall *w, bool change
     //tJUST_CONTROLLED_PTR< eWall > wal( w );
 
     // sanity check
-    if ( !isfinite( end.x ) || !isfinite( end.y ) )
+    if ( !std::isfinite( end.x ) || !std::isfinite( end.y ) )
         return start;
 
     Range(end.NormSquared());
@@ -837,9 +838,9 @@ ePoint * eGrid::DrawLine(ePoint *start, const eCoord &end, eWall *w, bool change
 
             while (run)
             {
-                eHalfEdge *next = run->next->next;
-                tASSERT(next->next = run);
-                next = next->other;
+                eHalfEdge *next = run->Next()->Next();
+                tASSERT(next->Next() == run);
+                next = next->Other();
 
                 tASSERT(next->Point() == start);
 
@@ -2689,13 +2690,19 @@ eGrid::eGrid()
         base(100,100)
 {
     currentGrid = this;
+    auto& mixer = eSoundMixer::GetMixer();
+    mixer.SetGrid(this);
 }
 
 
 eGrid::~eGrid()
 {
     if (currentGrid == this)
-        currentGrid = NULL;
+        currentGrid = nullptr;
+
+    auto& mixer = eSoundMixer::GetMixer();
+    if(mixer.GetGrid() == this)
+        mixer.SetGrid(nullptr);
 }
 
 static REAL s_rangeSquared;

@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "tXmlParser.h"
+#include "libxml/parser.h"
 #include "tResourceManager.h"
 #include "tDirectories.h"
 #include "tConsole.h"
@@ -340,10 +341,19 @@ bool tXmlParser::ParseDom() {
 }
 
 bool tXmlParser::ParseSax() {
-    if (xmlSAXUserParseFile(&aaSaxCallsback, this, m_Filename) < 0) {
+    // xmlSAXUserParseFile became deprecated around this version.
+    // maybe earlier, it was not worth finding the exact point only to avoid warnings.
+#if LIBXML_VERSION >= 21105
+    auto* ctxt = xmlNewSAXParserCtxt( &aaSaxCallsback, this );
+    auto ret = xmlCtxtReadFile( ctxt, m_Filename, nullptr, 0 );
+    xmlFreeParserCtxt( ctxt );
+    return ret;
+#else
+    if ( xmlSAXUserParseFile( &aaSaxCallsback, this, m_Filename ) < 0 )
         return false;
-    } else
+    else
         return true;
+#endif
 }
 
 #ifndef DEDICATED
@@ -392,8 +402,7 @@ bool tXmlParser::ValidateXml(FILE* docfd, const char* uri, const char* filepath)
 {
 #ifndef DEDICATED
     /* register error handler */
-    xmlGenericErrorFunc errorFunc = &st_ErrorFunc;
-    initGenericErrorDefaultFunc( &errorFunc );
+    xmlSetGenericErrorFunc( nullptr, st_ErrorFunc );
     st_errorLeadIn = "XML validation error in ";
     st_errorLeadIn += filepath;
     st_errorLeadIn += ":\n\n";
@@ -462,7 +471,7 @@ bool tXmlParser::ValidateXml(FILE* docfd, const char* uri, const char* filepath)
 
 #ifndef DEDICATED
     /* reset error handler */
-    initGenericErrorDefaultFunc( NULL );
+    xmlSetGenericErrorFunc( nullptr, nullptr );
 #endif
     return validated;
 }

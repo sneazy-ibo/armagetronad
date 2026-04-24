@@ -9,7 +9,7 @@ BRANCH=
 if test -z "${CI_DEFAULT_BRANCH}" || test -z "${CI_COMMIT_REF_PROTECTED}"; then
 	# no CI, get info from git directly
 	CI_COMMIT_REF_PROTECTED=false
-	CI_DEFAULT_BRANCH=master
+	CI_DEFAULT_BRANCH=trunk
 	CI_COMMIT_SHA=`git -C ${git_repo} rev-parse HEAD`
 	CI_COMMIT_BRANCH=`git -C ${git_repo} rev-parse --abbrev-ref HEAD`
 	CI_COMMIT_REF_NAME=${CI_COMMIT_BRANCH}
@@ -18,6 +18,15 @@ if test -z "${CI_DEFAULT_BRANCH}" || test -z "${CI_COMMIT_REF_PROTECTED}"; then
 	CI_MERGE_REQUEST_ID=
 	CI_MERGE_REQUEST_SOURCE_BRANCH_NAME=
 	CI_MERGE_REQUEST_TARGET_BRANCH_NAME=
+	unix_date=`git -C ${git_repo} log -1 --format=%at` || exit $?
+	CI_RELEASE_YEAR=`date --date=@${unix_date} +%Y` || exit $?
+else
+	if test -z "${CI_COMMIT_TIMESTAMP}"; then
+		CI_RELEASE_YEAR=$(date '+%Y')
+	else
+		# CI_COMMIT_TIMESTAMP is of the form 2020-12-21T02:13:17+01:00
+		CI_RELEASE_YEAR=`echo ${CI_COMMIT_TIMESTAMP} | sed -e "s/-.*//"` || exit $?
+	fi
 fi
 
 if test "${CI_COMMIT_REF_PROTECTED}" = "true"; then
@@ -33,14 +42,29 @@ if test "${CI_COMMIT_REF_PROTECTED}" = "true"; then
 			PROGRAM_NAME="armagetronad-beta"
 			PROGRAM_TITLE="Armagetron Beta"
 			;;
-		    legacy*)
+			legacy_*_*)
+			SERIES="WIP"
+			PROGRAM_NAME="armagetronad-wip"
+			PROGRAM_TITLE="Armagetron WIP"
+			;;
+			legacy*)
 			PROGRAM_NAME="armagetronad-alpha"
 			PROGRAM_TITLE="Armagetron Alpha"
 			;;
-		    master)
+			trunk)
 			SERIES="EXPERIMENTAL"
 			PROGRAM_NAME="armagetronad-experimental"
 			PROGRAM_TITLE="Armagetron Experimental"
+			;;
+			hack-*ap)
+			SERIES="AP"
+			PROGRAM_NAME="armagetronad-ap"
+			PROGRAM_TITLE="Armagetron aP"
+			;;
+			hack*)
+			SERIES="HACK"
+			PROGRAM_NAME="armagetronad-hack"
+			PROGRAM_TITLE="Armagetron Hack"
 			;;
 			*)
 			SERIES="WIP"

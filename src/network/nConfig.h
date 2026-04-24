@@ -145,8 +145,8 @@ public:
     saved_(t){}
     virtual ~nConfItem(){}
 
-
-    virtual void NetReadVal(nStreamMessage &m){
+    virtual void NetReadVal( nStreamMessage& m ) override
+    {
         T dummy;
         m >> dummy;
         if (sn_compare(dummy,*this->target)){
@@ -165,11 +165,13 @@ public:
         }
     }
 
-    virtual void NetWriteVal(nStreamMessage &m){
+    virtual void NetWriteVal( nStreamMessage& m ) override
+    {
         m << *this->target;
     }
 
-    virtual void NetReadVal( Network::Config const & protoBuf ){
+    virtual void NetReadVal( Network::Config const& protoBuf ) override
+    {
         T dummy;
         dummy = NetReadHelper( protoBuf, *this->target );
         if (sn_compare(dummy,*this->target)){
@@ -188,7 +190,8 @@ public:
         }
     }
 
-    virtual void NetWriteVal( Network::Config & protoBuf ){
+    virtual void NetWriteVal( Network::Config& protoBuf ) override
+    {
         NetWriteHelper( protoBuf, *this->target );
     }
 
@@ -203,22 +206,25 @@ public:
         }
     }
 
-    virtual void OnRevertToDefaults()      //!< revert this setting to its default
+    //!< revert this setting to its default
+    virtual void OnRevertToDefaults() override
     {
         Set( default_ );
     }
 
-    virtual void OnSaveValue()             //!< saves the current value
+    //!< saves the current value
+    virtual void OnSaveValue() override
     {
         saved_ = *this->target;
     }
 
-    virtual void OnRevertToSavedValue()    //!< revert this setting to the saved value
+    //!< revert this setting to the saved value
+    virtual void OnRevertToSavedValue() override
     {
         Set( saved_ );
     }
 private:
-    virtual void WasChanged()
+    virtual void WasChanged() override
     {
         nConfItemBase::CheckChange( ! (*this->target == default_) );
     }

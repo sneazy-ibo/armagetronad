@@ -5,7 +5,9 @@ dnl but have to do this with version generated in bootstrap.sh instead for some 
 m4_include(version.m4)
 
 dnl Comment this out to disable autoconf custom directories:
-m4_include(accustomdir.m4)
+m4_include(acinclude.d/accustomdir.m4)
+
+m4_include(acinclude.d/ax_cxx_have_align.m4)
 
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(armagetronad,AUTOMATIC_VERSION)
@@ -56,6 +58,20 @@ AC_SUBST(version)
 AC_ARG_VAR(SDL_CONFIG,[Configuration script of SDL to use, defaults to sdl-config])
 AC_ARG_VAR(SDL2_CONFIG,[Configuration script of SDL to use, defaults to sdl2-config])
 AC_ARG_VAR(FREETYPE_CONFIG,[Configuration script of freetype to use, defaults to freetype-config])
+
+source_date_epoch=SOURCE_DATE_EPOCH
+test ${source_date_epoch} = SOURCE_DATE_EPOCH && source_date_epoch=${SOURCE_DATE_EPOCH:-`date +%s`}
+AC_SUBST(source_date_epoch)
+
+# determine date, following the epoch time if we can
+date_iso=`date +%Y-%m-%d -d "@${source_date_epoch}" 2> /dev/null` || date_iso=`date +%Y-%m-%d` || exit $?
+dnl echo date_iso=${date_iso}
+AC_SUBST(date_iso)
+dnl date -R does not have an easy format string replacement and is unsupported in BSD. We don't need it right now, though.
+dnl date_rfc=`date -R -d "@${source_date_epoch}"` || exit $?
+dnl echo date_rfc=${date_rfc}
+dnl AC_SUBST(date_rfc)
+
 AC_ARG_VAR(CXXFLAGS,Flags passed to the C++ compiler)
 AC_ARG_VAR(DEBUGLEVEL,[Debug level for developers, normal users can safely ignore it. Accepted values go from 0 to 5. See README-DEVELOPER for details.])
 AC_ARG_VAR(CODELEVEL,[Code checking strictness level for developers, normal users can safely ignore it. Accepted values go from 0 to 4. See README-DEVELOPER for details.])
@@ -161,6 +177,17 @@ AC_ARG_ENABLE(glout,
 	    ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-glout) ;;
      esac],)
+
+use_curl=auto
+AC_ARG_ENABLE(curl,
+     AC_HELP_STRING([--enable-curl],
+        [Use libcurl for http requests]),
+     [case "${enableval}" in
+       yes) use_curl=true ;;
+       no)  use_curl=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-main) ;;
+     esac],[use_curl=auto])
+
 
 # consistency check of the three build flags	 
 test x$armamain = xfalse && build_dedicated=false build_regular=false
@@ -367,11 +394,6 @@ AC_ARG_ENABLE(automakedefaults,
 		[enforce the default installation directories as set by automake. localstatedir=prefix/var violates the FHS, so this is off by default.]),,
 enable_automakedefaults=$enable_automakedefaults_actual_default enable_automakedefaults_default=yes)
 
-AC_ARG_ENABLE(sysinstall,
-	AC_HELP_STRING([--enable-sysinstall],
-		[will install configuration files to /etc/armagetron and create a user if possible (default=enabled)]),,
-		enable_sysinstall=$default_enable_sysinstall)
-
 AC_ARG_ENABLE(useradd,
 	AC_HELP_STRING([--enable-useradd],
 		[will create a user during installation (default=enabled; requires --enable-sysinstall or a manual call of the sysinstall script)]),,
@@ -426,6 +448,7 @@ else
 fi,
 enable_uninstall=$default_enable_uninstall)
 AC_SUBST(external_uninstall_cmd)
+AM_CONDITIONAL(USE_UNINSTALL, test "$enable_uninstall" = "yes")
 
 AC_ARG_ENABLE(multiver,
 	AC_HELP_STRING([--enable-multiver@<:@=slot@:>@],
@@ -515,19 +538,19 @@ test -z "`echo $CXXFLAGS | grep "\-O"`" && CXXFLAGS="$CXXFLAGS -O2"
 
 test $DEBUGLEVEL -ge 1 && CXXFLAGS="`echo $CXXFLAGS | sed -e 's,-O.,,'` -g -O0"
 test $DEBUGLEVEL -ge 2 && CXXFLAGS="$CXXFLAGS -DDEBUG"
-test $DEBUGLEVEL -ge 3 && enable_memmanager=yes CXXFLAGS="$CXXFLAGS -DNO_MALLOC_REPLACEMENT"
+dnl test $DEBUGLEVEL -ge 3 && enable_memmanager=yes CXXFLAGS="$CXXFLAGS -DNO_MALLOC_REPLACEMENT"
 test $DEBUGLEVEL -ge 4 && CXXFLAGS="$CXXFLAGS -DDEBUG_EXPENSIVE"
 test $DEBUGLEVEL -ge 5 && CXXFLAGS="$CXXFLAGS -DMEM_DEB"
 
 dnl oddly, this macro needs to be called once unconditionally, or automake borks up.
-dnl pick C++11 standard if we can
-AX_CXXFLAGS_GCC_OPTION(-std=c++11)
+dnl pick C++14 standard if we can
+AX_CXXFLAGS_GCC_OPTION(-std=c++17)
 if test -z "`echo $CXXFLAGS | grep "\-std="`"; then
-  dnl maybe it is the future and c++11 is deprecated? C++14 should work, too
+  dnl fallback; our own code should maybe still work with older standards, it is just current protobuf that requires C++ 17
   AX_CXXFLAGS_GCC_OPTION(-std=c++14)
   if test -z "`echo $CXXFLAGS | grep "\-std="`"; then
-	dnl still nothing? Maybe this one:
-	AX_CXXFLAGS_GCC_OPTION(-std=c++17)
+	dnl still nothing? Last try, our own code relies on this standard.
+	AX_CXXFLAGS_GCC_OPTION(-std=c++11)
 	if test -z "`echo $CXXFLAGS | grep "\-std="`"; then
 	  dnl last call: pre-c++11 standard. Works on mingw, so why not here?
 	  AX_CXXFLAGS_GCC_OPTION(-std=c++0x)
@@ -557,12 +580,6 @@ if test $CODELEVEL -ge 1; then
         AX_CXXFLAGS_GCC_OPTION(-Wno-error=maybe-uninitialized)
     fi
     
-    dnl protobuf deprecated MessageLite::ByteSize(), not sure if we can already switch safely to ByteSizeLong()
-    AX_CXXFLAGS_GCC_OPTION(-Wno-error=deprecated-declarations)
-    
-    dnl dropped out of support
-    dnl AX_CXXFLAGS_GCC_OPTION(-Wno-mismatched-tags)
-
     dnl this one is from GCC 7 (change to 1 or 2 in the future,
     dnl leave at default and use [[fallthrough]] (std C++ 17)
     dnl we're using both here; hopefully, old compilers ignore the [[fallthrough]].
@@ -570,6 +587,12 @@ if test $CODELEVEL -ge 1; then
 
     dnl Well, they don't, GCC 5.7 warns about them; silence it.
     AX_CXXFLAGS_GCC_OPTION(-Wno-attributes)
+
+    dnl some data structures have members only used in client code, it would be too ugly to remove them
+    dnl on the dedicated server. Silence "unused private field" warnings.
+    if test x$build_dedicated = xtrue; then
+        AX_CXXFLAGS_GCC_OPTION(-Wno-unused-private-field)
+    fi
 fi
 
 dnl test $CODELEVEL -ge 2 && CXXFLAGS="$CXXFLAGS -Wshadow -Wpointer-arith -Wfloat-equal -W -Wcast-qual -Wcast-align -Wconversion -Wunreachable-code --pedantic -Winline"
@@ -577,12 +600,12 @@ test $CODELEVEL -ge 2 && CXXFLAGS="$CXXFLAGS -Wpointer-arith -W -Wcast-qual -Wca
 test $CODELEVEL -ge 3 && CXXFLAGS="$CXXFLAGS -Weffc++ -Wshadow -Winline -Wfloat-equal -Wconversion"
 test $CODELEVEL -ge 4 && CXXFLAGS="$CXXFLAGS -Werror"
 
-# unused variables should be tolerated while debugging, they're sometimes just there
-# to be printed in the debugger
-if test $CODELEVEL -ge 1 && test $DEBUGLEVEL -ge 1; then
+# unused things of any kind are expected in debug or dedicated mode
+if test x$build_dedicated = xtrue || test $DEBUGLEVEL -ge 1; then
     AX_CXXFLAGS_GCC_OPTION(-Wno-unused-but-set-variable)
     AX_CXXFLAGS_GCC_OPTION(-Wno-unused-variable)
     AX_CXXFLAGS_GCC_OPTION(-Wno-unused-private-field)
+    AX_CXXFLAGS_GCC_OPTION(-Wno-unused-function)
 fi
 
 dnl Strip pedantic flags from general CXXFLAGS and put them into a separate variable
@@ -718,9 +741,6 @@ if test -n "$ARMAGETRONAD_OS_X_TOOLKIT"; then
 	fi
 fi
 
-AM_CONDITIONAL(USE_SYSINSTALL, test "$enable_sysinstall" = "yes")
-AM_CONDITIONAL(USE_UNINSTALL, test "$enable_uninstall" = "yes")
-
 AM_CONDITIONAL(ALLOW_MULTIPLE_VERSIONS, test "$enable_multiver" = "yes")
 AC_SUBST(enable_multiver)
 if test "$enable_multiver" = "yes"; then
@@ -783,6 +803,8 @@ GENERICUNIX
 
 SDL2_CONFIG_DEFAULT=sdl2-config
 SDL_CONFIG_DEFAULT=sdl-config
+macosx=false
+OBJC="not_needed_on_this_platform"
 
 dnl *************************************************
 dnl GL AND  MATHLIB SELECTION ( SYSTEM DEPENDANT)
@@ -807,7 +829,11 @@ case "$target" in
         MATHLIB=""
         SYS_GL_LIB=""
         SYS_GLU_LIB=""
-        #LIBS="$LIBS -framework GLU -framework Quicktime -lsmpeg"
+        test x$build_regular = xfalse || LIBS="$LIBS -framework OpenGL -framework CoreFoundation -framework CoreServices"
+        CXXFLAGS="${CXXFLAGS} -DGL_SILENCE_DEPRECATION"
+        unset OBJC
+        macosx=true
+        default_enable_sysinstall=false
         ;;
     *-*-aix*)
 	AC_DEFINE(AIX, 1, [AIX])
@@ -839,8 +865,13 @@ SAFEUNIX
         ;;
 esac
 
+dnl Objective C:
+AC_PROG_OBJC
+
 test -z "$SDL_CONFIG" && SDL_CONFIG=$SDL_CONFIG_DEFAULT
 test -z "$SDL2_CONFIG" && SDL2_CONFIG=$SDL2_CONFIG_DEFAULT
+
+AM_CONDITIONAL(MACOSX, test x$macosx = xtrue)
 
 AC_SUBST(docstyle)
 
@@ -858,7 +889,16 @@ case "$target" in
         ;;
 esac
 
+AC_ARG_ENABLE(sysinstall,
+	AC_HELP_STRING([--enable-sysinstall],
+		[will install configuration files to /etc/armagetron and create a user if possible (default=enabled)]),,
+		enable_sysinstall=$default_enable_sysinstall)
+AM_CONDITIONAL(USE_SYSINSTALL, test "$enable_sysinstall" = "yes")
+
 AC_CACHE_SAVE
+
+dnl load conan settings if they exist
+test -r $(dirname $0)/conan/conanautotoolstoolchain.sh && source $(dirname $0)/conan/conanautotoolstoolchain.sh
 
 dnl *************************************************
 dnl         libxml2
@@ -870,32 +910,48 @@ if test x$armamain = xtrue; then
   LIBS="$LIBS $XML2_LIBS"
   AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
 
+  AC_CHECK_DECL(LIBXML_HTTP_ENABLED,,
+               dnl no nanoHTTP, auto-enable curl (if not explicitly disabled)
+               if test x$use_curl = xfalse; then
+                   AC_MSG_ERROR([[libxml2 does not have the http client compiled in. Curl replacement needed, do not disable it.]])
+               else
+                   use_curl=true
+               fi
+               ,
+               [[#include "libxml/nanohttp.h"]])
+
+dnl *************************************************
+dnl         curl
+dnl *************************************************
+
+if test x$use_curl = xtrue; then
+    PKG_CHECK_MODULES([LIBCURL], [libcurl >= 7],
+    AC_DEFINE(LIBCURL_PROTOCOL_HTTP, 1, [Define if you have libcurl and it supports http]) dnl not technically accurate... but we are using that define in the source.
+    CPPFLAGS="$CPPFLAGS $LIBCURL_CFLAGS"
+    LIBS=$"$LIBS $LIBCURL_LIBS",
+    AC_MSG_ERROR([libcurl not found. Either provide it or disable it (with `configure --disable-curl`)])
+    )
+fi
+
 dnl *************************************************
 dnl         Threading
 dnl *************************************************
 AC_LANG([C++])
 
-dnl Boost.System is a mandatory dependency of Boost.Thread
-dnl http://www.boost.org/doc/libs/1_52_0/doc/html/thread/build.html
-AC_CHECK_LIB([boost_system], _ZN5boost6system15system_categoryEv)
+AX_BOOST_SYSTEM()
+AX_BOOST_THREAD()
 
-AC_CHECK_LIB([boost_thread],_ZN5boost11this_thread5yieldEv,[
-LIBS="-lboost_thread ${LIBS}"
-
-AC_DEFINE(HAVE_LIBBOOST_THREAD,1,[Define if you have boost_thread libraries and header files.])
-
-],[
-
+dnl if boost-thread is unavailable, make do with pthread
+if test "x$BOOST_THREAD_LIB" = x; then
 ACX_PTHREAD([
-
 LIBS="${PTHREAD_LIBS} ${LIBS}"
 CXXFLAGS="${CXXFLAGS} ${PTHREAD_CFLAGS}"
 CC="${PTHREAD_CC}"
 AC_DEFINE(HAVE_PTHREAD,1,[Define if you have POSIX threads libraries and header files.])
-
-])
-
-])
+],
+AC_MSG_ERROR([You need boost::thread or pthread to compile ${progtitle}.])
+)
+fi
 
 dnl *************************************************
 dnl         Misc
@@ -916,25 +972,37 @@ fi
 
 AC_LANG([C++])
 
-dnl check for library
-AC_CHECK_LIB([protobuf],_ZN6google8protobuf7MessageD2Ev,,
-[
-	AC_CHECK_LIB([protobuf],_ZN6google8protobuf7ClosureD2Ev,
-		AC_MSG_WARN([[The library protobuf (Google Protobuf Buffers) has a broken dependency on library pthread on your system.]])
-		AC_DEFINE_UNQUOTED(HAVE_LIBPROTOBUF)
-		LIBS="-lprotobuf -lpthread $LIBS"
-	,
-AC_MSG_ERROR([[The library protobuf (Google Protocol Buffers, http://code.google.com/p/protobuf/) is required, but was not found.]])
-	,[-lpthread]
-	)
-]
+dnl check for library with PKG_CONFIG
+PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0,,
+	# the old detection, not sure if we still need this
+	[AC_CHECK_LIB([protobuf],_ZN6google8protobuf14FatalExceptionD2Ev,,
+		[AC_CHECK_LIB([protobuf],_ZN6google8protobuf7ClosureD2Ev,
+               AC_MSG_WARN([[The library protobuf (Google Protobuf Buffers) has a broken dependency on library pthread on your system.]])
+               AC_DEFINE_UNQUOTED(HAVE_LIBPROTOBUF)
+               LIBS="-lprotobuf -lpthread $LIBS"
+			,
+               AC_MSG_ERROR([[The library protobuf (Google Protocol Buffers, http://code.google.com/p/protobuf/) is required, but was not found.]])
+       ,[-lpthread]
+       )]
+	)]
 )
+
+
+# just adding all flags would work, but on macOS with brew, there are
+# a ton of duplicate flags that would slow the compilation output down.
+# Only add each option once.
+for flag in ${PROTOBUF_CFLAGS}; do
+	if [[[ "${CXXFLAGS}" != *"${flag}"* ]]]; then
+		# echo ${flag}
+		CPPFLAGS="${flag} ${CPPFLAGS}"
+	fi
+done
 
 AC_LANG([C++])
 
 dnl check for header
 AC_CHECK_HEADERS([google/protobuf/message.h],,
-AC_MSG_ERROR([[The library protobuf (Google Protocol Buffers, http://code.google.com/p/protobuf/) is required with all development files, but was not found.]])
+AC_MSG_ERROR([[The header for protobuf (Google Protocol Buffers, http://code.google.com/p/protobuf/) is required with all development files, but was not found.]])
 )
 
 dnl AC_LANG([C])
@@ -1141,13 +1209,9 @@ dnl *************************************************
 dnl         libpng
 dnl *************************************************
 
-AC_MSG_CHECKING(whether libpng is installed)
-if PNGLIBS=`libpng-config --libs`; then
-    AC_MSG_RESULT(yes)
-fi
-
-CPPFLAGS="$CPPFLAGS `libpng-config --cflags`"
-LIBS="$LIBS $PNGLIBS"
+PKG_CHECK_MODULES(LIBPNG, [libpng])
+CXXFLAGS="${CXXFLAGS} ${LIBPNG_CFLAGS}"
+LIBS="${LIBS} ${LIBPNG_LIBS}"
 
 AC_CHECK_FUNC(png_sig_cmp,
 ,
@@ -1321,7 +1385,10 @@ export CXXFLAGS
 
 fi dnl (dedicated server)
 
-
+dnl set protobuf libs only here at the bottom so any custom ones
+dnl get found before the regular ones from any generic /usr libary
+dnl include flags from other libraries
+LIBS="${PROTOBUF_LIBS} ${LIBS}"
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -1336,6 +1403,8 @@ AC_CHECK_FUNCS(atan2f sinf cosf tanf sqrtf logf expf fabsf floorf pow10 pow10f e
 AC_CHECK_FUNCS(wmemset)
 AC_CHECK_FUNCS(clearenv)
 
+AX_CXX_HAVE_ALIGN()
+
 # if the compiler is GCC -Os produces faulty code (exceptions cause crashes), at least on AMD64. Replace it with -O2.
 test -z "`$CXX --version | grep '(GCC)'`" || CXXFLAGS="`echo $CXXFLAGS | sed -e 's,-Os,-O2,g' `" CFLAGS="`echo $CFLAGS | sed -e 's,-Os,-O2,g' `"
 
@@ -1347,6 +1416,7 @@ fi
 AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR,"${srcdir}", [Define the top source directory])
 AC_DEFINE_UNQUOTED(PROGNAME,"${progname}", [Define the short progam name (with possible -dedicated suffix)])
 AC_DEFINE_UNQUOTED(PROGNAMEBASE,"${prognamebase}", [Define the short progam name])
+AC_DEFINE_UNQUOTED(PROGTITLE,"${progtitle}", [Define the fully captialized project tile (witout possible " Server" suffix)])
 
 realprefix="${prefix}"
 test "x${realprefix}" = xNONE && realprefix="${ac_default_prefix}"
@@ -1479,8 +1549,18 @@ AC_SUBST_UNIVERSAL(relocatable)
 AC_USE_SUBST_UNIVERSAL
 AC_AA_REPLACEPATHS
 
+dnl turn progname into canonical progid with three components, keeping the parts already there
+progid=org.armagetronad.${progname}
+echo ${progname} | grep -q "\." && progid=org.${progname}
+echo ${progname} | grep -q "\..*\." && progid=${progname}
+AC_SUBST(progid)
+
 # all include directories added via -I so far should be system level inlcudes, divide them from those added by individual makefiles
 # CPPFLAGS="-I- $CPPFLAGS"
+
+# slap on boost defines
+CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+LIBS="$LIBS $BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
 
 export CFLAGS
 export CPPFLAGS
@@ -1514,6 +1594,7 @@ desktop/armagetronad-link.xml
 desktop/armagetronad.protocol
 desktop/armagetronad.appdata.xml
 desktop/os-x/Info.plist
+desktop/os-x/build_bundle.sh
 docker/build/Makefile
 docker/build/setup_ci_test.sh
 docker/build/context/version.sh

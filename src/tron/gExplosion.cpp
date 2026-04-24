@@ -46,7 +46,7 @@ static tList< gExplosion > sg_Explosions;
 
 static void clamp01(REAL &c)
 {
-    if (!isfinite(c))
+    if (!std::isfinite(c))
         c = 0.5;
 
     if (c<0)
@@ -162,8 +162,8 @@ gExplosion::gExplosion(eGrid *grid, const eCoord &pos,REAL time, gRealColor& col
         owner_(owner)
 {
     radius_ = gCycle::ExplosionRadius() + owner_->Speed() * sg_explosionSpeedFactor;
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->PushButton(CYCLE_EXPLOSION, pos);
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.PushButton(CYCLE_EXPLOSION, *this, 4.0);
     //std::cout << "explosion sound effect\n";
     holeAccountedFor_ = false;
 
@@ -537,10 +537,10 @@ void gExplosion::Render2D(tCoord scale) const {
 }
 
 #if 0
-void gExplosion::SoundMix(Uint8 *dest,unsigned int len,
-                          int viewer,REAL rvol,REAL lvol){
+void gExplosion::SoundMix(Sint16 *dest,unsigned int len,
+                          int viewer,REAL rvol,REAL lvol, REAL dopplerPitch){
 #ifndef HAVE_LaIBSDL_MIXER
-    sound.Mix(dest,len,viewer,rvol*4,lvol*4);
+    sound.Mix(dest,len,viewer,rvol*4,lvol*4, dopplerPitch);
 #endif
 }
 #endif

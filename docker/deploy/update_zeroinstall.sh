@@ -16,7 +16,8 @@ EXIT=0
 gpg --import secrets/pub.gpg || EXIT=$?
 gpg --allow-secret-key-import --import secrets/sec.gpg || EXIT=$?
 rm -rf secrets/*
-test ${EXIT} = 0 || exit ${EXIT}
+test ${EXIT} = 0 || test ${EXIT} = 2 || exit ${EXIT}
+EXIT=0
 
 dd=`dirname $0`
 
@@ -47,7 +48,10 @@ case ${STAGING}+${ZI_SERIES}+${ZEROVERSION} in
 esac
 
 trust_gitlab || exit $?
-git clone ${ZI_GIT} zeroinstall || exit $?
+
+# the fallback git URI won't work for pushing later, but is fine for local testing when you don't have set up push rights anyway
+git clone ${ZI_GIT} zeroinstall || git clone https://gitlab.com/armagetronad/zeroinstall.git zeroinstall || exit $?
+
 cp zeroinstall/*.gpg . || exit $?
 
 # FeedLint requires this
@@ -63,6 +67,8 @@ function update_stream(){
     
     URI=${DOWNLOAD_URI_BASE}`basename ${FILE}`
 
+    ./wait_for_upload.sh "${URI}" || exit $?
+
     XML=zeroinstall/${PACKAGE_NAME_BASE}-${ZI_SERIES}-${STREAM}.xml
     test -f ${XML} || exit 1
     grep -q version=\"${ZEROVERSION}\" ${XML} && return 0
@@ -70,18 +76,26 @@ function update_stream(){
     STAB=""
     test -z "${STABILITY}" || STAB="--set-stability=${STABILITY}"
 
-    0launch -o -c 'http://0install.net/2006/interfaces/0publish' \
+    0launch -o -c 'https://apps.0install.net/0install/0publish.xml' \
 	    ${XML} \
 	    --add-version ${ZEROVERSION} \
 	    --archive-url=${URI} \
 	    --archive-file=${FILE} \
 	    ${STAB} \
-	    --set-main=${MAIN} \
+	    --set-main="${MAIN}" \
 	    --set-released=today -c -x || exit $?
 
-    0launch -o -c 'http://0install.net/2007/interfaces/FeedLint.xml' -o \
+    0launch -o -c 'https://apps.0install.net/0install/feedlint.xml' -o \
 	    ${XML} || exit $?
 }
+
+for f in upload/${PACKAGE_NAME}*client*macOS.zip; do
+    update_stream MacOSX $f "${PACKAGE_TITLE}.app/Contents/MacOS/${PACKAGE_NAME}"
+done
+
+for f in upload/${PACKAGE_NAME}*server*macOS.zip; do
+    update_stream dedicated-MacOSX $f "${PACKAGE_TITLE} Server.app/Contents/MacOS/${PACKAGE_NAME}-dedicated"
+done
 
 for f in upload/*client*win32.zip; do
     update_stream Windows $f ${PACKAGE_NAME}.exe

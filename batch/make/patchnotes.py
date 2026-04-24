@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #wd=`dirname $0`
 
 # generates patch notes from git log references to gitlab issues
@@ -29,12 +29,23 @@ def RepresentsInt(s):
 	except ValueError:
 		return False
 
+# exception filter for lambdas, taken from https://stackoverflow.com/a/24912979
+def replace_exception(original, default=None):
+   def safe(*args, **kwargs):
+       try:
+          return original(*args, **kwargs)
+       except:
+          return default
+   return safe
+
 # retrieve tags from git repository
 def GetTags(repo, tag_lower_limit):
 	alltags_raw=subprocess.run(["git", "-C", repo, "tag", "-l", "--merged"], stdout=subprocess.PIPE)
 	alltags=alltags_raw.stdout.decode('utf-8').split('\n')
-	tags=list(filter(lambda x: len(x) > 0 and version.parse(x) >= version.parse(tag_lower_limit), alltags))
-	#return tags
+	lower_limit_version=version.parse(tag_lower_limit)
+	tags=list(filter(replace_exception(lambda x: len(x) > 0 and version.parse(x) >= lower_limit_version, False), alltags))
+	# print(tags)
+	# return tags
 
 	# sort tags in chronological order (assuming they're all on the same branch)
 	revisions={}
@@ -195,19 +206,19 @@ def GetMarkupLine(team, project, issue):
 			line = Template(' * ${title} ([#${issue}](${weblink}))').substitute(title=title.strip(), issue=issue, weblink=weblink)
 		#print(line, labels)
 		if 'Type::Bug' in labels:
-			return 'Fixed Bugs', line
+			return '01 Fixed Bugs', line
 		elif 'Type::Feature' in labels:
-			return 'New Features', line
+			return '02 New Features', line
 		elif 'Type::Removed' in labels:
-			return 'Removed', line
+			return '03 Removed', line
 		elif 'Type::Breaking' in labels:
-			return 'Breaking Changes', line
+			return '04 Breaking Changes', line
 		else:
-			return 'Other Changes', line
+			return '09 Other Changes', line
 
 # parse given frozen changelog, look for last 'changes since' note, extract tag name
 def GetLastFrozenTag(frozen):
-	file = open(frozen, 'r')
+	file = open(frozen, 'r', encoding="utf-8")
 	begin = '#### Changes since '
 	for line in file:
 		if line.startswith(begin):
@@ -243,7 +254,7 @@ tag_lower_limit=GetLastFrozenTag(frozen)
 
 # get all tags relevant to the current branch
 tags=GetTags(repo, tag_lower_limit)
-#print("tags =", tags)
+# print("tags =", tags)
 
 fixed_after_tag=FixedAfterTag(repo, team, project, tags)
 #print(fixed_after_tag)
@@ -253,9 +264,10 @@ for tag in reversed(tags):
 	#print(tag)
 	if not tag in fixed_after_tag:
 		continue
+	if tag == tag_lower_limit:
+		continue
 
 	fixed = fixed_after_tag[tag]
-	# luckily, the category names are alphabetically in the order we want them in :)
 	categories={}
 	#categories={'Fixed Bugs' : [], 'New Features' : [], 'Other Changes': []}
 	for issue in fixed:
@@ -263,6 +275,10 @@ for tag in reversed(tags):
 		if not line is None:
 			categories.setdefault(category, []).append(line)
 	
+	sorted_categories=list(categories)
+	sorted_categories.sort()
+	#print(sorted_categories)
+
 	if len(categories) > 0:
 		printtag=tag
 		if tag[0] == 'v':
@@ -270,8 +286,8 @@ for tag in reversed(tags):
 		print()
 		print("#### Changes since", printtag + ":")
 		print()
-		for category in categories:
-			print("#####", category)
+		for category in sorted_categories:
+			print("#####", category[3:])
 			print()
 			for line in categories[category]:
 				print(line)
@@ -288,5 +304,5 @@ for tag in reversed(tags):
 			exit(0)
 		print()
 
-file = open(frozen, 'r')
+file = open(frozen, 'r', encoding="utf-8")
 print(file.read())

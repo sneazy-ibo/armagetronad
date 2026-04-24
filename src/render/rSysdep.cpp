@@ -436,8 +436,6 @@ private:
 
 static rFastForwardCommandLineAnalyzer analyzer;
 
-// #define MILLION 1000000
-
 rSysDep::rSwapOptimize rSysDep::swapOptimize_ = rSysDep::rSwap_Auto;
 rSysDep::rFramedropTolerance rSysDep::framedropTolerance_ = rSysDep::rSwap_Normal;
 
@@ -634,6 +632,10 @@ public:
         switch( rSysDep::swapOptimize_ )
         {
         case rSysDep::rSwap_Auto:
+            // no auto-low-latency unless vsync is explicitly on; rSwap_Throughput is a good enough safe default.
+            if (currentScreensetting.vSync != ArmageTron_VSync_On)
+                return rSysDep::rSwap_Throughput;
+
             // check for ridiculously high framerate
             if (frameTimesMax_.GetMin() > -lowFrameTime_)
             {
@@ -679,8 +681,7 @@ public:
             }
 #endif
 
-
-
+            sr_GetDrawableSize();
         }
     }
 
@@ -820,6 +821,11 @@ public:
 #endif
 
         rSysDep::rSwapOptimize opt = GetCurrentSwapOptimizeMode();
+
+        // Low latency mode adds delays before polling input to avoid delays waiting for vsync later.
+        // Naturally, that is nonsense if vsync is off. Switch to the lowest latency throughput mode instead.
+        if(opt == rSysDep::rSwap_Latency && currentScreensetting.vSync >= ArmageTron_VSync_Off)
+            opt = rSysDep::rSwap_Throughput;
 
         REAL neededToWait = ( opt == rSysDep::rSwap_Throughput ) ? ThroughputSwap(swap) : LatencySwap(swap);
         StopSwap( neededToWait, opt );
@@ -1030,7 +1036,7 @@ private:
     rRollingMinimum waitTimes_;
 
     // time sync is started
-    double startTime_;
+    // double startTime_;
 
     // last time swap was complete
     double lastTime_;
@@ -1367,6 +1373,32 @@ bool sr_MotionBlur( double time, std::unique_ptr< rTextureRenderTarget > & blurT
     return true;
 }
 
+int sr_maxFPS = 0;
+static tConfItem<int> sr_maxFPSConf("MAX_FPS", sr_maxFPS,
+                                    [](const int& val) { return (val >= 0); });
+
+void sr_LimitFPS()
+{
+    if (sr_maxFPS > 0 && !tRecorder::IsPlayingBack())
+    {
+        static double last_time = 0;
+
+        const double now_time = tRealSysTimeFloat();
+        const double SPF = 1.0 / sr_maxFPS;
+
+        const double target_now_time = last_time + SPF;
+        if (now_time < target_now_time)
+        {
+            SDL_Delay(round(1000 * (target_now_time - now_time)));
+            last_time = target_now_time;
+        }
+        else
+        {
+            last_time = now_time;
+        }
+    }
+}
+
 void rSysDep::SwapGL(){
     static std::unique_ptr< rTextureRenderTarget > blurTarget;
 
@@ -1514,8 +1546,7 @@ void rSysDep::SwapGL(){
     }
     //#endif
 
-    // store frame time for next frame
-    // lastFrame = tRealSysTimeFloat();
+    sr_LimitFPS();
 
     sr_glOut = next_glOut;
 }

@@ -2,7 +2,7 @@
 
 # put API key into the right place
 mkdir -p ~/.config/itch || exit $?
-mv secrets/butler_creds ~/.config/itch/ || exit $?
+export BUTLER_API_KEY=`cat secrets/butler_creds` || exit $?
 rm -rf secrets || exit $?
 
 . version.sh || exit $?
@@ -30,11 +30,13 @@ set -x
 # butler gets frequent updates, that is why we do not bake it into the docker images
 mkdir -p ~/bin || exit $?
 pushd ~/bin || exit $?
-if ! curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default; then
+BUTLER_VERSION=LATEST
+# BUTLER_VERSION=15.21.0
+if ! curl -k -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSION}/archive/default; then
  sleep 30
- curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default || exit $?
+ curl -k -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSION}/archive/default || exit $?
 fi
-unzip butler.zip || exit $?
+yes | unzip butler.zip || exit $?
 rm -f butler.zip || exit $?
 chmod +x butler || exit $?
 ./butler -V || exit $?
@@ -55,6 +57,7 @@ function upload()
 }
 
 # upload
+upload appdir_macos macos-x64
 upload appdir_linux_32 linux-32
 upload appdir_linux_64 linux-64
 upload appdir_windows windows-32

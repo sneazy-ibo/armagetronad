@@ -102,7 +102,10 @@ gArena Arena;
 
 static gTutorialBase * sg_tutorial = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "gGame.pb.h"
+#pragma GCC diagnostic pop
 
 #ifdef KRAWALL_SERVER
 #include "nKrawall.h"
@@ -899,7 +902,7 @@ extern bool sg_axesIndicator;
 
 void init_game_grid(eGrid *grid, gParser *aParser){
     se_ResetGameTimer();
-    se_PauseGameTimer(true);
+    se_PauseGameTimer(true, eTIMER_PAUSE_GAME);
 
 #ifndef DEDICATED
     if (sr_glOut){
@@ -1314,7 +1317,7 @@ void init_game_camera(eGrid *grid){
     cCockpit::BeforeRoundProcess();
 #else
     se_ResetGameTimer( -PREPARE_TIME - sg_extraRoundTime );
-    se_PauseGameTimer(false);
+    se_PauseGameTimer(false, eTIMER_PAUSE_GAME);
 #endif
     /*
       for(int p=se_PlayerNetIDs.Len()-1;p>=0;p--){
@@ -2293,11 +2296,23 @@ static void sg_ShowDocumentation()
     sg_OpenURI( s.str().c_str() );
 }
 
-// opens the system data directory
+// opens the Discord invide
+static void sg_ShowDiscord()
+{
+    sg_OpenURI("http://armagetronad.org/discord");
+}
+
+// opens the forums
+static void sg_ShowForums()
+{
+    sg_OpenURI("https://forums3.armagetronad.net");
+}
+
+// opens the IRC channel
 static void sg_ShowIRC()
 {
     std::ostringstream s;
-    s << "http://webchat.freenode.net/?channels=armagetron&prompt=1&nick="
+    s << "http://webchat.oftc.net/?channels=armagetron&prompt=1&nick="
       << ePlayer::PlayerConfig(0)->Name();
     sg_OpenURI(s.str().c_str());
 }
@@ -2349,6 +2364,18 @@ static uMenuItemFunction sg_ircMenuItem
  "$help_menu_irc_text",
  "$help_menu_irc_help",
  &sg_ShowIRC);
+
+static uMenuItemFunction sg_forumsMenuItem
+(&sg_helpMenu,
+ "$help_menu_forums_text",
+ "$help_menu_forums_help",
+ &sg_ShowForums);
+
+static uMenuItemFunction sg_discordMenuItem
+(&sg_helpMenu,
+ "$help_menu_discord_text",
+ "$help_menu_discord_help",
+ &sg_ShowDiscord);
 
 static uMenuItemFunction sg_wikiMenuItem 
 (&sg_helpMenu,
@@ -2664,7 +2691,7 @@ static void ingame_menu()
     {
         se_ChatState( ePlayerNetID::ChatFlags_Menu, true );
         if (sn_GetNetState()==nSTANDALONE)
-            se_PauseGameTimer(true);
+            se_PauseGameTimer(true, eTIMER_PAUSE_MENU);
         MainMenu(true);
     }
     catch ( ... )
@@ -2681,7 +2708,7 @@ static void ingame_menu()
 static void ingame_menu_cleanup()
 {
     if (sn_GetNetState()==nSTANDALONE)
-        se_PauseGameTimer(false);
+        se_PauseGameTimer(false, eTIMER_PAUSE_MENU);
     se_ChatState(ePlayerNetID::ChatFlags_Menu, false);
     if ((bool(sg_currentGame) && sg_currentGame->GetState()!=GS_PLAY))
         //      || se_PlayerNetIDs.Len()==0)
@@ -2703,7 +2730,6 @@ nNetObjectDescriptorBase const & gGame::DoGetDescriptor() const
 
 
 void gGame::Init(){
-    m_Mixer = eSoundMixer::GetMixer();
     grid = tNEW(eGrid());
     state=GS_CREATED;
     stateNext=GS_TRANSFER_SETTINGS;
@@ -2796,7 +2822,9 @@ void gGame::Verify()
     exit_game_grid(grid);
 }
 
-gGame::gGame(){
+gGame::gGame()
+: m_Mixer(eSoundMixer::GetMixer())
+{
     synced_ = true;
     gLogo::SetDisplayed(false);
     if (sn_GetNetState()!=nCLIENT)
@@ -2806,6 +2834,7 @@ gGame::gGame(){
 
 gGame::gGame( Game::GameSync const & sync, nSenderInfo const & sender )
 : nNetObject( sync.base(), sender )
+, m_Mixer(eSoundMixer::GetMixer())
 {
     synced_ = false;
     Init();
@@ -3024,7 +3053,8 @@ void gGame::StateUpdate(){
 
             con << tOutput("$gamestate_deleting_grid");
             //				sn_ConsoleOut(sg_roundCenterMessage + "\n");
-            sn_CenterMessage(sg_roundCenterMessage);
+            if(sn_GetNetState() != nCLIENT)
+                sn_CenterMessage(sg_roundCenterMessage);
 
             //				for (unsigned short int mycy = 0; mycy > sg_roundConsoleMessage5.Len(); c++)
 
@@ -3300,7 +3330,7 @@ void gGame::StateUpdate(){
             }
             //con << ePlayerNetID::Ranking();
 
-            se_PauseGameTimer(false);
+            se_PauseGameTimer(false, eTIMER_PAUSE_GAME);
             se_SyncGameTimer();
             sr_con.fullscreen=false;
             sr_con.autoDisplayAtNewline=false;
@@ -3700,7 +3730,6 @@ void gGame::Analysis(REAL time){
     int last_team_alive=-1;
     // int last_alive_and_not_disconnected=-1;
     int humans = 0;
-    int active_humans = 0;
     int ais    = 0;
     REAL deathTime=0;
 
@@ -3725,8 +3754,6 @@ void gGame::Analysis(REAL time){
             for (int j=t->NumPlayers()-1; j>=0; --j)
             {
                 ePlayerNetID* p = t->Player(j);
-                if (p->IsActive())
-                    active_humans++;
 
                 gCycle *g=dynamic_cast<gCycle *>(p->Object());
                 if (g){
@@ -3998,7 +4025,7 @@ void gGame::Analysis(REAL time){
                             message << eTeam::teams[winner-1]->Name();
 #endif
 
-                            m_Mixer->PushButton(ROUND_WINNER);
+                            m_Mixer.PushButton(ROUND_WINNER);
 
                             sn_CenterMessage(message);
                             message << '\n';
@@ -4152,7 +4179,7 @@ void gGame::Analysis(REAL time){
                             message << "$gamestate_champ_center";
                             sn_CenterMessage(message);
 
-                            m_Mixer->PushButton(MATCH_WINNER);
+                            m_Mixer.PushButton(MATCH_WINNER);
                         }
 
                         tOutput message;
@@ -4215,7 +4242,7 @@ void gGame::Analysis(REAL time){
 
                         sn_ConsoleOut(message);
 
-                        m_Mixer->PushButton(MATCH_WINNER);
+                        m_Mixer.PushButton(MATCH_WINNER);
 
                         wintimer=time;
                         absolute_winner=1;
@@ -4382,7 +4409,7 @@ static bool pausegame_func(REAL x){
 
     if (x>0){
         paused=!paused;
-        se_PauseGameTimer(paused);
+        se_PauseGameTimer(paused, eTIMER_PAUSE_BUTTON);
     }
 
     return true;
@@ -4484,7 +4511,7 @@ bool gGame::GameLoop(bool input){
         time=gtime;
 
         if (sn_GetNetState()==nSTANDALONE && sg_IngameMenu)
-            se_PauseGameTimer(true);
+            se_PauseGameTimer(true, eTIMER_PAUSE_MENU);
 
         static int lastcountdown=0;
         int cd=int(floor(-time))+1;
@@ -4495,16 +4522,16 @@ bool gGame::GameLoop(bool input){
 
             switch (cd) {
             case 3:
-                m_Mixer->PushButton(ANNOUNCER_3);
+                m_Mixer.PushButton(ANNOUNCER_3);
                 break;
             case 2:
-                m_Mixer->PushButton(ANNOUNCER_2);
+                m_Mixer.PushButton(ANNOUNCER_2);
                 break;
             case 1:
-                m_Mixer->PushButton(ANNOUNCER_1);
+                m_Mixer.PushButton(ANNOUNCER_1);
                 break;
             case 0:
-                m_Mixer->PushButton(ANNOUNCER_GO);
+                m_Mixer.PushButton(ANNOUNCER_GO);
                 break;
             }
             con.CenterDisplay(s,0);
@@ -4689,7 +4716,7 @@ bool gGame::GameLoop(bool input){
 
             // wait for chatting players
             if ( sn_GetNetState()==nSERVER && gtime < sg_lastChatBreakTime + 1 )
-                se_PauseGameTimer( gtime < sg_lastChatBreakTime && ePlayerNetID::WaitToLeaveChat() );
+                se_PauseGameTimer( gtime < sg_lastChatBreakTime && ePlayerNetID::WaitToLeaveChat(), eTIMER_PAUSE_GAME );
         }
 
         // send game object updates
@@ -4836,8 +4863,8 @@ void sg_EnterGameCore( nNetState enter_state ){
     sr_con.SetHeight(7);
 
     //  exit_game_objects(grid);
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->SetMode(GRID_TRACK);
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.SetMode(GRID_TRACK);
 
     // enter single player settings
     if ( sn_GetNetState() != nCLIENT )
@@ -4902,8 +4929,8 @@ void sg_EnterGameCleanup()
 {
     //gStatistics - save high scores
 
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->SetMode(GUI_TRACK);
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.SetMode(GUI_TRACK);
 
     sn_SetNetState( nSTANDALONE );
 
@@ -4999,7 +5026,7 @@ void Activate(bool act){
     {
         if (sn_GetNetState()==nSTANDALONE)
         {
-            se_PauseGameTimer(!act);
+            se_PauseGameTimer(!act, eTIMER_PAUSE_INACTIVE);
         }
 
         se_ChatState( ePlayerNetID::ChatFlags_Away, !act);
@@ -5029,7 +5056,7 @@ void sg_ClientFullscreenMessage( tOutput const & title, tOutput const & message,
     bool paused = se_mainGameTimer && se_mainGameTimer->speed < .0001;
     if( sn_GetNetState() != nCLIENT )
     {
-        se_PauseGameTimer(true);
+        se_PauseGameTimer(true, eTIMER_PAUSE_GAME);
     }
 
     // put players into idle mode
@@ -5053,7 +5080,7 @@ void sg_ClientFullscreenMessage( tOutput const & title, tOutput const & message,
     // continue the game
     if( sn_GetNetState() != nCLIENT )
     {
-        se_PauseGameTimer(paused);
+        se_PauseGameTimer(paused, eTIMER_PAUSE_GAME);
     }
 
     // get players out of idle mode again
@@ -5098,7 +5125,7 @@ void sg_FullscreenMessageWait()
     {
         // stop the game
         bool paused = se_mainGameTimer && se_mainGameTimer->speed < .0001;
-        se_PauseGameTimer(true);
+        se_PauseGameTimer(true, eTIMER_PAUSE_GAME);
         gGame::NetSyncIdle();
 
         REAL waitTo = tSysTimeFloat() + sg_fullscreenMessageTimeout;
@@ -5111,8 +5138,8 @@ void sg_FullscreenMessageWait()
             sg_FullscreenIdle();
             gameloop_idle();
             if ( se_GameTime() > sg_lastChatBreakTime )
-                se_PauseGameTimer(true);
-
+                se_PauseGameTimer(true, eTIMER_PAUSE_GAME);
+            
             // give the clients a second to enter chat state
             if ( tSysTimeFloat() > waitToMin )
             {
@@ -5127,7 +5154,7 @@ void sg_FullscreenMessageWait()
         }
 
         // continue the game
-        se_PauseGameTimer(paused);
+        se_PauseGameTimer(paused, eTIMER_PAUSE_GAME);
         gGame::NetSyncIdle();
     }
 }

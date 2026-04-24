@@ -30,13 +30,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "defs.h"
 
-#ifdef HAVE_LIBBOOST_THREAD
+#ifdef HAVE_BOOST_THREAD
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 
-#else // HAVE_LIBBOOST_THREAD
+#else // HAVE_BOOST_THREAD
 
 namespace boost
 {
@@ -47,10 +47,7 @@ private:
     mutex( mutex const & );
     mutex & operator = ( mutex const & );
 protected:
-#ifdef HAVE_PTHREAD
-#define HAVE_REAL_MUTEX
     pthread_mutex_t mutex_;
-#endif
 
     // special constructor, do not initialize mutex
     explicit mutex( int );
@@ -72,11 +69,10 @@ template <class T>
 class lock_base
 {
 private:
-    T & mutex_;
     lock_base( lock_base const & );
     lock_base & operator = ( lock_base const & );
 protected:
-lock_base(T & m)
+    lock_base(T & m)
     : mutex_(m)
     {}
 
@@ -89,6 +85,8 @@ lock_base(T & m)
     {
         mutex_.unlock();
     }
+
+    T & mutex_;
 };
 
 template <class T>
@@ -141,10 +139,23 @@ public:
             this->unlock_();
         }
     }
+
+    T * release()
+    {
+        if( locked_ )
+        {
+            locked_ = false;
+            return &this->mutex_;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
 };
 
 }
 
-#endif // HAVE_LIBBOOST_THREAD
+#endif // HAVE_BOOST_THREAD
 
 #endif

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# push make an entry on the download site
+# make an entry on the download site
 
 set +x
 
@@ -20,36 +20,56 @@ dd=`dirname $0`
 pushd upload || exit $?
 for f in *; do
     echo $f
+
+    URI=${DOWNLOAD_URI_BASE}$f
+
+	WAIT=true
+
     case $f in
 	*-dedicated-*.exe)
-	    WIN_SERVER=$f
-	    ;;
+		WIN_SERVER=$f
+		;;
 	*.exe)
-	    WIN_CLIENT=$f
-	    ;;
-	*Dedicated-32bit-${PACKAGE_VERSION})
-	    LIN32_SERVER=$f
-	    ;;
-	*-32bit-${PACKAGE_VERSION})
-	    LIN32_CLIENT=$f
-	    ;;
-	*Dedicated-${PACKAGE_VERSION})
-	    LIN64_SERVER=$f
-	    ;;
-	*-${PACKAGE_VERSION})
-	    LIN64_CLIENT=$f
-	    ;;
+		WIN_CLIENT=$f
+		;;
+	*Dedicated-32bit*.AppImage)
+		LIN32_SERVER=$f
+		;;
+	*-32bit*.AppImage)
+		LIN32_CLIENT=$f
+		;;
+	*Dedicated*.AppImage)
+		LIN64_SERVER=$f
+		;;
+	*.AppImage)
+		LIN64_CLIENT=$f
+		;;
 	*-client*.tbz|*-server*.tbz)
-	    ;;
+		WAIT=false
+		;;
 	*-${PACKAGE_VERSION}.tbz)
-	    SOURCE_TARBALL=$f
-	    ;;
+		SOURCE_TARBALL=$f
+		;;
 	*win32.zip)
-	    ;;
+		WAIT=false
+		;;
+	*-dedicated-*.dmg)
+		MACOS_SERVER=$f
+		;;
+	*.dmg)
+		MACOS_CLIENT=$f
+		;;
 	*-${PACKAGE_VERSION}.zip)
-	    SOURCE_ZIP=$f
-	    ;;
+		SOURCE_ZIP=$f
+		;;
+	*)
+		WAIT=false
+		;;
     esac
+
+	if test "${WAIT}" == "true"; then
+		../wait_for_upload.sh "${URI}" || exit $?
+	fi
 done
 popd
 
@@ -66,6 +86,7 @@ if test "${CI_COMMIT_REF_PROTECTED}" == "true" && test "${ZI_SERIES}" == "stable
 	# only releases have no _rc_, _alpha_ or _beta_ in their version
 	if ! echo ${PACKAGE_VERSION} | grep -q '_[a-z]*_'; then
 		BUILD_TYPE="release build"
+		TITLE="${PACKAGE_VERSION} released"
 	fi
 fi
 
@@ -94,10 +115,12 @@ uri_base: ${DOWNLOAD_URI_BASE}
 uri_winclient: ${WIN_CLIENT}
 uri_lin64client: ${LIN64_CLIENT}
 uri_lin32client: ${LIN32_CLIENT}
+uri_macosclient: ${MACOS_CLIENT}
 
 uri_winserver: ${WIN_SERVER}
 uri_lin64server: ${LIN64_SERVER}
 uri_lin32server: ${LIN32_SERVER}
+uri_macosserver: ${MACOS_SERVER}
 
 uri_tarsrc: ${SOURCE_TARBALL}
 uri_zipsrc: ${SOURCE_ZIP}
@@ -108,12 +131,20 @@ uri_zipsrc: ${SOURCE_ZIP}
 
 EOF
 
+if test -r ../upload/RELEASENOTES.md; then
+	cat >> ${POST} <<EOF
+### Release Notes
+
+EOF
+	cat ../upload/RELEASENOTES.md >> ${POST}
+	echo >> ${POST}
+fi
+
 if test -r ../upload/PATCHNOTES.md; then
 	cat >> ${POST} <<EOF
 ### Patch Notes
 
 EOF
-
 	cat ../upload/PATCHNOTES.md >> ${POST}
 fi
 

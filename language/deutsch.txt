@@ -594,6 +594,7 @@ fast_forward_maxstep_help     Maximale Zeit in aufgezeichneten Sekunden, die zwi
 fast_forward_maxstep_real_help Maximale Zeit in echten Sekunden, die zwischen Renderschritten im schnellen Vorlauf liegt
 fast_forward_maxstep_rel_help Maximale Zeit gemessen in der Zeit bis zum Vorspulziel, die zwischen Renderschritten liegt
 stop_recording_help           Stoppt eine laufende Debug-Aufzeichnung, um resourcen zu sparen. Eine Wiederaufnahme ist nicht möglich.
+expect_ack_on_client_playback_help  Setze auf 1, um im Playback Netzwerkproblem zu debuggen. Auf dem Default von 0 ignoriert der Client fehlende Ack-Pakete vom Server und versucht, sich irgendwie durchzuwursteln, was besser für das Debugging vom Spielecode ist.
 
 #********************************************
 #********************************************
@@ -763,6 +764,7 @@ forbid_hud_map                Verbiete Clients das Zeigen der HUD Minikarte?
 forbid_cockpit_data_help      Durch Doppelpunkte unterteilte Liste von Cockpitdatenquellen, die Clients nicht für ihre Cockpits verwenden dürfen (z.B. der Rubber ihrer Gegner)
 cm_locy_help                  Vertikale Position der Zentralnachrichten vom Server
 hud_cache_threshold_help      Update-Schwelle für HUD-Anzeigen, wenn Display-Listen-Optimierung aktiv ist. Erst, wenn die Änderung der Anzeigen eine durch diesen Wert bestimmte Schwelle überschreiten, werden sie neu gezeichnet.
+hud_max_width_help            Maximale Breite des unteren HUD in Relation zur Bildschirmhöhe. Ein Wert von 0 sorgt für das alte Verhalten (<=0.2.9.0), bei dem das HUD einfach über die gesamte Breite gestreckt wird, ohne die Höhe an Bildschirme in nicht-4:3-Formaten anzupassen.
 
 #floor
 grid_size_help                Abstand zwischen Rasterlinien
@@ -796,7 +798,7 @@ moviepack_rim_wall_stretch_y_help Ausdehnung der Textur der Arenabegrenzung, ver
 swapoptimize_text             Optimiere Swap für:
 swapoptimize_help             Bestimmt den Algorithmus, der für Buffer-Swaps und Syncs benutzt wird.
 swapoptimize_latency_text     Geringe Wartezeit
-swapoptimize_latency_help     Dies optimiert das Spiel für eine geringe Wartezeit zwischen Input und Anzeige (auch bekannt als Input-Lag)
+swapoptimize_latency_help     Dies optimiert das Spiel für eine geringe Wartezeit zwischen Input und Anzeige (auch bekannt als Input-Lag). Kann nur etwas Gutes mit aktivem VSYNC bewirken.
 swapoptimize_auto_text        Automatisch
 swapoptimize_auto_help        Dies wählt den Modus für geringe Wartezeit wenn deine Framerate stabil wirkt und hoch genug ist. Wenn zu viele Frames fallengelassen werden oder die Framerate so hoch ist, dass kein Warten nötig ist, geschieht ein Wechsel zum Verarbeitungsmengenmodus. Empfohlen.
 swapoptimize_throughput_text  Verarbeitungsmenge
@@ -843,7 +845,7 @@ zone_bottom_help              Unterer Rand der Zonen. Default: 0.0
 zone_height_help              Höhe der Zonen: Default: 5.0
 smooth_shading_help           Aktiviert "Rundes Licht"
 text_out_help                 Aktiviert Textausgabe
-console_columns_help          Anzahl der Spalten der Textausgabe
+console_columns_help          Anzahl der Spalten der Textausgabe. 0 für Automatikmodus. -1, um den Bitmap-Font 1:1 zu verwenden, egal wie klein das wird.
 console_rows_help             Anzahl der Zeilen der Textausgabe (normal)
 console_rows_max_help         Anzahl der Zeilen der Textausgabe (maximal beim Hochscrollen)
 chat_layer_help               Transparenz der Konsole und des Menühintergrundes: 0 für totale Transparenz, 1 für totale Intransparenz
@@ -913,6 +915,8 @@ armagetron_vsync_help         Was mit dem Vertical Sync des Monitors gemacht wer
 #rmagetron_vsync_last_help    UNTRANSLATED
 fullscreen_help               Vollbild oder Fenster?
 last_fullscreen_help          Vollbild oder Fenster, letzte erfolgreiche Einstellung
+low_dpi_window_help			  Verwende niedrigere Renderauflösung? (Nur Mac+Retina+Fenstermodus)
+last_low_dpi_window_help	  Verwende niedrigere Renderauflösung? (Nur Mac+Retina+Fenstermodus, letzte erfolgreiche Einstellung)
 check_errors_help             Soll \g auf Fehler bei der Grafikinitialisierung achten?
 last_check_errors_help        Soll \g auf Fehler bei der Grafikinitialisierung achten, letzte erfolgreiche Einstellung?
 colordepth_help               Farbtiefe: 0 für 16 Bit, 1 für Standard, 2 für 32 Bit
@@ -921,8 +925,9 @@ zdepth_help                   Z-Buffer-Tiefe: 0 für 16 Bit, 1 für Standard, 2 fü
 last_zdepth_help              Z-Buffer-Tiefe, letzte erfolgreiche Einstellung
 use_sdl_help                  Initiiere OpenGL über SDL?
 last_use_sdl_help             Initiiere OpenGL über SDL, letzte erfolgreiche Einstellung
-failed_attempts_help          Anzahl der erfolglosen Versuche, die Graphik zu initialisieren
+failed_attempts_help          Anzahl der erfolglosen Versuche, die Grafik zu initialisieren
 software_renderer_help        Ist der OpenGL Renderer nicht Hadware-Beschleunigt?
+max_fps_help                  Begrenzung der Bildrate. 0 bedeutet keine Begrenzung
 
 #model
 use_displaylists_help         Sollen display lists für die Vehikel verwendet werden?
@@ -1372,7 +1377,7 @@ player_mainmenu_text          Spieler konfigurieren
 player_mainmenu_help          Spielernamen, Tastatureinstellung, Kameraoptionen....
 
 system_settings_menu_text     System konfigurieren
-system_settings_menu_help     Einstellungen für Sound, Graphik und allgemeines Erscheinungsbild
+system_settings_menu_help     Einstellungen für Sound, Grafik und allgemeines Erscheinungsbild
 
 main_menu_about_text          Über \g
 main_menu_about_help          Zeigt detaillierte Informationen zum Spiel
@@ -1385,8 +1390,14 @@ help_menu_doc_text            Zeige Dokumentation
 help_menu_doc_help            Öffne die mitgelieferte HTML-Dokumentation in einem externen Browser
 help_menu_doc_file            index.html
 
+help_menu_discord_text	      Öffne Discord
+help_menu_discord_help	      Öffnet eine Einladung auf unser Discord... Chat... Ding. Warum nennen die das "Server"? Das ist genau, was es nicht ist.\nHier findet man tatsächlich hilfsbereite Menschen.
+
+help_menu_forums_text	      Öffne Forum
+help_menu_forums_help	      Öffnet die Web-Foren im Browser. Zum Posten muss man sich registrieren, Lesen geht auch so.
+
 help_menu_irc_text            Öffne IRC Chatroom
-help_menu_irc_help            Öffnet ein Web-Interface zu unserem IRC-Chatroom, wo du mit etwas Glück einen anständigen Spieler findest, der deine Fragen beantwortet.
+help_menu_irc_help            Öffnet ein Web-Interface zu unserem IRC-Chatroom. Hier findet man noch die ganz alten Hasen, es dauert schon mal ein paar Tage, bis jemand antwortet.
 
 help_menu_directories_text    Öffne Ordner
 help_menu_directories_help    Erleichtert den Zugang zu den Spieldateien und Konfigurationsmenüs.
@@ -1438,7 +1449,7 @@ game_menu_disconnect_help     Trennt die Verbindung zum Server und führt wieder 
 #********************************************
 version_info_title            Über diese Installation von \g
 version_info_version          Version von \g: \1
-version_info_misc_stuff       \n0xff8888Offizielle Website:0xRESETT http://armagetronad.net/\n0xff8888Offizielles Forum:0xRESETT https://forums3.armagetronad.net/\n0xff8888Wiki (Strategie, Turniere, Dokumentation, ...):0xRESETT http://wiki.armagetronad.net/\n0xff8888Projektverwalter:0xRESETT z-man, Tank Program (guru3), Lucifer
+version_info_misc_stuff       \n0xff8888Offizielle Website:0xRESETT https://armagetronad.net/\n0xff8888Offizielles Forum:0xRESETT https://forums3.armagetronad.net/\n0xff8888Wiki (Strategie, Turniere, Dokumentation, ...):0xRESETT https://wiki.armagetronad.net/\n0xff8888Projektverwalter:0xRESETT z-man, Tank Program (guru3), Lucifer
 
 path_info_user_cfg            Pfad zu user.cfg:
 path_info_config              Konfigurationsverzeichnisse:
@@ -1952,7 +1963,7 @@ friend_help                   Server mit diesem Spieler werden angezeigt, wenn d
 #********************************************
 
 misc_menu_text                Verschiedenes
-misc_menu_help                Diverse Dinge, die sonst nirdendwo gepasst haben, wie z.B. globale Tastatureinstellung.
+misc_menu_help                Diverse Dinge, die sonst nirgendwo gepasst haben, wie z.B. globale Tastatureinstellung.
 
 misc_global_key_text          Globale Tastatureinstellung
 misc_global_key_help          Einige Tastaturbefehle, die unabhängig von den Spielern interpretiert werden.
@@ -1964,7 +1975,7 @@ misc_textout_text             Textausgabe:
 misc_textout_help             Kontolliert die Ausgabe diverser Textnachrichten (Chat, Statusmeldungen...).
 
 misc_moviepack_text           Moviepack:
-misc_moviepack_help           Aktiviert die Unterstützung für das separat verfügbare Moviepack, das die Graphiken mehr an den Film "Tron" angleicht.
+misc_moviepack_help           Aktiviert die Unterstützung für das separat verfügbare Moviepack, damit Grafiken wie aus den "Tron"-Film aussehen.
 
 misc_initial_menu_title       Ersteinstellungen wiederholen
 misc_initial_menu_help        Startet erneut das erste Setup-Menü, in welchem du Farben und Tastatur-Layouts bestimmen kannst. Dies setzt nicht die gesamte Konfiguration zurück, nur die gewünschten Teile.
@@ -2309,7 +2320,7 @@ sound_menu_buffer_vhigh_help  Verzögerung: 0.4s.
 
 #display menu
 display_settings_menu         Grafikeinstellungen
-display_settings_menu_help    Hier kann man ettliche Darstellungsoptionen an die eigenen Wünsche anpassen.
+display_settings_menu_help    Hier kann man etliche Darstellungsoptionen an die eigenen Wünsche anpassen.
 
 screen_mode_menu              Anzeige
 screen_mode_menu_help         Auflösung, Farbtiefe,...
@@ -2375,17 +2386,20 @@ screen_custom_help            Setze die Variablen CUSTOM_SCREEN_WIDTH und CUSTOM
 screen_fullscreen_text        Vollbild:
 screen_fullscreen_help        Schaltet zwischen Vollbildmodus (Ein) und Fenstermodus (Aus) um. Auf einigen Systemen läuft \g leider nicht im Vollbild. Zum übernehmen muss \g neugestartet oder auf Aktivieren geklickt werden. Im Menu "System konfigurieren/Verschiedenes/Globale Tastatursteuerung" kann man eine Taste wählen, die jederzeit zwischen Vollbild und Fenstermodus wechselt.
 
+screen_lowdpi_text		      Low DPI:
+screen_lowdpi_help		      Nur für den Fenstermodus auf Retina-Bildschirmen: Verwende intern eine niedrigere Auflösung. Das schont Resourcen, kann eine höhere Bildrate liefern, sieht aber etwas verwaschen oder pixelig aus.
+
 screen_colordepth_text        Farbtiefe:
 screen_colordepth_help        Die Farbtiefe bestimmt die Bildqualität.
 
 screen_colordepth_16_text     16 Bit
-screen_colordepth_16_help     Niedrige Qualität; empfohlen für ältere Graphikkarten. \g verwendet keine aufwändigen Blendingeffekte, daher fällt die Rasterung nicht so sehr auf.
+screen_colordepth_16_help     Niedrige Qualität; empfohlen für ältere Grafikkarten. \g verwendet keine aufwändigen Blendingeffekte, daher fällt die Rasterung nicht so sehr auf.
 
 screen_colordepth_desk_text   Voreinstellung
 screen_colordepth_desk_help   Das System gibt eine "optimale" Farbtiefe vor; üblicherweise kommt sie von den Einstellungen des Desktops.
 
 screen_colordepth_32_text     32 Bit
-screen_colordepth_32_help     Hohe Qualität; empfohlen für alle Graphikkarten vom GeForce/Radeon-Kaliber.
+screen_colordepth_32_help     Hohe Qualität; empfohlen für alle Grafikkarten vom GeForce/Radeon-Kaliber.
 
 screen_zdepth_text            Z-Buffer-Tiefe:
 screen_zdepth_help            Bestimmt die Genauigkeit des Tiefenpuffers. Zum übernehmen muss \g neugestartet oder auf Aktivieren geklickt werden.
@@ -2400,7 +2414,7 @@ screen_zdepth_32_text         32 Bit
 screen_zdepth_32_help         Hohe Qualität; verringert Artefakte.
 
 screen_check_errors_text      Beachte Fehler:
-screen_check_errors_help      Soll \g bei der Graphikinitialisierung auf Warnungen des Systems achten? Üblicherweise sollte man diese Option so lassen, wie sie ist.
+screen_check_errors_help      Soll \g bei der Grafikinitialisierung auf Warnungen des Systems achten? Üblicherweise sollte man diese Option so lassen, wie sie ist.
 
 screen_use_sdl_text           Verwende SDL
 screen_use_sdl_help           Wenn aktiviert, wird OpenGL über die sauberen Initialisierungsroutinen von SDL gestartet. Sonst wird ein Hack benutzt. (SDL: Multiplattformbibliothek, die bei \g für Eingabe, Sound und Fenstermanagement verwendet wird)
@@ -2491,10 +2505,10 @@ pref_skymove_text             Himmelsbewegung:
 pref_skymove_help             Wenn aktiviert, dann wird die untere Himmelsebene ein wenig animiert.
 
 pref_lowersky_text            Unterer Himmel:
-pref_lowersky_help            Wird die untere Himmelsebene gezeichnet? Beide Himmelsebenen an zu zeigen verringert die Geschwindigkeit
+pref_lowersky_help            Wird die untere Himmelsebene gezeichnet? Beide Himmelsebenen anzuzeigen verringert die Geschwindigkeit
 
 pref_uppersky_text            Oberer Himmel:
-pref_uppersky_help            Wird die obere Himmelsebene gezeichnet? Beide Himmelsebenen an zu zeigen verringert die Geschwindigkeit
+pref_uppersky_help            Wird die obere Himmelsebene gezeichnet? Beide Himmelsebenen anzuzeigen verringert die Geschwindigkeit
 
 pref_highrim_text             Hoher Rand:
 pref_highrim_help             Macht die Wände am Rand der Arena unendlich hoch. Sonst sind die Wände so hoch wie die von Spielern.
@@ -2533,7 +2547,7 @@ pref_showrubber_text          Gummianzeige
 pref_showrubber_help          Zeigt den Status des etwas obskuren Gummifüllstands (regelt die Toleranz bei Kollisionen mit Wänden)
 
 misc_fps_text                 FPS-Anzeige:
-misc_fps_help                 Wenn die FPS-Anzeige aktiviert ist, wird die aktuelle Geschwindigkeit der Graphikausgabe am unteren linken Bildschirmrand in Bildern pro Sekunde (frames per second) angezeigt.
+misc_fps_help                 Wenn die FPS-Anzeige aktiviert ist, wird die aktuelle Geschwindigkeit der Grafikausgabe am oberen rechten Bildschirmrand in Bildern pro Sekunde (frames per second) angezeigt.
 
 #tweaks menu
 tweaks_displaylists_text      Display Lists:
@@ -2588,7 +2602,7 @@ menuitem_toggle_off           Aus
 #********************************************
 #********************************************
 
-timer_hickup                  Die Systemuhr scheint gerade um \1 Sekunden gesprungen zu sein. Wenn das hÃ¤ufger vorkommt, solltest Du ihre Funktion ueberpruefen.
+timer_hickup                  Die Systemuhr scheint gerade um \1 Sekunden gesprungen zu sein. Wenn das häufger vorkommt, solltest Du ihre Funktion überpruefen.
 
 #********************************************
 #********************************************
@@ -2985,15 +2999,15 @@ camera_watching_ai            Beobachte Computergegner\n
 camera_watching_player        Beobachte \1\n
 
 #score table
-team_scoretable_name          Team:
-team_scoretable_score         Score:
+team_scoretable_name          Teams:
+team_scoretable_score         Punkte
 team_scoretable_members       Mitglieder:
 team_scoretable_alive         Lebendig:
 player_scoretable_name        Spieler:
-player_scoretable_team        Mitglied von Team:
-player_scoretable_score       Punkte:
-player_scoretable_ping        Ping:
-player_scoretable_alive       Lebendig:
+player_scoretable_team        Team
+player_scoretable_score       Punkte
+player_scoretable_ping        Ping
+player_scoretable_alive       Aktiv
 player_scoretable_alive_yes   Ja
 player_scoretable_alive_no    Nein
 player_scoretable_pingcharity Ping-Spende:            
@@ -3034,7 +3048,7 @@ network_message_abortconn_inter Der Server hat die Verbindung abgebrochen.
 
 network_master_timeout_retry  Einer der Master-Server antwortet nicht. Nächster wird kontaktiert...\n
 network_master_timeout_title  Master-Server antworten nicht
-network_master_timeout_inter  Die Master-Server sind momentan nicht erreichbar und die Liste der Server konnte nicht aktualisiert werden. Wir versuchen es mit der alten Liste.\n\nWahrscheinlichster Grund für diesen Fehler ist ein lokales Netzwerkproblem. Überprufe bitte, ob der Internetzugang im Allgemeinen funktionniert, z.B. indem Du mit einem Web-Browser www.armagetronad.net besuchst.\nManchmal ist auch eine Firewall für Verbindungsprobleme verantwortlich. Am einfachsten testet man das, indem man die betreffende Firewall deaktiviert, und dann erneut ein Internet-Spiel zu starten versucht. Wenn es dann klappt, solltest Du die Firewall wieder aktivieren, aber speziefisch \g den Zugang erlauben. Wir verwenden UDP, Ports 4533 bis 4540. Sorge auch dafür, dass armagetronad(.exe) nicht in der Liste der erlaubten Anwendungen ist.\nWenn Teile des Netzwerkes sich Deiner Kontrolle entziehen, z.B. weil Du an einem öffentlichen WLAN-Hotspot sitzt oder in einem Unternehmens- oder Schulnetzwerk, dann sprich mit dem Administrator des Netzwerks.\nUnwahrscheinlich, aber möglich, ist es auch, dass die Master-Server Infrastruktur gerade zusammengebrochen ist. Besuche das Forum auf forums.armagetronad.net oder den IRC-Kanal armagetron auf irc.freenode.net für aktuelle Nachrichten.
+network_master_timeout_inter  Die Master-Server sind momentan nicht erreichbar und die Liste der Server konnte nicht aktualisiert werden. Wir versuchen es mit der alten Liste.\n\nWahrscheinlichster Grund für diesen Fehler ist ein lokales Netzwerkproblem. Überprufe bitte, ob der Internetzugang im Allgemeinen funktionniert, z.B. indem Du mit einem Web-Browser www.armagetronad.net besuchst.\nManchmal ist auch eine Firewall für Verbindungsprobleme verantwortlich. Am einfachsten testet man das, indem man die betreffende Firewall deaktiviert, und dann erneut ein Internet-Spiel zu starten versucht. Wenn es dann klappt, solltest Du die Firewall wieder aktivieren, aber speziefisch \g den Zugang erlauben. Wir verwenden UDP, Ports 4533 bis 4540. Sorge auch dafür, dass armagetronad(.exe) nicht in der Liste der erlaubten Anwendungen ist.\nWenn Teile des Netzwerkes sich Deiner Kontrolle entziehen, z.B. weil Du an einem öffentlichen WLAN-Hotspot sitzt oder in einem Unternehmens- oder Schulnetzwerk, dann sprich mit dem Administrator des Netzwerks.\nUnwahrscheinlich, aber möglich, ist es auch, dass die Master-Server Infrastruktur gerade zusammengebrochen ist. Besuche das Forum auf forums.armagetronad.net oder den IRC-Kanal armagetron auf irc.oftc.net für aktuelle Nachrichten.
 
 network_master_denied_title   Verbindung zum Master-Server abgelehnt
 network_master_denied_inter   Der Master-Server lässt keine Verbindung zu sich aufbauen. Vermutlich greifen gerade zu viele Benutzer auf ihn zu.\nWir versuchen es mal mit der alten Liste...
@@ -3231,7 +3245,7 @@ classification_maps           Benutzerdefinierte Karte
 
 resource_not_cached           Datei \1 befindet sich nicht im lokalen Speicher. Bitte etwas Geduld, sie wird heruntergeladen...\n
 resource_downloading          Lade \1 herunter ...\n
-resource_fetcherror_noconnect FEHLER: Der host von URI \1 ist nicht erreichbar. Das kann ein DNS Namensauflösungsfehler sein. Falls es sich um das Hauptlager für Resourcen (http://resource.armagetronad.net/resource/) handelt, melde dies bitte auf https://forums3.armagetronad.net/.\n
+resource_fetcherror_noconnect FEHLER: Der host von URI \1 ist nicht erreichbar. Das kann ein DNS Namensauflösungsfehler sein. Falls es sich um das Hauptlager für Resourcen (https://resource.armagetronad.net/resource/) handelt, melde dies bitte auf https://forums3.armagetronad.net/.\n
 resource_fetcherror_404       FEHLER 404 : Datei nicht gefunden.\n
 resource_fetcherror           FEHLER \1 != 200.\n
 resource_no_filename          FEHLER: Leerer Dateiname.\n

@@ -5,7 +5,8 @@ EXIT=0
 gpg --import pub.gpg || EXIT=$?
 gpg --allow-secret-key-import --import sec.gpg || EXIT=$?
 rm -rf *.gpg
-test ${EXIT} = 0 || exit ${EXIT}
+test ${EXIT} = 0 || test ${EXIT} = 2 || exit ${EXIT}
+EXIT=0
 
 set -x
 
@@ -22,8 +23,8 @@ fi
 SERIES=$1
 test -z ${SERIES} && SERIES=unstable
 
-#ls || exit $?
-DEBIAN_VERSION=`echo ${PACKAGE_VERSION} | sed -e s,_,~,g -e s,-,+,g`~ppa1~${SERIES} || exit $?
+DEBIAN_VERSION=${DEBIAN_VERSION_BASE}~${SERIES} || exit $?
+
 CHANGES=${PACKAGE_NAME}_${DEBIAN_VERSION}_source.changes || exit $?
 #ls ${CHANGES} || exit $?
 

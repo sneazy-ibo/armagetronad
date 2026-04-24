@@ -8,21 +8,27 @@ EXIT=0
 gpg --import pub.gpg 2>&1 | tee importlog || EXIT=$?
 gpg --allow-secret-key-import --import sec.gpg || EXIT=$?
 rm -rf *.gpg
-test ${EXIT} = 0 || exit ${EXIT}
+test ${EXIT} = 0 || test ${EXIT} = 2 || exit ${EXIT}
+EXIT=0
 
 set -x
 
 # determine email of key owner
 #grep "public key .* imported" importlog
 #grep "public key .* imported" importlog | sed -e 's/>".*$/>/' -e 's/^.*"//' 
-MAIL=`grep "public key .* imported" importlog | sed -e 's/>".*$/>/' -e 's/^.*"//'`
+MAIL=`grep "key .* \".*<.*>.*\"" importlog | sed -e 's/>".*$/>/' -e 's/^.*"//'`
 
 SERIES=$1
 test -z ${SERIES} && SERIES=unstable
 
 . version.sh || exit $?
 
-DEBIAN_VERSION=`echo ${PACKAGE_VERSION} | sed -e s,_,~,g -e s,-,+,g`~ppa1~${SERIES}
+DEBIAN_VERSION=${DEBIAN_VERSION_BASE}~${SERIES} || exit $?
+
+SERIES_PATCH=debian/patches/ubuntu-${SERIES}.patch
+if test -r ${SERIES_PATCH}; then
+  patch -p1 < ${SERIES_PATCH} || exit $?
+fi
 
 mv debian/changelog changelog_orig || exit $?
 cat > debian/changelog <<EOF

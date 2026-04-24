@@ -127,8 +127,8 @@ REAL uMenu::YPos(int num){
 }
 
 
-static inline void arrow(REAL x,REAL y,REAL dy,REAL size){
 #ifndef DEDICATED
+static inline void arrow(REAL x,REAL y,REAL dy,REAL size){
     if (sr_glOut){
         BeginLineLoop();
         Vertex(x,y+2*dy*size);
@@ -140,10 +140,10 @@ static inline void arrow(REAL x,REAL y,REAL dy,REAL size){
         Vertex(x-size,y);
         RenderEnd();
     }
-#endif
 }
+#endif
 
-static bool repeat = false;
+static bool s_globalRepeat = false;
 
 #ifndef DEDICATED
 static bool disphelp=false;
@@ -161,6 +161,7 @@ static rNoAutoDisplayAtNewlineCallback su_noNewline( uMenu::MenuActive );
 
 void uMenu::OnEnter(){
 #ifndef DEDICATED
+    bool localRepeat = false;
     float nextrepeat = 0.0f;
     static const float repeatdelay = 0.2f;
     static const float repeatrateStart  = 0.2f;
@@ -184,6 +185,7 @@ void uMenu::OnEnter(){
     yOffset=menuTop;
     REAL lastt=0;
     REAL ts=0;
+    bool snapScroll = false;
 
 #ifndef DEDICATED
     lastkey=tSysTimeFloat();
@@ -206,6 +208,32 @@ void uMenu::OnEnter(){
         lastt=tSysTimeFloat();
         if (ts>.2) ts=.2;
 
+        if(snapScroll)
+        {
+            if(ts * 30 < 1)
+                snapScroll = false;
+        }
+        else
+        {
+            if(ts * 15 > 1)
+                snapScroll = true;
+        }
+        auto scrollBy = [this, snapScroll, ts](REAL delta)
+        {
+            if(snapScroll || fabsf(delta) < 1E-6)
+            {
+                yOffset += delta;
+            }
+            else
+            {
+                // almost standard exponential decay; the proximity factor makes it
+                // approach the target position like t -> t^2 for negative t
+                REAL proximity = std::min(1.0f, 10.0f * sqrtf(fabsf(delta)));
+                REAL speed = std::min(1.0f, ts * 6 / proximity);
+                yOffset += speed * delta;
+            }
+        };
+
         menuentries=items.Len();
 
         // clamp cursor
@@ -218,7 +246,7 @@ void uMenu::OnEnter(){
         {
             SDL_Event tEvent;
             uInputProcessGuard inputProcessGuard;
-            while (su_GetSDLInput(tEvent))
+            while (!exitFlag && !quickexit && !exitToMain && su_GetSDLInput(tEvent))
             {
                 REAL entertime = tSysTimeFloat();
 
@@ -231,12 +259,12 @@ void uMenu::OnEnter(){
                         // don't send keyup events when released.
                         break;
                     }
-                    repeat = true;
+                    localRepeat = s_globalRepeat = true;
                     memcpy( &tEventRepeat, &tEvent, sizeof( SDL_Event ) );
                     nextrepeat = tSysTimeFloat() + repeatdelay;
                     break;
                 case SDL_KEYUP:
-                    repeat = false;
+                    localRepeat = s_globalRepeat = false;
                     repeatrate = repeatrateStart;
                     break;
                 }
@@ -249,11 +277,11 @@ void uMenu::OnEnter(){
 
                 if ( tSysTimeFloat() - entertime > 1 )
                 {
-                    repeat = false;
+                    localRepeat = s_globalRepeat = false;
                 }
             }
 
-            if ( repeat && tSysTimeFloat() > nextrepeat )
+            if ( localRepeat && s_globalRepeat && tSysTimeFloat() > nextrepeat )
             {
                 this->HandleEvent( tEventRepeat );
                 nextrepeat = tSysTimeFloat() + repeatrate;
@@ -290,11 +318,16 @@ void uMenu::OnEnter(){
 
         REAL ysel=YPos(selected);
 
-        if (ysel<menuBot+border)
-            yOffset+=(menuBot+border-ysel)*6*ts;
-
-        if (ysel>menuTop-border)
-            yOffset+=(menuTop-border-ysel)*6*ts;
+        {
+            REAL scrollUp = menuBot+border-ysel;
+            if(scrollUp > 0)
+                scrollBy(scrollUp);
+        }
+        {
+            REAL scrollDown = menuTop-border-ysel;
+            if(scrollDown < 0)
+                scrollBy(scrollDown);
+        }
 
         if (ysel<menuBot)
             yOffset+=(menuBot-ysel);
@@ -386,7 +419,7 @@ void uMenu::OnEnter(){
 #endif
     }
 
-    repeat = false;
+    s_globalRepeat = false;
 
     uCallbackMenuLeave::MenuLeave();
     su_inMenu = false;
@@ -406,35 +439,31 @@ void uMenu::HandleEvent( SDL_Event event )
             switch (event.key.keysym.sym){
 
             case(SDLK_ESCAPE):
-                            repeat = false;
+                s_globalRepeat = false;
                 lastkey=tSysTimeFloat();
                 Exit();
                 break;
 
                 case(SDLK_UP):
-                                lastkey=tSysTimeFloat();
-                    if( selected >=0 && selected < items.Len() ) items[selected]->Deselect();
-                    selected = GetNextSelectable(selected);
-                    if( selected >=0 && selected < items.Len() ) items[selected]->Select();
+                    lastkey=tSysTimeFloat();
+                    SetSelected(GetNextSelectable(selected));
                     break;
                 case(SDLK_DOWN):
-                                lastkey=tSysTimeFloat();
-                    if( selected >=0 && selected < items.Len() ) items[selected]->Deselect();
-                    selected = GetPrevSelectable(selected);
-                    if( selected >=0 && selected < items.Len() ) items[selected]->Select();
+                    lastkey=tSysTimeFloat();
+                    SetSelected(GetPrevSelectable(selected));
                     break;
 
             case(SDLK_LEFT):
-                            items[selected]->LeftRight(-1);
+                items[selected]->LeftRight(-1);
                 break;
             case(SDLK_RIGHT):
-                            items[selected]->LeftRight(1);
+                items[selected]->LeftRight(1);
                 break;
 
             case(SDLK_SPACE):
                         case(SDLK_KP_ENTER):
                             case(SDLK_RETURN):
-                                    repeat = false;
+                                    s_globalRepeat = false;
                 try
         {
                     su_inMenu = false;
@@ -465,7 +494,7 @@ void uMenu::HandleEvent( SDL_Event event )
 
                 su_inMenu = true;
 
-                repeat = false;
+                s_globalRepeat = false;
                 lastkey=tSysTimeFloat();
                 break;
 
@@ -512,6 +541,13 @@ int uMenu::GetPrevSelectable(int start)
 #ifndef DEDICATED
 static bool s_idleBackground = false;
 #endif
+
+void uMenu::SetSelected( int s )
+{
+    if( selected >= 0 && selected < items.Len() ) items[selected]->Deselect();
+    selected = s;
+    if( selected >= 0 && selected < items.Len() ) items[selected]->Select();
+}
 
 // select the menu item above "start"
 int uMenu::GetNextSelectable(int start)
@@ -649,7 +685,7 @@ void uMenuItem::DisplayText(REAL x,REAL y,const char *text,
         SetColor( selected, alpha );
 
         REAL th = text_height;
-
+        
         REAL availw = 1.9f;
         if (center < 0) availw = (.9f-x);
         if (center > 0) availw = (x + .9f);
@@ -1013,9 +1049,11 @@ bool uMenuItemString::Event(SDL_Event &e){
             if(initialized_scrap) {
                 get_scrap(SCRAP_TEXT, &scraplen, &scrap);
                 if(scraplen > 0) {
+                    bool convToUnicode = (!utf8::is_valid(scrap,scrap+scraplen));
+                    if(!convToUnicode) std::cerr << "utf8 ";
                     std::cerr << "scrap: " << scrap << std::endl;
                     for(unsigned char *c = (unsigned char *)scrap; *c; ++c) {
-                        if(!InsertChar(*c)) {
+                        if(!InsertChar(*c,convToUnicode)) {
                             break; // we hit a newline or were trying to
                                   // paste binary stuff
                         }
@@ -1619,7 +1657,7 @@ bool uMenu::IdleInput( bool processInput )
             switch (event.key.keysym.sym)
             {
             case(SDLK_ESCAPE):
-                repeat = false;
+                s_globalRepeat = false;
                 lastkey=tSysTimeFloat();
                 return true;
                 break;
@@ -1955,9 +1993,8 @@ bool uMenu::Message(const tOutput& message, const tOutput& interpretation, REAL 
                 Vertex(-1,-1);
                 RenderEnd();
 
-                REAL w=16*3/640.0;
-                REAL h=32*3/480.0;
-
+                //16*3/640.0, 32*3/480.0
+                REAL w=0.1*(REAL(sr_screenHeight)/sr_screenWidth),h=0.2;
 
                 //REAL middle=-.6;
 
@@ -1973,7 +2010,8 @@ bool uMenu::Message(const tOutput& message, const tOutput& interpretation, REAL 
                 Color(1,1,1);
                 DisplayText(0,.8,w,message,sr_fontError);
 
-                w = 16/640.0;
+                //16/640.0
+                w = 1/30.0*(REAL(sr_screenHeight)/sr_screenWidth);
                 h = 32/480.0;
 
                 REAL center = .4;

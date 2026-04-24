@@ -1,5 +1,160 @@
 
+#### Changes since 0.2.9.2.3:
+
+##### Fixed Bugs
+
+ * Startup freeze ([#161](https://gitlab.com/armagetronad/armagetronad/-/issues/161))
+
+##### Other Changes
+
+ * sdl12-compat for macOS (was: Retina resolution support) ([#147](https://gitlab.com/armagetronad/armagetronad/-/issues/147))
+
+##### Contributors
+
+Manuel Moos
+
+
+#### Changes since 0.2.9.1.1:
+
+##### Fixed Bugs
+
+ * Sound trouble deja entendu ([#130](https://gitlab.com/armagetronad/armagetronad/-/issues/130))
+ * Docker/Alpine: Crash in ZThread::ThreadOps::setPriority ([#138](https://gitlab.com/armagetronad/armagetronad/-/issues/138))
+ * Display lists keep rim wall lowered ([#141](https://gitlab.com/armagetronad/armagetronad/-/issues/141))
+ * FPS display inaccurate ([#143](https://gitlab.com/armagetronad/armagetronad/-/issues/143))
+ * Online play suddenly stopped working. ([#145](https://gitlab.com/armagetronad/armagetronad/-/issues/145))
+ * Work around Ubuntu sending spurious window activation messages ([#68](https://gitlab.com/armagetronad/armagetronad/-/issues/68))
+ * Desktop/AppData/Icon files are installed in a wrong place during make install ([#73](https://gitlab.com/armagetronad/armagetronad/-/issues/73))
+ * Steam: No logging, does not work in pressure vessel ([#77](https://gitlab.com/armagetronad/armagetronad/-/issues/77))
+ * Retina display not working correctly ([#88](https://gitlab.com/armagetronad/armagetronad/-/issues/88))
+ * 0.2.9 clients lose connection on 0.4 server ([#98](https://gitlab.com/armagetronad/armagetronad/-/issues/98))
+ * Window title sometimes SDL_APP ([#102](https://gitlab.com/armagetronad/armagetronad/-/issues/102))
+ * Docker Image: Increase thread stack size ([#104](https://gitlab.com/armagetronad/armagetronad/-/issues/104))
+ * Client sends quickly typed chat message with last character missing ([#106](https://gitlab.com/armagetronad/armagetronad/-/issues/106))
+ * Backslashes not escaped when saving to user.cfg ([#110](https://gitlab.com/armagetronad/armagetronad/-/issues/110))
+ * Fix invulnerability bug handling ([#111](https://gitlab.com/armagetronad/armagetronad/-/issues/111))
+ * macOS DMG Build problems when building inside the source tree ([#119](https://gitlab.com/armagetronad/armagetronad/-/issues/119))
+ * error: use of undeclared identifier 'finite'; did you mean 'isfinite'? ([#120](https://gitlab.com/armagetronad/armagetronad/-/issues/120))
+ * User data saved in the wrong place on macOS ([#125](https://gitlab.com/armagetronad/armagetronad/-/issues/125))
+
+##### New Features
+
+ * Make network trafic realtime priority ([#137](https://gitlab.com/armagetronad/armagetronad/-/issues/137))
+ * Add AppImage zsync update data ([#78](https://gitlab.com/armagetronad/armagetronad/-/issues/78))
+ * Provide docker image for the dedicated server ([#79](https://gitlab.com/armagetronad/armagetronad/-/issues/79))
+ * Add macOS dmg bundling ([#86](https://gitlab.com/armagetronad/armagetronad/-/issues/86))
+ * Integrate macOS build into pipeline ([#87](https://gitlab.com/armagetronad/armagetronad/-/issues/87))
+ * Sign the application bundle ([#89](https://gitlab.com/armagetronad/armagetronad/-/issues/89))
+
+##### Other Changes
+
+ * Flatpak adaptions ([#75](https://gitlab.com/armagetronad/armagetronad/-/issues/75))
+
+##### Contributors
+
+Armanelgtron, Cosimo Cecchi, Manuel Moos
+
+
+#### Changes since 0.2.9.1.0:
+
+##### Fixed Bugs
+
+ * Crash when using sdl12-compat ([#131](https://gitlab.com/armagetronad/armagetronad/-/issues/131))
+ * Ubuntu versions contain ~ppa1~ppa1 ([#70](https://gitlab.com/armagetronad/armagetronad/-/issues/70))
+ * Website update waits for launchpad uploads that do not happen ([#71](https://gitlab.com/armagetronad/armagetronad/-/issues/71))
+ * Versioning script incorrectly takes current tag into account ([#72](https://gitlab.com/armagetronad/armagetronad/-/issues/72))
+
+##### Other Changes
+
+ * Improve deployment cancellation ([#80](https://gitlab.com/armagetronad/armagetronad/-/issues/80))
+ * macOS Build ([#82](https://gitlab.com/armagetronad/armagetronad/-/issues/82))
+
+##### Contributors
+
+Christian Mäder, Manuel Moos
+
+
+#### Changes since 0.2.9.0.1:
+
+##### Fixed Bugs
+
+ * Use after free in nNetObject::ClearKnows ([#34](https://gitlab.com/armagetronad/armagetronad/-/issues/34))
+ * Missing null check for master server info ([#58](https://gitlab.com/armagetronad/armagetronad/-/issues/58))
+ * Basic screen aspect ratio failures: Text ([#59](https://gitlab.com/armagetronad/armagetronad/-/issues/59))
+ * Center message issues ([#62](https://gitlab.com/armagetronad/armagetronad/-/issues/62))
+ * AppImage library content still lacking ([#63](https://gitlab.com/armagetronad/armagetronad/-/issues/63))
+ * Crash in menu key repeat handling ([#66](https://gitlab.com/armagetronad/armagetronad/-/issues/66))
+
+##### New Features
+
+ * Make AppImage builds fit for registration at AppImageHub ([#17](https://gitlab.com/armagetronad/armagetronad/-/issues/17))
+ * Do not show a player's own IP on the client ([#27](https://gitlab.com/armagetronad/armagetronad/-/issues/27))
+ * Make --playback optional so recordings can be more easily played back ([#37](https://gitlab.com/armagetronad/armagetronad/-/issues/37))
+ * Steam on Windows: Add playback registry keys so .aarec files automatically playback with a doubleclick ([#38](https://gitlab.com/armagetronad/armagetronad/-/issues/38))
+ * Make clientside playback more robust ([#56](https://gitlab.com/armagetronad/armagetronad/-/issues/56))
+ * user.cfg fine grained upgrade system ([#61](https://gitlab.com/armagetronad/armagetronad/-/issues/61))
+ * Make SIZE_ and SPEED_FACTOR floating point instead of integer ([#20](https://gitlab.com/armagetronad/armagetronad/-/issues/20))
+
+##### Other Changes
+
+ * Make custom camera the default for new players ([#35](https://gitlab.com/armagetronad/armagetronad/-/issues/35))
+ * Turn down tutorial tooltip spam ([#36](https://gitlab.com/armagetronad/armagetronad/-/issues/36))
+ * Onboarding game improvements ([#39](https://gitlab.com/armagetronad/armagetronad/-/issues/39))
+ * ROUND_CENTER_MESSAGEs are still displayed in nCLIENT state ([#49](https://gitlab.com/armagetronad/armagetronad/-/issues/49))
+ * Make Full HD players see the small font as little as possible ([#60](https://gitlab.com/armagetronad/armagetronad/-/issues/60))
+
+##### Contributors
+
+Armanelgtron, Manuel Moos, SwagTron
+
+
+#### Changes since 0.2.9.0:
+
+##### Fixed Bugs
+
+ * Can't open the .appimage file. Missing libwebp.so.5 ([#54](https://gitlab.com/armagetronad/armagetronad/-/issues/54))
+
+##### Contributors
+
+Manuel Moos
+
+
+#### Changes since 0.2.8.3.6:
+
+##### Fixed Bugs
+
+ * Socket and unclean exit trouble due to fork(), execve() and exit() interaction ([#13](https://gitlab.com/armagetronad/armagetronad/-/issues/13))
+ * Language string identifier silence_player_text used twice ([#22](https://gitlab.com/armagetronad/armagetronad/-/issues/22))
+ * Bad video mode error recovery ([#23](https://gitlab.com/armagetronad/armagetronad/-/issues/23))
+
+##### New Features
+
+ * Update German translation ([#2](https://gitlab.com/armagetronad/armagetronad/-/issues/2))
+ * Adapt ChangeLog and fingerprint generation to git ([#11](https://gitlab.com/armagetronad/armagetronad/-/issues/11))
+ * Make playback time display optional ([#16](https://gitlab.com/armagetronad/armagetronad/-/issues/16))
+ * Deploy to itch.io ([#19](https://gitlab.com/armagetronad/armagetronad/-/issues/19))
+ * Credit contributors in patch notes ([#21](https://gitlab.com/armagetronad/armagetronad/-/issues/21))
+
+##### Contributors
+
+Daniel Harple, Hugh McMaster, Luke-Jr, Manuel Moos, Uzix, fman23, zolk3ri
+
+
 #### Changes since 0.2.8.3.5:
+
+##### Fixed Bugs
+
+ * Debian builds: Documentation html files have empty last change ([#9](https://gitlab.com/armagetronad/armagetronad/-/issues/9))
+ * Socket and unclean exit trouble due to fork(), execve() and exit() interaction ([#13](https://gitlab.com/armagetronad/armagetronad/-/issues/13))
+ * Ubuntu PPA release candidate builds would overwrite previous stable releases ([#15](https://gitlab.com/armagetronad/armagetronad/-/issues/15))
+ * Language string identifier silence_player_text used twice ([#22](https://gitlab.com/armagetronad/armagetronad/-/issues/22))
+ * Bad video mode error recovery ([#23](https://gitlab.com/armagetronad/armagetronad/-/issues/23))
+ * AppRun script does not work if call path contains spaces ([#24](https://gitlab.com/armagetronad/armagetronad/-/issues/24))
+ * Included forum links outdated ([#25](https://gitlab.com/armagetronad/armagetronad/-/issues/25))
+ * Client segfaults on OpenBSD ([#26](https://gitlab.com/armagetronad/armagetronad/-/issues/26))
+ * Client compiled with clang 10.0 (optimized) sefgaults on logout ([#28](https://gitlab.com/armagetronad/armagetronad/-/issues/28))
+ * Valgrind reports uses of unitialized, freed or invalid memory ([#29](https://gitlab.com/armagetronad/armagetronad/-/issues/29))
+ * Windows: DPI scaling behavior wrong ([#33](https://gitlab.com/armagetronad/armagetronad/-/issues/33))
 
 ##### New Features
 
@@ -10,14 +165,9 @@
  * Deploy to itch.io ([#19](https://gitlab.com/armagetronad/armagetronad/-/issues/19))
  * Credit contributors in patch notes ([#21](https://gitlab.com/armagetronad/armagetronad/-/issues/21))
 
-##### Fixed Bugs
+##### Other Changes
 
- * Debian builds: Documentation html files have empty last change ([#9](https://gitlab.com/armagetronad/armagetronad/-/issues/9))
- * Socket and unclean exit trouble due to fork(), execve() and exit() interaction ([#13](https://gitlab.com/armagetronad/armagetronad/-/issues/13))
- * Ubuntu PPA release candidate builds would overwrite previous stable releases ([#15](https://gitlab.com/armagetronad/armagetronad/-/issues/15))
- * Language string identifier silence_player_text used twice ([#22](https://gitlab.com/armagetronad/armagetronad/-/issues/22))
- * Bad video mode error recovery ([#23](https://gitlab.com/armagetronad/armagetronad/-/issues/23))
- * AppRun script does not work if call path contains spaces ([#24](https://gitlab.com/armagetronad/armagetronad/-/issues/24))
+ * Make custom camera the default for new players ([#35](https://gitlab.com/armagetronad/armagetronad/-/issues/35))
 
 ##### Contributors
 
@@ -215,11 +365,13 @@ Daniel Harple, Hugh McMaster, Luke-Jr, Manuel Moos, Uzix, fman23, zolk3ri
    ladderlog.txt.
  * "--input" now can be used more than once to read from multiple files or pipes.
  * new team management ladderlog messages:
-   TEAM_CREATED <team name>
-   TEAM_DESTROYED <team name>
-   TEAM_RENAMED <old team name> <new team name>
-   TEAM_PLAYER_ADDED <team name> <player>
-   TEAM_PLAYER_REMOVED <team name> <player>
+
+        TEAM_CREATED <team name>
+        TEAM_DESTROYED <team name>
+        TEAM_RENAMED <old team name> <new team name>
+        TEAM_PLAYER_ADDED <team name> <player>
+        TEAM_PLAYER_REMOVED <team name> <player>
+        
  * Manage external scripts on Unix dedicated servers. New commands: 
    SPAWN_SCRIPT, RESPAWN_SCRIPT, FORCE_RESPAWN_SCRIPT, KILL_SCRIPT,
    LIST_SCRIPTS, SCRIPT_ENV.
@@ -980,4 +1132,5 @@ Bugfixes:
  * the moviepack title screen is displayed
  * Linux version: easier system-wide installation with RPM packages 
    or "make install"
+
 

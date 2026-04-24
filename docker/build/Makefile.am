@@ -43,7 +43,7 @@ CI_base.tag: gits.tag source.tag result.build_server_32 result.build_client_64 c
 	touch $@
 
 # minimal expected build to be packable
-CI_pack.tag: gits_artifacts.tag source.tag CI_base.tag free.tag upload/PATCHNOTES.md upload/CHANGELOG.md
+CI_pack.tag: gits_artifacts.tag source.tag CI_base.tag free.tag upload/PATCHNOTES.md upload/CHANGELOG.md upload/RELEASENOTES.md
 	touch $@
 
 # all windows builds
@@ -70,12 +70,15 @@ CI.tag: CI_windows.tag CI_free.tag full.tag CI_pack.tag
 CI_base: CI_base.tag
 CI: CI.tag
 
+# all tests
+test: debtest.tag appimagetests.tag CI.tag deploy_base.tag
+
 all:	default
 
 dockertest.tag:
 	cp ${srcdir}/fakerelease_proto.sh .
 	@echo "Testing whether 'docker' works..."
-	docker help > /dev/null
+	if which docker; then docker help > /dev/null; fi
 	echo > $@
 
 tarwrapper.sh: ${top_srcdir}/docker/scripts/tarwrapper.sh
@@ -95,7 +98,7 @@ STEAM_PACKAGE_NAME=retrocycles
 STEAM_PACKAGE_TITLE=Retrocycles
 
 # configurations for lean builds not supposed to be installed
-CONFIGURE_ARGUMENTS:=--disable-uninstall --disable-restoreold --enable-etc --enable-automakedefaults --disable-useradd --disable-sysinstall --disable-initscripts
+CONFIGURE_ARGUMENTS:=--disable-uninstall --disable-restoreold --enable-etc --enable-automakedefaults --disable-useradd --disable-sysinstall --disable-initscripts --enable-curl
 CONFIGURE_ARGUMENTS_SERVER:=--disable-glout --enable-armathentication
 
 # other directories
@@ -110,6 +113,7 @@ CI_INFO: ${srcdir}/../scripts/brand.sh
 	echo PROGRAM_TITLE=$${PROGRAM_TITLE} >> $@ && \
 	echo CI_COMMIT_REF_PROTECTED=$${CI_COMMIT_REF_PROTECTED} >> $@ && \
 	echo CI_COMMIT_SHA=$${CI_COMMIT_SHA} >> $@ && \
+	echo CI_RELEASE_YEAR=$${CI_RELEASE_YEAR} >> $@ && \
 	echo CI_COMMIT_REF_NAME=$${CI_COMMIT_REF_NAME} >> $@
 
 .PRECIOUS: CI_INFO
@@ -180,6 +184,9 @@ upload/PATCHNOTES.md: sourcetar.tag upload/.tag
 upload/CHANGELOG.md: sourcetar.tag upload/.tag
 	${top_srcdir}/batch/make/patchnotes.py ${top_srcdir} ${top_srcdir}/CHANGELOG_FROZEN.md armagetronad armagetronad > $@
 
+upload/RELEASENOTES.md: ${src_dir}../deploy/RELEASENOTES.md upload/.tag
+	cp $< $@
+
 #***************************************************************
 
 # generic context with source
@@ -209,31 +216,44 @@ context.steam: context.64 gits_artifacts.tag
 	rm $@.dir/image
 	echo "armasteam_64" > $@.dir/image
 #	rebrand
-	sed -i $@.dir/version.sh -e s/PACKAGE_NAME=armagetronad/PACKAGE_NAME=$(STEAM_PACKAGE_TITLE)/ -e s/PACKAGE_TITLE=\"Armagetron\ Advanced/PACKAGE_TITLE=\"$(STEAM_PACKAGE_TITLE)/ -e s/PACKAGE_TITLE=\"Armagetron/PACKAGE_TITLE=\"$(STEAM_PACKAGE_TITLE)/
+	rm -f $@.dir/version.sh # required because the source and dest are hard links to the same file originally
+	sed < $<.dir/version.sh > $@.dir/version.sh -e s/PACKAGE_NAME=armagetronad/PACKAGE_NAME=$(STEAM_PACKAGE_TITLE)/ -e s/PACKAGE_TITLE=\"Armagetron\ Advanced/PACKAGE_TITLE=\"$(STEAM_PACKAGE_TITLE)/ -e s/PACKAGE_TITLE=\"Armagetron/PACKAGE_TITLE=\"$(STEAM_PACKAGE_TITLE)/
 # 	no remotely adult stuff
-	sed -i $@.dir/source/src/engine/ePlayer.cpp -e "s/pr0n/cat videos/"
+	rm -f $@.dir/source/src/engine/ePlayer.cpp
+	sed < $<.dir/source/src/engine/ePlayer.cpp > $@.dir/source/src/engine/ePlayer.cpp -e "s/pr0n/cat videos/"
 #   install alternative title, adapt sources
 	cp gits/steam/title.png $@.dir/source/textures/
-	sed -i $@.dir/source/src/tron/gLogo.cpp $@.dir/source/Makefile.* -e "s,textures/title.jpg,textures/title.png,"
-	cd $@.dir/source; automake
+	for f in source/src/tron/gLogo.cpp source/Makefile.am; do \
+		rm -f $@.dir/$$f; \
+		sed < $<.dir/$$f > $@.dir/$$f -e "s,textures/title.jpg,textures/title.png,"; \
+	done
+	cd $@.dir/source; ./bootstrap.sh
 #   done
 	echo > $@
+
+# switch container to use to steam soldier SDK, rebrand
+context.steamsoldier: context.steam
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*'
+	rm $@.dir/image
+	echo "armasteam_soldier" > $@.dir/image
 
 # add debian/ubuntu build info for release %. Requires GPG key from ~/.gnupg
 context.debsrc_%: rootcontext.64 ${srcdir}/rebrand_debian_core.sh ${srcdir}/debian_source.sh gits_artifacts.tag $(TARBALL)
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' $(TARBALL) ${srcdir}/rebrand_debian_core.sh ${srcdir}/debian_source.sh ${srcdir}/context/debian
 	if test -r  ../deploy/secrets/sec.gpg; then cp -lrf ../deploy/secrets/*.gpg $@.dir/; fi
+	rm -f $@.dir/image
 	echo "armadeb_64" > $@.dir/image
 	echo > $@
 result.debsrc_%: context.debsrc_%
 	+$(srcdir)/context_to_result.sh $@.dir ./debian_source.sh $*
 	echo > $@
 
-# test build a debian package (with a really old ubuntu codename)
+# test build a debian package (with a really old ubuntu codename that does not appear anywhere else, or there will be deployment errors)
 context.debsrc_test: context.debsrc_dapper
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*'
 #	extract fake secrets
 	base64 -d < ${srcdir}/../deploy/anonymous_secrets.b64 | tar -xjf - --one-top-level=$@.dir
+#   reverse to pack: tar -cjf - secrets | base64 > anonymous_secrets.b64 
 	mv $@.dir/secrets/* $@.dir
 	rmdir $@.dir/secrets/
 	echo > $@
@@ -256,6 +276,61 @@ context.test: rootcontext.64
 	rm $@.dir/image
 	echo "armalpine_32" > $@.dir/image
 	echo > $@
+
+#***************************************************************
+
+# macOS builds are done without docker
+MACOS_BUILD_BUNDLE="desktop/os-x/build_bundle.sh"
+MACOS_CONFIGURE_BUNDLE="desktop/os-x/configure_for_bundle.sh"
+
+MACZIP_CLIENT:=$(PACKAGE_NAME)-client-$(PACKAGE_VERSION).macOS.zip
+MACZIP_SERVER:=$(PACKAGE_NAME)-server-$(PACKAGE_VERSION).macOS.zip
+
+macOS/steam_build.tag: context.steam #macOS/client_build.tag #Makefile
+	mkdir -p macOS/steam
+	. context.steam.dir/version.sh && cd macOS/steam && ../../$<.dir/source/$(MACOS_CONFIGURE_BUNDLE) progname="$${PACKAGE_NAME}-${PACKAGE_VERSION}" progtitle="$${PACKAGE_TITLE}" && ${MAKE}
+	echo > $@
+
+macOS/server_build.tag: context.64 #smacOS/client_build.tag #Makefile
+	mkdir -p macOS/server
+	cd macOS/server && ../../$<.dir/source/$(MACOS_CONFIGURE_BUNDLE) --disable-glout && ${MAKE}
+	echo > $@
+
+macOS/client_build.tag: context.64 #Makefile
+	mkdir -p macOS/client
+	cd macOS/client && ../../$<.dir/source/$(MACOS_CONFIGURE_BUNDLE) && ${MAKE}
+	echo > $@
+
+
+macOS/%_sign.tag: macOS/%_build.tag #Makefile
+	@echo /////////////////////////////////////////
+	@echo // Bundle, sign and notarize macOS $*
+	@echo /////////////////////////////////////////
+	rm -rf macOS/$*/*.app macOS/$*/*.zip macOS/$*/*.dmg 
+	cd macOS/$* && SKIP_PART_2=yes bash ${MACOS_BUILD_BUNDLE}
+	echo > $@
+
+macOS/%.tag: macOS/%_sign.tag upload/.tag #Makefile
+	@echo /////////////////////////////////
+	@echo // Staple and pack macOS $*
+	@echo /////////////////////////////////
+	cd macOS/$* && SKIP_PART_1=yes bash ${MACOS_BUILD_BUNDLE}
+	cp macOS/$*/*.dmg macOS/$*/*.macOS.zip upload/
+	echo > $@
+
+#macOS/server_sign.tag: macOS/steam_sign.tag
+#macOS/client_sign.tag: macOS/server_sign.tag
+macOS/server.tag: macOS/steam.tag
+macOS/client.tag: macOS/server.tag
+
+.PRECIOUS: macOS/server_build.tag macOS/client_build.tag macOS/steam_build.tag
+.PRECIOUS: macOS/server_sign.tag macOS/client_sign.tag macOS/steam_sign.tag
+.PRECIOUS: macOS/server.tag macOS/client.tag macOS/steam.tag
+
+macOS_build: macOS/client_build.tag macOS/server_build.tag macOS/steam_build.tag
+macOS: macOS/client.tag macOS/server.tag macOS/steam.tag
+upload/${MACZIP_CLIENT}: macOS/client.tag
+upload/${MACZIP_SERVER}: macOS/server.tag
 
 #***************************************************************
 
@@ -336,29 +411,56 @@ apptar: apptar.tag
 
 #***************************************************************
 
-# AppImages
-context.appimage_%: result.appdir_% ${srcdir}/context/appimage.sh gits.tag
-	${srcdir}/prepare_context.sh $@.dir $<.dir/appdir $<.dir/image $<.dir/version.sh ${srcdir}/context/appimage.sh $(GITS)/pkg2appimage
+# Docker image building
+build_docker.tag: rootcontext.64 ${srcdir}/../deploy/deploy_docker.sh CI_INFO
+	DOCKER_NODEPLOY="nodeploy" ${srcdir}/../deploy/deploy_docker.sh $<.dir/source
 	echo > $@
 
-result.appimage_%: context.appimage_%
-	+$(srcdir)/context_to_result.sh $@.dir "./appimage.sh AppImage"
+deploy_docker.tag: rootcontext.64 ${srcdir}/../deploy/deploy_docker.sh CI_INFO
+	${srcdir}/../deploy/deploy_docker.sh $<.dir/source
+	echo > $@
+
+#***************************************************************
+
+# AppImages with optional signing
+context.appimage_%: upload/$(PACKAGE_NAME)-%-$(PACKAGE_VERSION).tbz context/version.sh ${srcdir}/context/appimage.sh gits.tag
+	${srcdir}/prepare_context.sh $@.dir ${srcdir}/context/appimage.sh $(GITS)/pkg2appimage
+	mkdir -p $@.dir/appdir/ && tar -jxf $< -C $@.dir/appdir/
+	echo $* | sed -e 's,.*_,armabuild_,' > $@.dir/image
+	if test -r  ../deploy/secrets/sec.gpg; then cp -lrf ../deploy/secrets/*.gpg $@.dir/; fi
 	echo > $@
 
 APPIMAGE_BASENAME:=$(shell echo $(PACKAGE_TITLE) | sed -e "s, ,,g")
-APPIMAGE_CLIENT_64:=$(APPIMAGE_BASENAME)-$(PACKAGE_VERSION)
-APPIMAGE_SERVER_64:=$(APPIMAGE_BASENAME)Dedicated-$(PACKAGE_VERSION)
-APPIMAGE_CLIENT_32:=$(APPIMAGE_BASENAME)-32bit-$(PACKAGE_VERSION)
-APPIMAGE_SERVER_32:=$(APPIMAGE_BASENAME)Dedicated-32bit-$(PACKAGE_VERSION)
+APPIMAGE_CLIENT_64:=$(APPIMAGE_BASENAME).AppImage
+APPIMAGE_SERVER_64:=$(APPIMAGE_BASENAME)Dedicated.AppImage
+APPIMAGE_CLIENT_32:=$(APPIMAGE_BASENAME)-32bit.AppImage
+APPIMAGE_SERVER_32:=$(APPIMAGE_BASENAME)Dedicated-32bit.AppImage
+
+result.appimage_client_64: context.appimage_client_64
+	+$(srcdir)/context_to_result.sh $@.dir "./appimage.sh ${APPIMAGE_CLIENT_64}"
+	echo > $@
+result.appimage_server_64: context.appimage_server_64
+	+$(srcdir)/context_to_result.sh $@.dir "./appimage.sh ${APPIMAGE_SERVER_64}"
+	echo > $@
+result.appimage_client_32: context.appimage_client_32
+	+$(srcdir)/context_to_result.sh $@.dir "./appimage.sh ${APPIMAGE_CLIENT_32}"
+	echo > $@
+result.appimage_server_32: context.appimage_server_32
+	+$(srcdir)/context_to_result.sh $@.dir "./appimage.sh ${APPIMAGE_SERVER_32}"
+	echo > $@
 
 upload/$(APPIMAGE_CLIENT_64): result.appimage_client_64 upload/.tag
-	cp $<.dir/AppImage $@
+	cp $<.dir/`basename $@` $@
+	cp $<.dir/`basename $@`.zsync $@.zsync
 upload/$(APPIMAGE_SERVER_64): result.appimage_server_64 upload/.tag
-	cp $<.dir/AppImage $@
+	cp $<.dir/`basename $@` $@
+	cp $<.dir/`basename $@`.zsync $@.zsync
 upload/$(APPIMAGE_CLIENT_32): result.appimage_client_32 upload/.tag
-	cp $<.dir/AppImage $@
+	cp $<.dir/`basename $@` $@
+	cp $<.dir/`basename $@`.zsync $@.zsync
 upload/$(APPIMAGE_SERVER_32): result.appimage_server_32 upload/.tag
-	cp $<.dir/AppImage $@
+	cp $<.dir/`basename $@` $@
+	cp $<.dir/`basename $@`.zsync $@.zsync
 
 appimage_client_64.tag: upload/$(APPIMAGE_CLIENT_64)
 	echo > $@
@@ -373,6 +475,84 @@ appimage.tag: appimage_client_64.tag appimage_server_64.tag appimage_client_32.t
 	echo > $@
 
 .PRECIOUS: context.appimage_server_32 context.appimage_client_32 context.appimage_server_64 context.appimage_client_64
+
+#***************************************************************
+
+# appimage tests; test scripts are in contest/tests/Dockerfile.*
+
+test.appimage_server_64_ubuntu_latest: upload/$(APPIMAGE_SERVER_64)
+test.appimage_server_64_ubuntu_oldest: upload/$(APPIMAGE_SERVER_64)
+test.appimage_client_64_ubuntu_latest: upload/$(APPIMAGE_CLIENT_64)
+test.appimage_client_64_ubuntu_oldest: upload/$(APPIMAGE_CLIENT_64)
+
+test.appimage_server_64_ubuntu_rolling: upload/$(APPIMAGE_SERVER_64)
+test.appimage_client_64_ubuntu_rolling: upload/$(APPIMAGE_CLIENT_64)
+
+test.appimage_client_64_ubuntu_latest_skewed: upload/$(APPIMAGE_CLIENT_64)
+test.appimage_client_64_ubuntu_oldest_skewed: upload/$(APPIMAGE_CLIENT_64)
+
+test.appimage_server_64_fedora_latest: upload/$(APPIMAGE_SERVER_64)
+test.appimage_server_64_fedora_oldest: upload/$(APPIMAGE_SERVER_64)
+test.appimage_client_64_fedora_latest: upload/$(APPIMAGE_CLIENT_64)
+test.appimage_client_64_fedora_oldest: upload/$(APPIMAGE_CLIENT_64)
+
+test.appimage_server_32_debian_latest: upload/$(APPIMAGE_SERVER_32)
+test.appimage_server_32_debian_oldest: upload/$(APPIMAGE_SERVER_32)
+test.appimage_client_32_debian_latest: upload/$(APPIMAGE_CLIENT_32)
+test.appimage_client_32_debian_oldest: upload/$(APPIMAGE_CLIENT_32)
+
+test.%: context/tests/Dockerfile.%
+	rm -rf $@.dir
+	mkdir -p $@.dir
+	cp $^ $@.dir
+	cd $@.dir; docker rmi $*:last || true
+	cd $@.dir; docker tag $*:latest $*:last || true
+	cd $@.dir; docker build . -f Dockerfile.* --pull -t $*:latest
+	cd $@.dir; docker rmi $*:last || true
+	echo > $@
+
+appimagetests.tag: \
+	test.appimage_server_64_ubuntu_latest \
+	test.appimage_server_64_ubuntu_oldest \
+	test.appimage_client_64_ubuntu_latest \
+	test.appimage_client_64_ubuntu_oldest \
+	test.appimage_client_64_ubuntu_latest_skewed \
+	test.appimage_client_64_ubuntu_oldest_skewed \
+	test.appimage_server_64_ubuntu_rolling \
+	test.appimage_client_64_ubuntu_rolling \
+	test.appimage_server_64_fedora_latest \
+	test.appimage_server_64_fedora_oldest \
+	test.appimage_client_64_fedora_latest \
+	test.appimage_client_64_fedora_oldest \
+	test.appimage_server_32_debian_latest \
+	test.appimage_server_32_debian_oldest \
+	test.appimage_client_32_debian_latest \
+	test.appimage_client_32_debian_oldest \
+	upload/.tag
+	echo > $@
+
+appimagetests: appimagetests.tag
+
+appimagetests_ci.tag: \
+	test.appimage_client_64_ubuntu_latest \
+	test.appimage_client_64_ubuntu_oldest_skewed \
+	test.appimage_client_64_fedora_latest \
+	test.appimage_server_64_fedora_oldest \
+	test.appimage_client_64_fedora_oldest \
+	test.appimage_server_32_debian_oldest \
+	test.appimage_client_32_debian_oldest \
+	upload/.tag
+	echo > $@
+
+appimagetests_ci: appimagetests_ci.tag
+
+appimagetests_extra.tag: \
+	test.appimage_server_64_ubuntu_rolling \
+	test.appimage_client_64_ubuntu_rolling \
+	upload/.tag
+	echo > $@
+
+appimagetests_extra: appimagetests_extra.tag
 
 #***************************************************************
 
@@ -487,6 +667,12 @@ steamdirs/steam_linux: result.appdir_server_steam result.appdir_client_steam ste
 	cp -al result.appdir_client_steam.dir/appdir/* $@.dir/
 	echo > $@
 
+steamdirs/steam_linux_soldier: result.appdir_server_steamsoldier result.appdir_client_steamsoldier steamdirs/.tag
+	rm -rf $@.dir
+	cp -al $<.dir/appdir $@.dir
+	cp -al result.appdir_client_steamsoldier.dir/appdir/* $@.dir/
+	echo > $@
+
 steamdirs/steam_windows: result.winbuild_steam steamdirs/.tag ${srcdir}/context/steam/windows/*
 	rm -rf $@.dir
 	cp -al $<.dir/dist $@.dir
@@ -500,28 +686,62 @@ steamdirs/steam_windows: result.winbuild_steam steamdirs/.tag ${srcdir}/context/
 	rm -rf $@.dir/banner*
 	echo > $@
 
+steamdirs/steam_macos: macOS/steam.tag steamdirs/.tag
+	rm -rf $@.dir
+	mkdir -p $@.dir
+	cd $@.dir; unzip ../../upload/${STEAM_PACKAGE_TITLE}*-client-$(PACKAGE_VERSION).macOS.zip
+	mv $@.dir/*.app $@.dir/CLIENT.app
+	mv $@.dir/CLIENT.app $@.dir/${STEAM_PACKAGE_TITLE}.app
+	echo > $@
+
 steam_linux.tag: steamdirs/steam_linux result.appdir_client_steam result.appdir_server_steam
 	echo > $@
 steam_windows.tag: steamdirs/steam_windows result.winbuild_steam
 	echo > $@
+steam_macos.tag: steamdirs/steam_macos
+	echo > $@
 
-steam.tag: steam_windows.tag steam_linux.tag
+steam.tag: steam_windows.tag steam_linux.tag steam_macos.tag
 	echo > $@
 .PHONY: steam steam_windows steam_linux
 
 .PRECIOUS:  context.build_client_steam result.build_client_steam context.appdir_client_steam result.build_server_steam context.build_server_steam context.appdir_server_steam context.winbuild_steam context.winsource_steam
 
 #***************************************************************
+# Reformat .md files
+
+context.reformat: rootcontext.64 CI_pack.tag ${srcdir}/context/reformat.sh
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' upload/*.md ${srcdir}/context/reformat.sh
+	rm -f $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
+	echo > $@
+result.reformat: context.reformat
+	+$(srcdir)/context_to_result.sh $@.dir ./reformat.sh $*
+	echo > $@
+
+reformat.tag: result.reformat
+	cp -a $<.dir/*.txt upload/
+	cp -a $<.dir/*.html upload/
+	echo > $@
+
+#***************************************************************
 
 # for testing, we want minimal builds before any deployment
 # in production, the CI solution is responsible for having built
 # everything not explicitly required here
-deploy_base.tag: CI_pack.tag debtest.tag ../deploy/targets.sh
+deploy_base.tag: CI_pack.tag debtest.tag reformat.tag ../deploy/targets.sh
 	echo > $@
 deploy_base: deploy_base.tag
 
-context.deploy_base_%: rootcontext.64 deploy_base.tag ${srcdir}/../deploy/deploy_%.sh ../deploy/* CI_INFO
-	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' upload ../deploy/'*' ${srcdir}/../deploy/deploy_$*.sh CI_INFO
+# out of our control deploy targets that break from time to time; the whole deploy process needs to be delayed if they fail
+deploy_essential: result.deploy_lp result.deploy_scp
+deploy_external: deploy_essential
+
+# targets in our control
+deploy_ours: result.deploy_zi result.deploy_download
+
+context.deploy_base_%: rootcontext.64 deploy_base.tag ${srcdir}/../deploy/deploy_%.sh ${srcdir}/../deploy/wait_for_upload.sh ../deploy/* CI_INFO
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' upload ../deploy/'*' ${srcdir}/../deploy/deploy_$*.sh ${srcdir}/../deploy/wait_for_upload.sh CI_INFO
 	echo > $@
 context.deploy_%: context.deploy_base_%
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*'
@@ -531,15 +751,44 @@ result.deploy_%: context.deploy_%
 	echo > $@
 
 # special case steam: run in steamcmd image
-context.deploy_steam: context.deploy_base_steam ${srcdir}/../deploy/steamcontentbuilder/*/* steamdirs/*
+context.deploy_steam: context.deploy_base_steam ${srcdir}/../deploy/steamcontentbuilder/*/* steam.tag
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/steamcontentbuilder
 	sed -i $@.dir/steamcontentbuilder/scripts/app_build_1306180.vdf -e "s/BUILD_DESCRIPTION/$(STEAM_PACKAGE_TITLE)$(PACKAGE_TITLE_SUFFIX) $(PACKAGE_VERSION)/"
 	mkdir -p $@.dir/steamcontentbuilder/content $@.dir/steamcontentbuilder/output
 	cp -al steamdirs/steam_windows.dir $@.dir/steamcontentbuilder/content/steam_windows
 	cp -al steamdirs/steam_linux.dir $@.dir/steamcontentbuilder/content/steam_linux
+	cp -al steamdirs/steam_macos.dir $@.dir/steamcontentbuilder/content/steam_macos
 	rm -rf $@.dir/upload
 	rm -f $@.dir/image
 	echo "steamcmd" > $@.dir/image
+	echo > $@
+
+# special case steam: obtain steam guard unlock data
+context.steam_guard: rootcontext.64 ${srcdir}/prepare_context.sh ${srcdir}/../deploy/steamcontentbuilder/*/* ${srcdir}/../deploy/*steam_guard*.sh CI_INFO Makefile
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ../deploy/'*' ${srcdir}/../deploy/steamcontentbuilder ${srcdir}/../deploy/*steam_guard*.sh CI_INFO
+	mkdir -p $@.dir/steamcontentbuilder/content $@.dir/steamcontentbuilder/output
+	rm -rf $@.dir/upload
+	rm -f $@.dir/image
+	echo "steamcmd" > $@.dir/image
+	echo > $@
+
+result.steam_guard: context.steam_guard
+	$(srcdir)/context_to_result.sh $@.dir ./obtain_steam_guard_1.sh
+	echo "Enter Steam Guard Code : " && read STEAM_GUARD_CODE && echo "STEAM_GUARD_CODE=$${STEAM_GUARD_CODE}" > ./context.steam_guard.dir/secrets/steamguard.sh
+	$(srcdir)/context_to_result.sh $@.dir ./obtain_steam_guard_2.sh
+	echo > $@
+
+steam_guard: result.steam_guard
+	scp result.steam_guard.dir/output/config.vdf armadeploy@builder.armagetronad.org:~/secrets/
+	echo > $@
+
+context.deploy_gitlab: rootcontext.64 deploy_base.tag ../deploy/* ${srcdir}/../deploy/deploy_gitlab.sh CI_INFO
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' upload ../deploy/'*' ${srcdir}/../deploy/deploy_gitlab.sh CI_INFO
+	echo "#/bin/bash" > $@.dir/CI_INFO_DEPLOY_GITLAB
+	echo "CI_JOB_TOKEN=${CI_JOB_TOKEN}" >> $@.dir/CI_INFO_DEPLOY_GITLAB
+	echo "CI_API_V4_URL=${CI_API_V4_URL}" >> $@.dir/CI_INFO_DEPLOY_GITLAB
+	echo "CI_PROJECT_ID=${CI_PROJECT_ID}" >> $@.dir/CI_INFO_DEPLOY_GITLAB
+	chmod 755 $@.dir/CI_INFO_DEPLOY_GITLAB
 	echo > $@
 
 context.deploy_ppa_%: result.debsrc_% ${srcdir}/../deploy/deploy_ppa.sh ../deploy/targets.sh CI_INFO
@@ -559,45 +808,59 @@ context.deploy_lp: context.deploy_base_lp ${srcdir}/../deploy/lp-project-upload
 context.update_zi: context.deploy_base_zeroinstall ${srcdir}/../deploy/*_zeroinstall.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/*_zeroinstall.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_20" > $@.dir/image
 	echo > $@
 result.update_zi: context.update_zi
 	+$(srcdir)/context_to_result.sh $@.dir ./update_zeroinstall.sh
 	echo > $@
-context.deploy_zi: context.deploy_base_zeroinstall result.update_zi ${srcdir}/../deploy/*_zeroinstall.sh result.deploy_lp result.deploy_scp
+context.deploy_zi: context.deploy_base_zeroinstall result.update_zi ${srcdir}/../deploy/*_zeroinstall.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' result.update_zi.dir/zeroinstall ${srcdir}/../deploy/*_zeroinstall.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_20" > $@.dir/image
 	echo > $@
-result.deploy_zi: context.deploy_zi
+result.deploy_zi: context.deploy_zi result.deploy_download
 	+$(srcdir)/context_to_result.sh $@.dir ./deploy_zeroinstall.sh
 	echo > $@
-context.deploy_itch: context.deploy_base_itch ${srcdir}/../deploy/*_itch.sh upload/$(APPTAR_CLIENT_64) upload/$(APPTAR_CLIENT_32) $(WINZIP_CLIENT)
+
+context.deploy_fp: context.deploy_base_flatpak ${srcdir}/../deploy/*_flatpak.sh
+	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/*_flatpak.sh
+	rm -f $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
+	echo > $@
+result.deploy_fp: context.deploy_fp
+	+$(srcdir)/context_to_result.sh $@.dir ./deploy_flatpak.sh
+	echo > $@
+
+context.deploy_itch: context.deploy_base_itch ${srcdir}/../deploy/*_itch.sh upload/$(APPTAR_CLIENT_64) upload/$(APPTAR_CLIENT_32) $(WINZIP_CLIENT) upload/${MACZIP_CLIENT}
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/*_itch.sh
+	mkdir -p $@.dir/appdir_macos; cd $@.dir/appdir_macos; unzip ../../upload/$(MACZIP_CLIENT); mv ${PACKAGE_TITLE}.app ${PACKAGE_TITLE}" ${PACKAGE_VERSION}".app
 	mkdir -p $@.dir/appdir_linux_64; cd $@.dir/appdir_linux_64; tar -xjf ../../upload/$(APPTAR_CLIENT_64)
 	mkdir -p $@.dir/appdir_linux_32; cd $@.dir/appdir_linux_32; tar -xjf ../../upload/$(APPTAR_CLIENT_32)
 	mkdir -p $@.dir/appdir_windows; cd $@.dir/appdir_windows; unzip ../../$(WINZIP_CLIENT)
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
 	echo > $@
 result.deploy_itch: context.deploy_itch
 	+$(srcdir)/context_to_result.sh $@.dir ./deploy_itch.sh
 	echo > $@
 
-# deploy to download site (additional dependency here only, standard rules apply)
-result.deploy_download: result.deploy_scp result.deploy_lp
-
 # individual deploy targets
 deploy_lp: result.deploy_lp
 deploy_scp: result.deploy_scp
+deploy_gitlab: result.deploy_gitlab
 deploy_steam: result.deploy_steam
 deploy_zi: result.deploy_zi
+deploy_fp: result.deploy_fp
 deploy_download: result.deploy_download
 deploy_itch: result.deploy_itch
 
+# current list of suppored releases is here: http://www.releases.ubuntu.com/
 deploy_ppa: \
+deploy_ppa_questing \
+deploy_ppa_plucky \
+deploy_ppa_noble \
+deploy_ppa_jammy \
 deploy_ppa_focal \
-deploy_ppa_eoan \
 deploy_ppa_bionic \
 deploy_ppa_xenial \
 deploy_ppa_trusty
@@ -605,7 +868,7 @@ deploy_ppa_trusty
 deploy_ppa_%: result.deploy_ppa_%
 	@echo Deployed $*
 
-deploy: deploy_lp deploy_scp deploy_ppa deploy_zi deploy_steam deploy_download deploy_itch
+deploy: deploy_lp deploy_scp deploy_zi deploy_fp deploy_steam deploy_download deploy_itch
 #deploy: deploy_scp
 #deploy: deploy_zi
 #deploy: deploy_ppa
@@ -620,15 +883,17 @@ staged_%:
 	sed -i ../deploy/targets.sh -e "s/STAGING=false/STAGING=true/"
 	MAKE=$(MAKE) ${srcdir}/make_deploy.sh $*
 
-.PHONY: deploy deploy_ppa deploy_scp deploy_steam deploy_base deploy_download
+.PHONY: deploy deploy_ppa deploy_scp deploy_gitlab deploy_steam deploy_base deploy_download
 
 .PRECIOUS: context.debsrc_dapper \
 context.debsrc_bionic result.debsrc_bionic context.deploy_ppa_bionic result.deploy_ppa_bionic \
 context.debsrc_trusty result.debsrc_trusty context.deploy_ppa_trusty result.deploy_ppa_trusty \
 context.debsrc_xenial result.debsrc_xenial context.deploy_ppa_xenial result.deploy_ppa_xenial \
-context.debsrc_eoan   result.debsrc_eoan   context.deploy_ppa_eoan   result.deploy_ppa_eoan \
 context.debsrc_focal  result.debsrc_focal  context.deploy_ppa_focal  result.deploy_ppa_focal \
+context.debsrc_hirsute result.debsrc_hirsute context.deploy_ppa_hirsute result.deploy_ppa_hirsute \
+context.debsrc_impish result.debsrc_impish context.deploy_ppa_impish result.deploy_ppa_impish \
 context.deploy_base_scp context.deploy_scp \
+context.deploy_base_gitlab context.deploy_gitlab \
 context.deploy_base_download result.deploy_download context.deploy_download
 
 #***************************************************************
@@ -653,10 +918,24 @@ intermediateclean:
 
 # keep the artifacts clean of junk not needed in the next phase
 artifactclean:
-	rm -rf *.dir source proto/*.dir
+	rm -rf \
+	*.dir \
+	proto/*.dir \
+	source
 
 clean: intermediateclean
-	rm -rf upload source gits result.* *.tag proto
+	rm -rf \
+	*.tag \
+	gits \
+	proto \
+	result.* \
+	rootcontext.* \
+	source \
+	steamdirs \
+	test.* \
+	macOS \
+	upload
+
 	if git -C ${srcdir} rev-parse --abbrev-ref HEAD > /dev/null; then rm -f CI_INFO; fi
 distclean: clean
 	rm -rf $(TARBALL) CI_INFO

@@ -30,15 +30,11 @@ case ${BRANCH} in
         MERGE_FROM=release${SUFFIX}
         ;;
     legacy*)
-        if test "${SUFFIX}" = "_0.2.8"; then
-            SUFFIX=_0.2.9
-            MERGE_FROM=legacy_0.2.8.3
-        fi
-        MERGE_FROM="${MERGE_FROM} release${SUFFIX} beta${SUFFIX}"
+        MERGE_FROM="release${SUFFIX} beta${SUFFIX}"
         ;;
-    master)
-        MERGE_FROM="legacy_0.2.8 legacy_0.2.8.3"
-        #MERGE_FROM="release beta legacy_0.2.8 legacy_0.2.8.3"
+    trunk)
+        MERGE_FROM="legacy_0.2.9"
+        #MERGE_FROM="release beta legacy_0.2.9 legacy_0.2.8.3"
         ;;
     *)
         echo "Unknown branch, don't know what to do."

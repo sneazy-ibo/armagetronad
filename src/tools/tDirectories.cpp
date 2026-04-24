@@ -63,6 +63,10 @@ static const char * s_topSourceDir = ".";
 #endif
 #endif
 
+#ifndef PROGTITLE
+#define PROGTITLE "Armagetron Advanced"
+#endif
+
 #ifndef PROGNAMEBASE
 #define PROGNAMEBASE "armagetronad"
 #endif
@@ -184,7 +188,16 @@ static tString st_MusicDir(expand_home_c(DATA_DIR));    // directory for game mu
 #ifdef USE_XDG
 #define USER_DATA_DIR "${XDG_DATA_HOME}/" PROGDIR
 #else
+#ifdef __APPLE__
+#define USER_DATA_DIR_BASE "~/Library/Application Support/" PROGTITLE
+#ifdef DEDICATED
+#define USER_DATA_DIR USER_DATA_DIR_BASE " Server"
+#else
+#define USER_DATA_DIR USER_DATA_DIR_BASE
+#endif
+#else
 #define USER_DATA_DIR "~/." PROGDIR
+#endif
 #endif
 #endif
 static tString st_UserDataDir(expand_home_c(USER_DATA_DIR));    // directory for game data
@@ -240,7 +253,11 @@ static tString st_WwwDir(expand_home_c(WWWROOTDIR));     // directory for dynami
 static tString st_ResourceDir(expand_home_c(RESOURCE_DIR));
 
 #ifndef AUTORESOURCE_DIR
+#ifdef USE_XDG
+#define AUTORESOURCE_DIR "${XDG_CACHE_HOME}/" PROGDIR "/resource"
+#else
 #define AUTORESOURCE_DIR ""
+#endif
 #endif
 static tString st_AutoResourceDir(expand_home_c(AUTORESOURCE_DIR));
 
@@ -499,6 +516,12 @@ char *eh_getdir(const char *da, size_t *len) {
                 {
                     char const * xdg_data = getenv("XDG_DATA_HOME");
                     tString data(xdg_data ? xdg_data : tString(pw->pw_dir) + "/.local/share");
+                    ret = strdup( data );
+                }
+                else if (!strcmp(type, "XDG_CACHE_HOME"))
+                {
+                    char const * xdg_cache = getenv("XDG_CACHE_HOME");
+                    tString data(xdg_cache ? xdg_cache : tString(pw->pw_dir) + "/.cache");
                     ret = strdup( data );
                 }
 
@@ -1831,23 +1854,34 @@ void tDirectoriesCommandLineAnalyzer::DoInitialize( tCommandLineParser & parser 
     }
     catch( tRunningInBuildDirectory )
     {
-        // last fallback for debugging (activated only if there is data in the current directory)
-        if ( TestPath( ".", "language/languages.txt") && TestDataPath(s_topSourceDir) && TestConfigurationPath(st_DataDir + "/config") )
+        for ( int depth = 1; depth <= 2; ++depth )
         {
-            // we must be running the game in debug mode; set user data dir to current directory.
-            st_UserDataDir = ".";
-            st_UserConfigDir = "./userconfig";
+            tString buildDirectory = GenerateParentOfExecutable( depth );
 
-            // the included resources are scrambled and put into the current directory as well.
-            st_IncludedResourceDir = "./resource/included";
+            if ( buildDirectory.Len() <= 1 )
+                buildDirectory = ".";
+#ifdef DEBUG
+            std::cout << "BuildDirectory = " << buildDirectory << "\n";
+#endif
+
+            // last fallback for debugging (activated only if there is data in the assumed build directory)
+            if ( TestPath( buildDirectory, "language/languages.txt" ) && TestDataPath( s_topSourceDir ) && TestConfigurationPath( st_DataDir + "/config" ) )
+            {
+                // we must be running the game in debug mode; set user data dir to current directory.
+                st_UserDataDir = buildDirectory;
+                st_UserConfigDir = buildDirectory + "/userconfig";
+
+                // the included resources are scrambled and put into the current directory as well.
+                st_IncludedResourceDir = buildDirectory + "/resource/included";
 
 #ifdef LEGACY_USER_DATA_DIR
-            st_LegacyUserDataDir = "";
+                st_LegacyUserDataDir = "";
 #endif
 #ifdef LEGACY_USER_DATA_DIR2
-            st_LegacyUserDataDir2 = "";
+                st_LegacyUserDataDir2 = "";
 #endif
-            return;
+                return;
+            }
         }
     }
 }

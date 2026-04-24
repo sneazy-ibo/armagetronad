@@ -141,7 +141,7 @@ static nSettingItem<tString> fcs("FORBID_COCKPIT_DATA", stc_forbiddenCallbacksSt
 
 cCockpit::~cCockpit() {
     ClearWidgets();
-    std::remove_if(m_Cockpits.begin(), m_Cockpits.end(), std::bind2nd(std::equal_to<cCockpit *>(), this));
+    m_Cockpits.remove(this);
 }
 cCockpit::cCockpit(cockpit_type type) :
         m_Type(type),
@@ -241,18 +241,8 @@ tValue::BasePtr cCockpit::cb_AliveTeammates(void){
 
 tValue::BasePtr cCockpit::cb_Framerate(void){
 
-    static int fps       = 60;
-    static REAL lastTime = 0;
+    int fps = se_FPS();
 
-    const REAL newtime = tSysTimeFloat();
-    const REAL ts      = newtime - lastTime;
-
-    int newfps   = static_cast<int>(se_AverageFPS());
-    if (fabs((newfps-fps)*ts)>4)
-    {
-        fps      = newfps;
-        lastTime = newtime;
-    }
     return tValue::BasePtr(new tValue::Int(fps));
 }
 
@@ -409,7 +399,7 @@ tValue::BasePtr cCockpit::cb_TimeToImpactLeft(void){
 }
 
 tValue::BasePtr cCockpit::cb_CurrentSong(void){
-    return tValue::BasePtr(new tValue::String(eSoundMixer::GetMixer()->GetCurrentSong()));
+    return tValue::BasePtr(new tValue::String(eSoundMixer::GetMixer().GetCurrentSong()));
 }
 
 tValue::BasePtr cCockpit::cb_CurrentName(void) {
@@ -484,7 +474,7 @@ void cCockpit::ProcessWidgets(node cur) {
             break;
         }
         cWidget::Base_ptr widget_ptr = ProcessWidgetType(cur);
-        if(&*widget_ptr == 0) {
+        if(!widget_ptr) {
             tERR_WARN("Unknown Widget type '" + cur.GetName() + "'");
             continue;
         }

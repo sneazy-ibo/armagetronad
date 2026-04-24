@@ -140,6 +140,10 @@ class nVersion
 public:
     nVersion();
     nVersion( int min, int max );
+
+    nVersion( nVersion const& ) = default;
+    nVersion& operator=( const nVersion& other ) = default;
+
     bool Supported( int version ) const;	// check if a particular version is supported
     bool Merge( const nVersion& a,
                 const nVersion& b);	// merges two versions to one; the new version supports only features both versions understand. false is returned if no common denominator could be found
@@ -159,7 +163,6 @@ public:
         return !operator==(other);
     }
     bool operator == ( const nVersion& other );
-    nVersion& operator = ( const nVersion& other ) = default;
 private:
     int min_, max_;
 };
@@ -300,11 +303,13 @@ public:
     void Add( REAL value, REAL weight ); //!< adds a value to the average
     void Add( REAL value );              //!< adds a value to the average
     void Reset();                 //!< resets average to zero
+    void Record();                //!< archive ping to/from recording
 private:
     nAverager snail_;    //!< extremely slow averager
     nAverager slow_;     //!< slow, reliable averager
     nAverager fast_;     //!< fast averager for detecting ping spikes
     static REAL weight_; //!< current default weight
+    REAL recordedPing_{};//!< ping from recording
 public:
     // accessors
     inline static void SetWeight( REAL const & weight ); //!< Sets the default statistical weight
@@ -601,6 +606,8 @@ public:
     static void AckAllPeer(unsigned short peer);
 
     static void Resend();
+
+    static bool ExpectAcks();
 };
 
 

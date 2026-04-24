@@ -15,8 +15,11 @@ include $(top_srcdir)/Makefile.manual
 # what goes into the distribution
 EXTRA_DIST = README-DEVELOPER README-Subversion README-SDL \
 armagetron.kdevelop armagetron.kdevelop.pcs armagetron.kdevses tron.ico \
-models sound textures bootstrap.sh music accustomdir.m4 fingerprint \
-win32 major_version
+models sound textures bootstrap.sh music \
+acinclude.d/accustomdir.m4 acinclude.d/ax_boost_base.m4 acinclude.d/ax_boost_system.m4 acinclude.d/ax_boost_thread.m4\
+acinclude.d/ax_cxx_have_align.m4\
+fingerprint \
+win32 major_version Dockerfile language
 # language/update.py
 
 # resource is included as a subdir for the purpose of keeping this makefile short and delegating
@@ -25,8 +28,8 @@ SUBDIRS = src resource batch config desktop www-root docker/build
 
 # special tasks to do if we're building the master server
 if BUILDMASTER
-masterInstallTasks=	cd  $(DESTDIR)$(bindir); mv armagetronad_main_master$(EXEEXT) @prognamebase@-master$(executable_suffix)
-masterUninstallTasks=rm -f $(DESTDIR)$(bindir)/@prognamebase@-master$(executable_suffix)
+masterInstallTasks=	cd "$(DESTDIR)$(bindir)"; mv armagetronad_main_master$(EXEEXT) @prognamebase@-master$(executable_suffix)
+masterUninstallTasks=rm -f "$(DESTDIR)$(bindir)"/@prognamebase@-master$(executable_suffix)
 else
 masterInstallTasks=echo 'No tasks for the master server'
 masterUninstallTasks=echo 'No tasks for the master server'
@@ -38,6 +41,9 @@ languagedata=language/english_base.txt language/english_base_notranslate.txt lan
 nobase_dist_language_DATA=language/languages.txt.in $(languagedata) language/update.py
 
 # What gets installed
+
+nobase_language_DATA=language/languages.txt language/english_base.txt language/english_base_notranslate.txt language/american.txt language/british.txt\
+             language/deutsch.txt language/french.txt language/spanish.txt language/polish.txt language/russian.txt
 
 if NEEDDATA
 # install media data only when it is needed
@@ -115,8 +121,6 @@ nobase_music_DATA=music/titletrack.ogg  music/when.ogg music/doIknowyou.ogg\
 nobase_model_DATA=models/cycle_body.mod models/cycle_front.mod models/cycle_rear.mod
 endif
 
-nobase_language_DATA=language/languages.txt $(languagedata)
-
 doxy:
 	cd src/doc && doxygen Doxyfile
 	cd ../../
@@ -173,9 +177,9 @@ uninstall_location=$(DESTDIR)${bindir}/${uninstaller}
 
 # generate and install uninstallation script
 install-uninstall: @srcdir@/batch/make/uninstall Makefile
-	$(install_sh_PROGRAM) $< $(uninstall_location)
-	rm $(uninstall_location)
-	ROOTDIR=$(ROOTDIR) DESTDIR=$(DESTDIR) MAKE="$(MAKE)" PREFIX="${prefix}" PROGTITLE="${progtitle}" PROGNAME="${progname}" SCRIPTDIR="${scriptdir}" sh $< $(uninstall_location) "$(external_uninstall_cmd)"
+	$(install_sh_PROGRAM) $< "$(uninstall_location)"
+	rm "$(uninstall_location)"
+	ROOTDIR=$(ROOTDIR) DESTDIR="$(DESTDIR)" MAKE="$(MAKE)" PREFIX="${prefix}" PROGTITLE="${progtitle}" PROGNAME="${progname}" SCRIPTDIR="${scriptdir}" sh $< "$(uninstall_location)" "$(external_uninstall_cmd)"
 else
 install-uninstall:
 endif
@@ -196,7 +200,7 @@ endif
 install-data-hook:
 #	install systemwide files
 if USE_SYSINSTALL
-	DESTDIR=$(DESTDIR) ROOTDIR=$(ROOTDIR) bash "$(DESTDIR)${scriptdir}/sysinstall" install "$(prefix)"
+	DESTDIR="$(DESTDIR)" ROOTDIR="$(ROOTDIR)" bash "$(DESTDIR)${scriptdir}/sysinstall" install "$(prefix)"
 endif
 if OS_X_TOOLKIT
 	${top_srcdir}/batch/make/symlink-relative "$(DESTDIR)${prefix}" --files-in-directory "$(DESTDIR)${aa_datadir}" --file-with-name "$(DESTDIR)${aa_sysconfdir}" config
@@ -213,9 +217,9 @@ endif
 
 uninstall-hook:
 #	delete executable and uninstaller
-	rm -f $(DESTDIR)${bindir}/@progname@$(executable_suffix)
+	rm -f "$(DESTDIR)${bindir}/@progname@$(executable_suffix)"
 if BUILDDEDICATED
-	rm -f $(DESTDIR)${bindir}/@prognamebase@-serverquery$(executable_suffix)
+	rm -f "$(DESTDIR)${bindir}/@prognamebase@-serverquery$(executable_suffix)"
 endif
 
 #	delegate to special tasks
@@ -232,7 +236,7 @@ endif
 uninstall-first:
 #	uninstall systemwide files
 if USE_SYSINSTALL
-	if test -z "$(AA_FAKE_UNINSTALL)"; then DESTDIR=$(DESTDIR) ROOTDIR=$(ROOTDIR) bash $(DESTDIR)${scriptdir}/sysinstall uninstall $(prefix); fi
+	if test -z "$(AA_FAKE_UNINSTALL)"; then DESTDIR="$(DESTDIR)" ROOTDIR=$(ROOTDIR) bash "$(DESTDIR)${scriptdir}"/sysinstall uninstall $(prefix); fi
 endif
 
 install-first:

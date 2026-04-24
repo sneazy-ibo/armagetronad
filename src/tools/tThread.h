@@ -30,17 +30,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "defs.h"
 
-#ifdef HAVE_LIBBOOST_THREAD
+#ifdef HAVE_BOOST_THREAD
 
 #include <boost/thread/thread.hpp>
 
-#define HAVE_THREADS
-
-#else // HAVE_LIBBOOST_THREAD
+#else // HAVE_BOOST_THREAD
 
 #ifdef HAVE_PTHREAD
-
-#define HAVE_THREADS
 
 #include <pthread.h>
 
@@ -50,8 +46,14 @@ namespace boost
 class thread
 {
 public:
+    struct attributes{
+        size_t stack_size{};
+
+        void set_stack_size(size_t s){stack_size = s;}
+    };
+
     template< class T>
-    thread( T const & t )
+    void launch( attributes const & a, T const & t )
     {
         // we don't currently hang on to thread objects, so no need to store handles
         pthread_t thread;
@@ -59,7 +61,32 @@ public:
         // make a copy of the object to call
         T * o = new T(t);
 
-        pthread_create(&thread, NULL, &run<T>, (void*) o);
+        if(a.stack_size)
+        {
+            pthread_attr_t attr;
+            pthread_attr_init(&attr);
+            pthread_attr_setstacksize(&attr, a.stack_size);
+
+            pthread_create(&thread, &attr, &run<T>, (void*) o);
+
+            pthread_attr_destroy(&attr);
+        }
+        else
+        {
+            pthread_create(&thread, nullptr, &run<T>, (void*) o);
+        }
+    }
+
+    template< class T>
+    thread( attributes const & a, T const & t )
+    {
+        launch(a, t);
+    }
+
+    template< class T>
+    thread( T const & t )
+    {
+        launch(attributes{}, t);
     }
 
     void detach(){}
@@ -81,28 +108,8 @@ private:
 };
 }
 
-#else  // HAVE_PTHREAD
-
-#include "tError.h"
-
-namespace boost
-{
-class thread
-{
-public:
-    template< class T>
-    thread( T const & t )
-    {
-        // should never be called, then
-        tVERIFY(0);
-    }
-
-    void detach(){}
-};
-}
-
 #endif // HAVE_PTHREAD
 
-#endif // HAVE_LIBBOOST_THREAD
+#endif // HAVE_BOOST_THREAD
 
 #endif

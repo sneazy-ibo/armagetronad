@@ -140,6 +140,8 @@ protected:
     REAL helpAlpha_;
     
     gBrowserMenuItem(uMenu *M,const tOutput &help): uMenuItem( M, help )
+      , displayHelp_{false}
+      , helpAlpha_(0.0f)
     {
     }
 
@@ -181,13 +183,14 @@ public:
     void SetServer(nServerInfo *s);
     gServerInfo *GetServer();
 
-    virtual void Render(REAL x,REAL y,REAL alpha=1, bool selected=0);
-    virtual void RenderBackground();
+    void Render(REAL x,REAL y,REAL alpha=1, bool selected=0) override;
+    void RenderBackground() override;
 
-    virtual void Enter();
+    void Enter() override;
+    void Select() override;
 
     // handles a key press
-    virtual bool Event( SDL_Event& event );
+    bool Event( SDL_Event& event ) override;
 
     gServerMenuItem(gServerMenu *men);
     virtual ~gServerMenuItem();
@@ -792,10 +795,9 @@ void gServerMenuItem::RenderBackground()
         players << tOutput( "$network_master_serverinfo", server->Release(), uri, options );
     }
 
-    if( displayHelp_ )
     {
         players << "\n";
-        players.SetColor(tColor(1,1,1,helpAlpha_));
+        players.SetColor(tColor(1,1,1,displayHelp_ ? helpAlpha_ : 0));
         players << Help();
     }
 
@@ -983,6 +985,12 @@ void gServerMenuItem::Enter()
         ConnectToServer(server);
 }
 
+void gServerMenuItem::Select()
+{
+    // reset help display state
+    this->displayHelp_ = false;
+    this->helpAlpha_ = 0.0f;
+}
 
 void gServerMenuItem::SetServer(nServerInfo *s)
 {
