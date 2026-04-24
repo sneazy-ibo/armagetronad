@@ -306,6 +306,8 @@ public:
 
     bool renameAllowed_;     //!< specifies if the player is allowed to rename or not, does not know about votes.
 
+    bool hasDroppable, wantsDrop;
+
     nSpamProtection & GetChatSpam();       //!< chat volume spam
     eChatLastSaid & GetLastSaid();         //!< last said information
     eShuffleSpamTester & GetShuffleSpam(); //!< shuffle message spam

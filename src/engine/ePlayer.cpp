@@ -4165,6 +4165,14 @@ void se_ChatHandlerServer( unsigned short id, tColoredString const & say, nMessa
                         se_ChatShuffle( p, s );
                         return;
                     }
+                    else if (command == "/drop")
+                    {
+                        if( p->hasDroppable )
+                        {
+                            p->wantsDrop = true;
+                        }
+                        return;
+                    }
                     else if (command == "/team")
                     {
                         spam.lastSaidType_ = eChatMessageType_Team;
@@ -5082,6 +5090,9 @@ ePlayerNetID::ePlayerNetID(int p):nNetObject(),listID(-1), teamListID(-1), timeC
     chatFlags_          = 0;
     disconnected        = false;
     suspended_          = 0;
+    
+    hasDroppable=false;
+    wantsDrop   =false;
 
     loginWanted = false;
 
@@ -6865,6 +6876,9 @@ ePlayerNetID::ePlayerNetID( Engine::PlayerNetIDSync const & sync, nSenderInfo co
     suspended_  = 0;
     chatFlags_  =0;
     ready       =false;
+    
+    hasDroppable=false;
+    wantsDrop   =false;
 
     color = tShortColor(15,15,15);
 

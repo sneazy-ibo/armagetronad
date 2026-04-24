@@ -200,7 +200,7 @@ bool zFlagZone::Timestep( REAL time )
         //Check if player is alive or not. If yes, make the flag follow the owner. If not, send the flag home or drop it based on setting
         if(owner_->Player())
         {
-            if(!player->Object()->Alive())
+            if( player->wantsDrop || !player->Object()->Alive() )
             {
                 OwnerDropped();
             }
@@ -660,6 +660,8 @@ void zFlagZone::OnEntry( gCycle * target, REAL time )
         */
         positionUpdatePending_ = true;
 
+        target->Player()->hasDroppable = true;
+
         tColoredString playerName;
         playerName << *target->Player() << tColoredString::ColorString(1,1,1);
         sn_ConsoleOut( tOutput( "$player_flag_take", playerName ) );
@@ -757,6 +759,8 @@ void zFlagZone::RemoveOwner()
     {
         if (owner_->Player())
         {
+            owner_->Player()->hasDroppable = false;
+            owner_->Player()->wantsDrop = false;
             if (owner_->Player()->flagOverrideChat)
             {
                 owner_->Player()->flagOverrideChat = false;
