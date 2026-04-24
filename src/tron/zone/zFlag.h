@@ -85,7 +85,7 @@ private:
     float lastHoldScoreTime_;
     bool positionUpdatePending_;
     eCoord originalPosition_;
-    REAL originalRadius_;
+    REAL originalScale_;
 	bool ownerWarnedNotHome_;
 
    

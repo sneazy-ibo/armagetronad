@@ -77,6 +77,8 @@ private:
     int  current;
 };
 
+class eFPSCounter;
+
 //! timer class
 class eTimer:public nNetObject{
 public:
@@ -99,9 +101,15 @@ public:
     void SyncTime();
     void Reset(REAL t=0,bool force=false);
 
-    REAL AverageFPS(){return 1/(averageSpf_.GetAverage()+EPS);}
-    REAL AverageFrameTime(){return averageSpf_.GetAverage();}
-    REAL FrameTime(){return spf_;}
+    // best FPS value for UI display (currently: same as StableFPS())
+    int FPS() const noexcept;
+    // the most recent measure of FPS
+    REAL LastFPS() const noexcept;
+    // a stabilized measure of FPS, not changing as often as LastFPS
+    int StableFPS() const noexcept;
+
+    REAL AverageFrameTime() const noexcept { return averageSpf_.GetAverage(); }
+    REAL FrameTime() const noexcept { return spf_; }
 
     bool IsSynced() const; //!< returns whether the timer is synced sufficiently well to allow rendering
 
@@ -149,6 +157,8 @@ private:
 
     //! returns the descriptor responsible for this class
     virtual nNetObjectDescriptorBase const & DoGetDescriptor() const;
+
+    std::unique_ptr<eFPSCounter> fpsCounter_; //!< the private implementation of a precise FPS counter
 };
 
 REAL se_GameTime();
@@ -158,11 +168,21 @@ void se_SyncGameTimer();
 void se_ResetGameTimer(REAL t=0);
 void se_MakeGameTimer();
 void se_KillGameTimer();
-void se_PauseGameTimer(bool p);
 
-REAL se_PredictTime();
-REAL se_AverageFrameTime();
-REAL se_AverageFPS();
+enum eTimerPauseSource
+{
+    eTIMER_PAUSE_BUTTON = 1, // the dedicated pause button
+    eTIMER_PAUSE_MENU = 2, // pause from opening the menu
+    eTIMER_PAUSE_INACTIVE = 4, // pause from losing application focus
+    eTIMER_PAUSE_GAME = 8, // pause by game control flow
+    eTIMER_PAUSE_NONE = 0
+};
+
+void se_PauseGameTimer(bool p, eTimerPauseSource source);
+
+REAL se_PredictTime() noexcept;
+REAL se_AverageFrameTime() noexcept;
+int se_FPS() noexcept;
 
 extern eTimer *se_mainGameTimer;
 #endif

@@ -13,6 +13,7 @@
 #include "tConsole.h"
 #include "tError.h"
 #include "eGameObject.h"
+#include "eCamera.h"
 #include "eCoord.h"
 
 #include "eSoundMixer.h"
@@ -36,7 +37,7 @@
  *******************************************************************************/
 
 eWavData::eWavData() :
-        m_Volume(64), m_Playable(false)
+        m_Volume(64)
 {
 #ifdef HAVE_LIBSDL_MIXER
     // Do nothing constructor
@@ -60,11 +61,6 @@ eWavData::eWavData(const char* filename) {
 
 void eWavData::LoadWavFile(const char* filename) {
 #ifdef HAVE_LIBSDL_MIXER
-#ifdef MACOSX
-    // BUG: This call is very very slow on my system. Disable it until I figure out what is wrong. -- Dan
-    return;
-#endif
-
     m_WavData = Mix_LoadWAV(filename);
 
     if(!m_WavData) {
@@ -146,6 +142,16 @@ void eChannel::Set3d(eCoord home, eCoord soundPos, eCoord homeDirection) {
     Mix_SetPosition(m_ChannelID, 0, 0);
     // Add the new effect
     Mix_SetPosition(m_ChannelID, bearingInt, distanceInt );
+#endif // DEDICATED
+}
+
+void eChannel::Set3d(eCamera const &camera, eGameObject const &soundOrigin, REAL volume) {
+#ifdef HAVE_LIBSDL_MIXER
+    REAL r, l, doppler;
+    camera.GetSoundVolume(soundOrigin, r, l, doppler);
+    r *= volume;
+    l *= volume;
+    Mix_SetPanning(m_ChannelID, std::min(255, static_cast<int>(l*255)), std::min(255, static_cast<int>(r*255)));
 #endif // DEDICATED
 }
 

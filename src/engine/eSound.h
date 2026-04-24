@@ -62,12 +62,10 @@ public:
 
 class eLegacyWavData: public tListItem<eLegacyWavData>{
     SDL_AudioSpec spec; // the audio format
-    Uint8         *data; // the sound data
-    Uint32        len;   // the data's length
-    Uint32        samples; // samples
+    std::vector<Sint16> data; // in memory, all data is signed 16 bit
+    Uint32        samples; // samples (data length divided by channels)
     tString       filename; // the filename
     tString       filename_alt; // the filename
-    bool          freeData; // manually free data or use SDL_FreeWAV?
     bool          loadError; //!< was there an error during loading?
 
     static eLegacyWavData* s_anchor; // list anchor
@@ -82,8 +80,7 @@ public:
     void Unload();	// remove the file from memory
     static void UnloadAll(); // unload all sounds
 
-
-    bool Mix(Uint8 *dest,
+    bool Mix(Sint16 *dest,
              Uint32 len,
              eAudioPos &pos,
              REAL rvol,
@@ -99,6 +96,9 @@ public:
 
     void Loop(); // prepares the sample for smooth looped output;
     // none of the many sound-editors I tried had that feature...
+
+private:
+    void SetData(Uint8 const *data, Uint32 lengthInBytes);
 };
 
 class eSoundPlayer{
@@ -112,7 +112,7 @@ public:
     eSoundPlayer(eLegacyWavData &w,bool loop=false);
     ~eSoundPlayer();
 
-    bool Mix(Uint8 *dest,
+    bool Mix(Sint16 *dest,
              Uint32 len,
              int viewer,
              REAL rvol,

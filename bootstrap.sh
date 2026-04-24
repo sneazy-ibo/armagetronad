@@ -12,10 +12,23 @@ test -r ChangeLog || touch -t 198001010000 ChangeLog
 MYDIR=`dirname $0`
 if test -r batch/make/version; then
     echo "Generating version..."
-    echo "m4_define(AUTOMATIC_VERSION,["`sh batch/make/version $MYDIR`"])" > version || exit 1
+    echo "m4_define(AUTOMATIC_VERSION,["`sh batch/make/version $MYDIR`"])" > version.m4 || exit 1
+	sh batch/make/version --verbose $MYDIR | awk '{ print "#define TRUE_ARMAGETRONAD_" $1 " " substr( $0, index( $0, $2 ) ) }' > src/tTrueVersion.h
+
+    # try to fix source epoch
+    if test -e .git; then
+        if SOURCE_DATE_EPOCH=`git show --pretty='format:%at' -q`; then
+            git update-index --refresh > /dev/null
+            if git diff-index --quiet HEAD --; then
+                echo "m4_define(SOURCE_DATE_EPOCH,${SOURCE_DATE_EPOCH})" >> version.m4 || exit 1
+            fi
+        fi
+    fi
+
+    rm -f version
 fi
 echo "Copying license..."
-cp COPYING.txt COPYING
+test -r COPYING || cp COPYING.txt COPYING || exit $?
 echo "Running aclocal..."
 $ACLOCAL || { rm aclocal.m4; exit 1; }
 

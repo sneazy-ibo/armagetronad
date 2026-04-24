@@ -50,7 +50,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <fstream>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 #include "gWall.pb.h"
+
+#pragma GCC diagnostic pop
 
 /* **********************************************
    Wall
@@ -132,13 +137,13 @@ rwb("RIM_WALL_BLUE",rim_wall_blue);
    ********************************************** */
 
 gWallRim::gWallRim(eGrid *grid, REAL h)
-        :eWallRim(grid, false, h), renderHeight_(h), lastUpdate_(-100), tBeg_( 0 ), tEnd_( 0 )
+        :eWallRim(grid, false, h), renderHeight_(h), lastUpdate_(-100), lastRenderHeight_(h), tBeg_( 0 ), tEnd_( 0 )
 {
     // std::cout << "create " << this << "\n";
 }
 
 gWallRim::gWallRim(eGrid *grid, REAL tBeg, REAL tEnd, REAL h)
-        :eWallRim(grid, false, h), renderHeight_(h), lastUpdate_(-100), tBeg_( tBeg ), tEnd_( tEnd )
+        :eWallRim(grid, false, h), renderHeight_(h), lastUpdate_(-100), lastRenderHeight_(h), tBeg_( tBeg ), tEnd_( tEnd )
 {
     // std::cout << "create " << this << "\n";
 }
@@ -211,39 +216,17 @@ static void gWallRim_helper(eCoord p1,eCoord p2,REAL tBeg,REAL tEnd,REAL h,
 
     BeginQuads();
 
-    // NOTE: display lists on nvidia cards don't like infinite points
-    if (h<9000 || !sr_infinityPlane || rDisplayList::IsRecording() ){
-        TexVertex(p1.x, p1.y, 0,
-                  tBeg      , 1);
+    TexVertex(p1.x, p1.y, 0,
+              tBeg      , 1);
 
-        TexVertex(p1.x, p1.y, h,
-                  tBeg,       1-h/Z_SCALE);
+    TexVertex(p1.x, p1.y, h,
+              tBeg,       1-h/Z_SCALE);
 
-        TexVertex(p2.x, p2.y, h,
-                  tEnd,       1-h/Z_SCALE);
+    TexVertex(p2.x, p2.y, h,
+              tEnd,       1-h/Z_SCALE);
 
-        TexVertex(p2.x, p2.y, 0,
-                  tEnd      , 1);
-    }
-
-    else{
-        TexVertex(p1.x, p1.y, 0,
-                  tBeg,       1);
-
-        TexCoord(0,-1/REAL(Z_SCALE),0,0);
-
-#ifndef WIN32
-        Vertex(0,0,1,0);
-        Vertex(0,0,1,0);
-#else
-        Vertex(0.001f,0.001f,1,0); // Windows OpenGL has problems with
-        // infitite points perpenticular to the viewing direction
-        Vertex(0.001f,0.001f,1,0);
-#endif
-
-        TexVertex(p2.x, p2.y, 0,
-                  tEnd,       1);
-    }
+    TexVertex(p2.x, p2.y, 0,
+              tEnd      , 1);
 }
 
 // maximal size of the arena wall shadow compared to the camera height
@@ -475,12 +458,16 @@ void gWallRim::RenderReal(const eCamera *cam){
     }
 
     // grow the wall again
+    REAL ts = 0;
     if ( se_mainGameTimer )
     {
         REAL time = se_mainGameTimer->Time();
-        REAL ts = time - lastUpdate_;
+        ts = time - lastUpdate_;
+
         if ( ts > 0 )
         {
+            ts = std::max( ts, 1E-5f );
+
             lastUpdate_ = time;
 
             if ( renderHeight_ < .25 )
@@ -494,11 +481,12 @@ void gWallRim::RenderReal(const eCamera *cam){
                 renderHeight_ = height;
             }
         }
+    }
 
-        if ( renderHeight_ < height )
-        {
-            DestroyDisplayList();
-        }
+    if ( ts <= 0 || renderHeight_ != lastRenderHeight_ )
+    {
+        DestroyDisplayList();
+        lastRenderHeight_ = renderHeight_;
     }
 }
 
@@ -515,15 +503,29 @@ void gWallRim::RenderReal(const eCamera *cam){
 
 void gWallRim::OnBlocksCamera( eCamera * camera, REAL height ) const
 {
-    DestroyDisplayList();
-
     // lower the wall so it now longer blocks the view
+    if ( renderHeight_ < .25 )
+    {
+        renderHeight_ = .25;
+    }
     if ( height < renderHeight_ )
     {
         renderHeight_ = height;
    }
     if ( renderHeight_ < .25 )
         renderHeight_ = .25;
+
+    if ( renderHeight_ != lastRenderHeight_ )
+    {
+        DestroyDisplayList();
+        lastRenderHeight_ = renderHeight_;
+    }
+
+    // do not grow too soon
+    if ( se_mainGameTimer )
+    {
+        lastUpdate_ = se_mainGameTimer->Time() + .2;
+    }
 }
 
 #endif
@@ -600,7 +602,7 @@ void gPlayerWall::Flip(){
 }
 
 static void clamp01(REAL &c){
-    if (!isfinite(c))
+    if (!std::isfinite(c))
         c = 0.5;
 
     if (c<0)
@@ -987,7 +989,7 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
             if ( bool(cycle_) && gCycle::WallsLength() > 0 )
             {
                 REAL denom = pa-pe;
-                if( denom > 0 )
+                if( denom >= 0 )
                 {
                     continue;
                 }
@@ -1426,20 +1428,39 @@ REAL gPlayerWall::Pos(REAL a) const
     return begDist_ + ( endDist_ - begDist_ ) * a;
 }
 
+namespace
+{
+// return a in [0,1] so that begin + (end - begin)*a == inBetween, or as close as possible
+inline REAL GetAlpha(REAL begin, REAL end, REAL inBetween)
+{
+    REAL diff = ( end - begin );
+
+    if ( diff > 0 )
+    {
+        REAL a = (inBetween - begin) / diff;
+
+        // can happen from time to time due to numeric instabilities, especially in HR.
+        // tASSERT ( -.001 < a );
+        // tASSERT ( 1.001 > a );
+
+        clamp01(a);
+        return a;
+    }
+
+    if(inBetween < begin)
+        return 0;
+    if(inBetween > end)
+        return 1;
+
+    return 0.5;
+}
+}
+
 REAL gPlayerWall::Alpha(REAL pos) const
 {
     CHECKWALL;
 
-    REAL diff = ( endDist_  - begDist_ );
-    REAL a = pos - begDist_;
-
-    if ( diff > 0 )
-        a /= diff;
-
-    tASSERT ( -.001 < a );
-    tASSERT ( 1.001 > a );
-
-    return a;
+    return ::GetAlpha(begDist_, endDist_, pos);
 }
 
 bool gPlayerWall::IsDangerousAnywhere( REAL time ) const
@@ -1599,10 +1620,10 @@ void gNetPlayerWall::MyInitAfterCreation()
 
     //w=
 #ifdef DEBUG
-    if (!isfinite(end.x) || !isfinite(end.y))
+    if (!std::isfinite(end.x) || !std::isfinite(end.y))
         st_Breakpoint();
 
-    if (!isfinite(beg.x) || !isfinite(beg.y))
+    if (!std::isfinite(beg.x) || !std::isfinite(beg.y))
         st_Breakpoint();
 #endif
 
@@ -1639,7 +1660,6 @@ gNetPlayerWall::gNetPlayerWall(gCycle *cyc,
         cycle_(cyc),lastWall_(NULL),dir(d),dbegin(dbeg),
         beg(begi),end(begi),tBeg(tBegi),tEnd(tBegi),
         inGrid(false){
-    dir=dir; // Don't normalize: *REAL(1/sqrt(dir.NormSquared()));
     preliminary=(sn_GetNetState()==nCLIENT);
     obsoleted_=-100;
     gridding=1E+20;
@@ -1653,7 +1673,7 @@ void gNetPlayerWall::Update(REAL Tend,REAL dend){
 		end=beg + dir*(dend-dbegin);
 
 #ifdef DEBUG
-		if (!isfinite(end.x) || !isfinite(end.y))
+		if (!std::isfinite(end.x) || !std::isfinite(end.y))
 			st_Breakpoint();
 #endif
 
@@ -1702,7 +1722,7 @@ void gNetPlayerWall::real_Update(REAL Tend,const eCoord &pend, bool force )
     }
 
 #ifdef DEBUG
-    if (!isfinite(end.x) || !isfinite(end.y))
+    if (!std::isfinite(end.x) || !std::isfinite(end.y))
         st_Breakpoint();
 #endif
 
@@ -2042,6 +2062,8 @@ gPlayerWall *gNetPlayerWall::Wall(){
 
 void gNetPlayerWall::ReleaseData()
 {
+    Remove();
+
     if (this->cycle_){
         if (this->cycle_->currentWall==this)
             this->cycle_->currentWall=NULL;
@@ -2306,8 +2328,8 @@ void gNetPlayerWall::Check() const
     for ( i = coords_.Len() -1 ; i>=0; --i )
     {
         gPlayerWallCoord const * coords = &( coords_( i ) );
-        tASSERT( isfinite( coords[0].Pos ) );
-        tASSERT( isfinite( coords[0].Time ) );
+        tASSERT( std::isfinite( coords[0].Pos ) );
+        tASSERT( std::isfinite( coords[0].Time ) );
     }
 #endif
 }
@@ -2379,16 +2401,7 @@ REAL gNetPlayerWall::Alpha(REAL pos) const
 {
     CHECKWALL;
 
-    REAL diff = ( EndPos()  - BegPos() );
-    REAL a = pos - BegPos();
-
-    if ( diff > 0 )
-        a /= diff;
-
-    tASSERT ( -.001 < a );
-    tASSERT ( 1.001 > a );
-
-    return a;
+    return ::GetAlpha(BegPos(), EndPos(), pos);
 }
 
 bool gNetPlayerWall::IsDangerousAnywhere( REAL time ) const
@@ -2438,7 +2451,7 @@ bool gNetPlayerWall::IsDangerousApartFromHoles( REAL a, REAL time ) const
     // the distance value at the spot we hit
     REAL wallDistance = Pos( a );
 
-    // test for finite wall lenght
+    // test for finite wall length
     if ( gCycle::WallsLength() > 0 )
     {
         // the distance the cycle traveled so far

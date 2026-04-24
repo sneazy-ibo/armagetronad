@@ -49,6 +49,7 @@ eSoundMixer by Dave Fancella
 
 // Possibly temporary?
 #include <math.h>
+#include <memory>
 
 // sound quality
 #define SOUND_OFF 0
@@ -108,8 +109,19 @@ static tConfItem<int> scc("SOUND_CHANNELS",numSoundcardChannels);
 int musicActive = 1;
 static tConfItem<int> se("MUSIC_ACTIVE", musicActive);
 
-float buffersize = 4.0;
+float buffersize = 1.0;
 static tConfItem<float> sbs("SOUND_BUFFER_SIZE", buffersize);
+
+namespace
+{
+static tConfigMigration migrate([](tString const &savedInVersion){
+    // default for buffersize changed from 4 to 1, 4 would mean 30 ms sound latency, clearly too much
+    if(buffersize > 1 && tConfigMigration::SavedBefore(savedInVersion, "0.4.0_alpha_z5226"))
+    {
+        buffersize = 1;
+    }
+});
+}
 
 tString titleTrack("music/titletrack.ogg");
 static tConfItemLine stt("TITLE_TRACK", titleTrack);
@@ -140,14 +152,14 @@ static tConfItem<int> ss("SOUND_SOURCES",sound_sources);
 
 int eSoundMixer::m_Mode = 0;
 bool eSoundMixer::m_isDirty = true;
-eMusicTrack* eSoundMixer::m_TitleTrack = 0;
-eMusicTrack* eSoundMixer::m_GuiTrack = 0;
-eMusicTrack* eSoundMixer::m_GameTrack = 0;
+std::unique_ptr<eMusicTrack> eSoundMixer::m_TitleTrack{};
+std::unique_ptr<eMusicTrack> eSoundMixer::m_GuiTrack{};
+std::unique_ptr<eMusicTrack> eSoundMixer::m_GameTrack{};
 
 eSoundMixer::eSoundMixer()
 {
 #ifdef HAVE_LIBSDL_MIXER
-    m_Owner = NULL;
+    m_Grid = NULL;
     m_Playlist = NULL;
 
     if(musicActive == 1) {
@@ -158,11 +170,8 @@ eSoundMixer::eSoundMixer()
 #endif // DEDICATED
 }
 
-void eSoundMixer::SetMicrophoneOwner(eGameObject* newOwner) {
-#ifdef HAVE_LIBSDL_MIXER
-    //std::cout << "Setting new microphone owner\n";
-    m_Owner = newOwner;
-#endif // DEDICATED
+void eSoundMixer::SetGrid(eGrid* grid) {
+    m_Grid = grid;
 }
 
 void eSoundMixer::__channelFinished(int channel) {
@@ -237,35 +246,19 @@ int se_mixerFrequency = 1;
 
 void eSoundMixer::Init() {
 #ifdef HAVE_LIBSDL_MIXER
-    bool initbase = false;
+    if(!SDL_WasInit( SDL_INIT_AUDIO )) {
+        int rc;
+        rc = se_Wrap_SDL_InitSubSystem();
+        if ( rc < 0 ) {
+            //std::cerr << "Couldn't initialize audio, disabling.  I'm very sorry about that.\n";
+            return;
+            // todo: disable audio if we can't initialize it
+        }
+    }
+
+    Mix_Init(MIX_INIT_MOD | MIX_INIT_OGG);
 
     m_active = false;
-
-    const tPath& vpath = tDirectories::Data();
-
-    // We haven't started playing any music yet
-    m_musicIsPlaying = false;
-
-    tString musFile;
-
-    musFile = vpath.GetReadPath( titleTrack );
-#ifdef DEBUG
-    std::cout << titleTrack << "\n";
-#endif
-    m_TitleTrack = new eMusicTrack(musFile, true);
-    musFile = vpath.GetReadPath( guiTrack );
-#ifdef DEBUG
-    std::cout << guiTrack << "\n";
-#endif
-    m_GuiTrack = new eMusicTrack(musFile, true);
-
-    //m_GuiTrack->Loop();
-
-    // Don't load a file for this, we don't know what we're playing until it's time
-    // to play.
-    m_GameTrack = new eMusicTrack();
-
-    LoadPlaylist();
 
     int frequency;
 
@@ -283,43 +276,17 @@ void eSoundMixer::Init() {
         frequency=22050;
     }
 
-    if(!SDL_WasInit( SDL_INIT_AUDIO )) {
-        int rc;
-        rc = se_Wrap_SDL_InitSubSystem();
-        if ( rc < 0 ) {
-            //std::cerr << "Couldn't initialize audio, disabling.  I'm very sorry about that.\n";
-            initbase = false;
-            // todo: disable audio if we can't initialize it
-        } else {
-            initbase = true;
-        }
-    } else {
-        initbase = true;
-    }
-
-    if( !initbase ) {
-        return;
-    }
-
-    int rc;
-
     // guesstimate the desired number of samples to calculate in advance
-    int samples = static_cast< int >( buffersize * 512 );
+    int samples = std::max(128, static_cast< int >( (buffersize * frequency) / 60 ));
 
-    rc = Mix_OpenAudio( frequency, AUDIO_S16LSB,
-                        numSoundcardChannels, samples );
-
-    // try fallbacks
-    if( rc!=0 )
-    {
-        rc = Mix_OpenAudio( frequency, AUDIO_S16LSB,
+    int rc = Mix_OpenAudio( frequency, AUDIO_S16LSB,
                             2, samples );
 
-        if( rc!=0 )
-        {
-            rc = Mix_OpenAudio( 22050, AUDIO_S16LSB,
-                                2, samples );
-        }
+    // try fallback
+    if( rc!=0 )
+    {
+        rc = Mix_OpenAudio( 22050, AUDIO_S16LSB,
+                            2, samples );
     }
         
     if(rc==0) {
@@ -339,6 +306,32 @@ void eSoundMixer::Init() {
 
     // register old school sound filler callback
     Mix_SetPostMix( &fill_audio, NULL );
+
+    const tPath& vpath = tDirectories::Data();
+
+    // We haven't started playing any music yet
+    m_musicIsPlaying = false;
+
+    tString musFile;
+
+    musFile = vpath.GetReadPath( titleTrack );
+#ifdef DEBUG
+    std::cout << titleTrack << "\n";
+#endif
+    m_TitleTrack.reset(new eMusicTrack(musFile, true));
+    musFile = vpath.GetReadPath( guiTrack );
+#ifdef DEBUG
+    std::cout << guiTrack << "\n";
+#endif
+    m_GuiTrack.reset(new eMusicTrack(musFile, true));
+
+    //m_GuiTrack->Loop();
+
+    // Don't load a file for this, we don't know what we're playing until it's time
+    // to play.
+    m_GameTrack.reset(new eMusicTrack());
+
+    LoadPlaylist();
 
     // Now we're done with music and initializing sdl_mixer, we'll setup the sound
     // effect stuff
@@ -443,18 +436,27 @@ void eSoundMixer::PushButton( int soundEffect ) {
 #endif // DEDICATED
 }
 
-void eSoundMixer::PushButton( int soundEffect, eCoord location ) {
+void eSoundMixer::PushButton( int soundEffect, eGameObject const &noiseMaker, REAL volume ) {
 #ifdef HAVE_LIBSDL_MIXER
     if (!m_active) return;
 
     // If we don't have an owner yet, just call regular PushButton
-    if(!m_Owner) return;
+    if(!m_Grid)
+        return PushButton(soundEffect);
 
-    int theChannel = FirstAvailableChannel();
+    auto &cameras = m_Grid->Cameras();
+    for(auto *pCamera: cameras)
+    {
+        if(!pCamera)
+            continue;
 
-    if( theChannel < 0) return;
-    m_Channels[theChannel].Set3d(m_Owner->Position(), location, m_Owner->Direction());
-    m_Channels[theChannel].PlaySound(m_SoundEffects[soundEffect]);
+        int theChannel = FirstAvailableChannel();
+
+        if( theChannel < 0) continue;
+        m_Channels[theChannel].Set3d(*pCamera, noiseMaker, volume);
+        m_Channels[theChannel].PlaySound(m_SoundEffects[soundEffect]);
+    }
+
 #endif // DEDICATED
 }
 
@@ -466,6 +468,7 @@ void eSoundMixer::PlayContinuous(int soundEffect, eGameObject* owner) {
     if (!m_active) return;
     return;
 
+    /*
     int theChannel = FirstAvailableChannel();
     if( theChannel < 0 || m_Channels[theChannel].isBusy()) {
 #ifdef DEBUG
@@ -479,6 +482,7 @@ void eSoundMixer::PlayContinuous(int soundEffect, eGameObject* owner) {
     if(!m_Owner) m_Channels[theChannel].DelayStarting();
     m_Channels[theChannel].SetHome(m_Owner);
     m_Channels[theChannel].LoopSound(m_SoundEffects[soundEffect]);
+    */
 #endif
 }
 
@@ -503,8 +507,7 @@ void eSoundMixer::Update() {
     // First we'll update all the channels
     for(int i=0; i<eChannel::numChannels; i++) {
         if( m_Channels[i].IsDelayed() ) {
-            if( m_Owner ) {
-                m_Channels[i].SetHome(m_Owner);
+            if( m_Grid ) {
                 m_Channels[i].Undelay();
             }
         }
@@ -568,44 +571,40 @@ tString eSoundMixer::GetCurrentSong() {
     return tString(" ");
 }
 
-eSoundMixer* eSoundMixer::_instance = 0;
+std::unique_ptr<eSoundMixer> eSoundMixer::_instance = 0;
 
 void eSoundMixer::ShutDown() {
 #ifdef HAVE_LIBSDL_MIXER
-    if ( _instance )
-        _instance->SetMicrophoneOwner( NULL );
+    m_TitleTrack.reset();
+    m_GuiTrack.reset();
+    m_GameTrack.reset();
 
     if ( _instance && _instance->m_active )
     {
         Mix_CloseAudio();
+        Mix_Quit();
         SDL_QuitSubSystem( SDL_INIT_AUDIO );
     }
 
-    delete _instance;
-    delete m_TitleTrack;
-    delete m_GuiTrack;
-    if(m_GameTrack) delete m_GameTrack;
-
-
+    _instance.reset();
 #endif // DEDICATED
 }
 
-eSoundMixer* eSoundMixer::GetMixer() {
-#ifdef HAVE_LIBSDL_MIXER
-    if(_instance == 0) {
-        _instance = new eSoundMixer();
+eSoundMixer& eSoundMixer::GetMixer() {
+    if(!_instance) {
+        // the division into constructor and Init() is required right now because we have cyclical dependencies with eMusicTrack. Init creates some, and they look for eSoundMixer.
+        _instance.reset(new eSoundMixer());
         _instance->Init();
     }
 
-#endif // DEDICATED
-    return _instance;
+    return *_instance;
 }
 
 #ifdef HAVE_LIBSDL_MIXER
 // Play this every frame
 static void updateMixer() {
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->Update();
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.Update();
 }
 
 static rPerFrameTask mixupdate(&updateMixer);
@@ -617,10 +616,12 @@ static rPerFrameTask mixupdate(&updateMixer);
 
 uMenu Sound_menu("$sound_menu_text");
 
+/*
 static uMenuItemInt sources_men
 (&Sound_menu,"$sound_channels",
  "$sound_channels_help",
  numSoundcardChannels,2,6,2);
+*/
 
 static uMenuItemSelection<int> sq_men
 (&Sound_menu,"$sound_menu_quality_text",
@@ -669,10 +670,10 @@ static uMenuItemString bc(&Sound_menu, "$sound_customplaylist_text",
 void se_SoundMenu(){
     int oldUsePlaylist = usePlaylist;
     tString oldCustomPlaylist = customPlaylist;
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
 
     Sound_menu.Enter();
-    if( oldUsePlaylist != usePlaylist || oldCustomPlaylist != customPlaylist) mixer->LoadPlaylist();
+    if( oldUsePlaylist != usePlaylist || oldCustomPlaylist != customPlaylist) mixer.LoadPlaylist();
 }
 
 // Media player keybinds

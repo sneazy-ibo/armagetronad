@@ -53,7 +53,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <deque>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "nNetwork.pb.h"
+#pragma GCC diagnostic pop
 
 #include "nStreamMessage.h"
 
@@ -386,14 +389,6 @@ bool nVersion::operator == ( const nVersion& other )
     return this->max_ == other.max_ && this->min_ == other.min_;
 }
 
-nVersion& nVersion::operator = ( const nVersion& other )
-{
-    this->min_ = other.min_;
-    this->max_ = other.max_;
-
-    return *this;
-}
-
 nMessage& operator >> ( nMessage& m, nVersion& ver )
 {
     int min,max;
@@ -434,7 +429,7 @@ std::ostream& operator << ( std::ostream& s, const nVersion& ver )
 
 nVersionFeature::nVersionFeature( int min, int max ) // creates a feature that is supported from version min to max; values of -1 indicate no bordera
 {
-    tASSERT( min_ >= sn_MyVersion().Min() );
+    tASSERT( min >= sn_MyVersion().Min() );
     tASSERT( max < 0 || max <= sn_MyVersion().Max() );
 
     min_ = min;
@@ -646,6 +641,7 @@ nDescriptorBase::nDescriptorBase(unsigned short identification,
 : tListItem<nDescriptorBase>(nDescriptor_anchor),
   id(identification), name(Name), acceptWithoutLogin(awl)
 {
+    std::ignore = name;
 #ifdef DEBUG
 #ifndef WIN32
     //  con << "Descriptor " << id << ": " << name << '\n';
@@ -1165,10 +1161,24 @@ void nWaitForAck::Resend(){
             ::timeouts[pendingAck->receiver]++;
             pendingAck->timeouts++;
 
-            if(netTime - pendingAck->timeFirstSent  >  killTimeout &&
-                    ::timeouts[pendingAck->receiver] > 20){
+            REAL timeoutTimeLimit;
+            int timeoutPacketLimit;
+            if(tRecorder::ProbablyDesyncedPlayback())
+            {
+                // allow quick timeouts in probably-broken-anyway playback mode
+                timeoutTimeLimit = killTimeout/4;
+                timeoutPacketLimit = 5;
+            }
+            else
+            {
+                timeoutTimeLimit = killTimeout;
+                timeoutPacketLimit = 20;
+            }
+
+            if(netTime - pendingAck->timeFirstSent > timeoutTimeLimit &&
+                    ::timeouts[pendingAck->receiver] > timeoutPacketLimit){
                 // total timeout. Kill connection.
-                if (pendingAck->receiver<=MAXCLIENTS){
+                if (pendingAck->receiver<=MAXCLIENTS && nWaitForAck::ExpectAcks()){
                     tOutput o;
                     o.SetTemplateParameter(1, pendingAck->receiver);
                     o << "$network_error_timeout";
@@ -1181,7 +1191,10 @@ void nWaitForAck::Resend(){
                         i=sn_pendingAcks.Len()-1;
                 }
                 else // it is just in the login slot. Ignore it.
+                {
+                    ::timeouts[pendingAck->receiver] = 0;
                     delete pendingAck;
+                }
             }
             else{
 #ifdef DEBUG
@@ -1215,6 +1228,18 @@ void nWaitForAck::Resend(){
     }
 }
 
+static bool sn_noExpectAckOnClientPlayback = false;
+static tSettingItem< bool > sn_noExpectAckOnClientPlaybackConf( "EXPECT_ACK_ON_CLIENT_PLAYBACK", sn_noExpectAckOnClientPlayback );
+
+bool nWaitForAck::ExpectAcks()
+{
+    bool ret = !tRecorder::IsPlayingBack() || (sn_GetNetState() != nCLIENT) || sn_noExpectAckOnClientPlayback;
+
+    if(!ret)
+        tRecorder::ActivateDesyncedPlayback();
+
+    return ret;
+}
 
 // defined in netobjec.C
 // void ClearKnows(int user);
@@ -1407,6 +1432,13 @@ void first_fill_ids();
 // from nServerInfo.cpp
 extern bool sn_AcceptingFromMaster;
 
+#ifndef DEDICATED
+static bool sn_showOwnIP = false;
+static tConfItem<bool> sn_showOwnIPConf("SHOW_OWN_IP",sn_showOwnIP);
+#else
+static constexpr bool sn_showOwnIP = true;
+#endif
+
 static void sn_LoginAcceptedHandler( Network::LoginAccepted const & accepted, nSenderInfo const & sender )
 {
     // accepted.PrintDebugString();
@@ -1498,7 +1530,10 @@ static void sn_LoginAcceptedHandler( Network::LoginAccepted const & accepted, nS
             {
                 if ( sn_myAddress != address )
                 {
-                    con << "Got address " << address << ".\n";
+                    if(sn_showOwnIP)
+                        con << "Got address " << address << ".\n";
+                    else
+                        con << "Got address.\n";
                 }
                 sn_myAddress = address;
             }
@@ -2741,7 +2776,7 @@ static void rec_peer(unsigned int peer){
                 catch(nIgnore const &){
                     // well, do nothing.
                 }
-                catch(nKillHim)
+                catch(nKillHim const &)
                 {
                     con << "nKillHim signal caught: ";
                     sn_DisconnectUser(id, "$network_kill_error");
@@ -3108,7 +3143,8 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
     case Login_Protobuf:
         // switch server connection to protobuf capable version
         sn_Connections[0].version = sn_myVersion;
-        [[fallthrough]];
+        // [[fallthrough]];
+        // fallthrough on purpose
     case Login_Pre0252:
         // just write a protobuf message. In pre-0.2.5.2 mode, it'll get converted
         // to a stream message correctly.
@@ -3591,14 +3627,14 @@ void sn_Receive(){
     switch (current_state){
     case nSERVER:
         {
-            memset( &peers[0], 0, sizeof(sockaddr) );
+	    peers[0] = nAddress{};
 
             // listen on all sockets
             nSocketListener const & listener = sn_BasicNetworkSystem.GetListener();
             for ( nSocketListener::iterator i = listener.begin(); i != listener.end(); ++i )
             {
                 // clear peer info used for receiving
-                memset( &peers[MAXCLIENTS+1], 0, sizeof(sockaddr) );
+                peers[MAXCLIENTS+1] = nAddress{};
 
                 // copy socket info over to [MAXCLIENTS+1] and receive. The copy
                 // step is important, nAuthentication.cpp relies on the socket being set.
@@ -3674,6 +3710,9 @@ void sn_DisconnectUser(int i, const tOutput& reason, nServerInfoBase * redirectT
 
 void sn_DisconnectUserNoWarn(int i, const tOutput& reason, nServerInfoBase * redirectTo )
 {
+    if(i < 0 || i > MAXCLIENTS+1)
+        return;
+
     nCurrentSenderID senderID( i );
 
     nWaitForAck::AckAllPeer(i);
@@ -3694,8 +3733,8 @@ void sn_DisconnectUserNoWarn(int i, const tOutput& reason, nServerInfoBase * red
 
         nMessageBase::SendCollected(i);
 
-        // to make sure...
-        if ( i!=0 && i != MAXCLIENTS+2 && sn_GetNetState() == nSERVER ){
+        // send disconnect message to peer
+        if ( i!=0 && sn_GetNetState() == nSERVER ){
             printMessage = true;
             for(int j=2;j>=0;j--){
                 nProtoBufMessage< Network::LoginDenied > * mess = sn_loginDeniedDescriptor.CreateMessage();
@@ -3932,6 +3971,8 @@ void nConnectionInfo::AckReceived()          //!< call whenever an ackownledgeme
 
 REAL nConnectionInfo::PacketLoss() const     //!< returns the average packet loss ratio
 {
+    if(tRecorder::DesyncedPlayback())
+        return 0;
     REAL ret = packetLoss_.GetAverage();
     return ret > 0 ? ret : 0;
 }
@@ -4390,6 +4431,9 @@ nPingAverager::~nPingAverager( void )
 
 REAL nPingAverager::GetPing( void ) const
 {
+    if(tRecorder::DesyncedPlayback())
+        return recordedPing_;
+
     // collect data
     // determine the lowest guessed value for variance.
     // lag spikes should not contribute here too much.
@@ -4460,6 +4504,9 @@ nPingAverager::operator REAL( void ) const
 
 REAL nPingAverager::GetPingSnail( void ) const
 {
+    if(tRecorder::DesyncedPlayback())
+        return recordedPing_;
+
     return snail_.GetAverage();
 }
 
@@ -4475,6 +4522,9 @@ REAL nPingAverager::GetPingSnail( void ) const
 
 REAL nPingAverager::GetPingSlow( void ) const
 {
+    if(tRecorder::DesyncedPlayback())
+        return recordedPing_;
+
     return slow_.GetAverage();
 }
 
@@ -4490,6 +4540,9 @@ REAL nPingAverager::GetPingSlow( void ) const
 
 REAL nPingAverager::GetPingFast( void ) const
 {
+    if(tRecorder::DesyncedPlayback())
+        return recordedPing_;
+
     return fast_.GetAverage();
 }
 
@@ -4505,6 +4558,9 @@ REAL nPingAverager::GetPingFast( void ) const
 
 bool nPingAverager::IsSpiking( void ) const
 {
+    if(tRecorder::DesyncedPlayback())
+        return false;
+
     REAL difference = slow_.GetAverage() - fast_.GetAverage();
     return slow_.GetAverageVariance() < difference * difference;
 }
@@ -4586,6 +4642,20 @@ void nPingAverager::Reset( void )
     // pin snail averager close to zero
     // snail_.Add(0,10);
     // not such a good idea after all. The above line caused massive resending of packets.
+}
+
+// archive ping
+void nPingAverager::Record()
+{
+    recordedPing_ = GetPing();
+
+    static constexpr auto section = "PING";
+    tRecorder::Playback(section, recordedPing_);
+    tRecorder::Record(section, recordedPing_);
+    if(tRecorder::DesyncedPlayback())
+    {
+        Add(recordedPing_, 1);
+    }
 }
 
 REAL nPingAverager::weight_=1;

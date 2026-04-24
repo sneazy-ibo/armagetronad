@@ -75,6 +75,9 @@ public:
     rScreenSize			res;
     rScreenSize			windowSize;
     bool				fullscreen;
+#ifdef MACOSX
+    bool                lowDPIWindow{};
+#endif    
     rColorDepth			colorDepth;
     rColorDepth			zDepth;
     bool				checkErrors;
@@ -98,12 +101,12 @@ extern rScreenSettings lastSuccess;
 struct SDL_Window;
 struct SDL_Renderer;
 extern SDL_Window   *sr_screen;
-extern SDL_Renderer *sr_screenRenderer;
 #else
 struct SDL_Surface;
 extern SDL_Surface  *sr_screen;
 #endif
 
+// screen/window dimensions in pixels
 extern int sr_screenWidth,sr_screenHeight;
 
 extern bool sr_alphaBlend;
@@ -199,6 +202,7 @@ public:
 bool sr_InitDisplay();
 void sr_ExitDisplay();
 void sr_ReinitDisplay();
+void sr_GetDrawableSize();
 
 void sr_LoadDefaultConfig();
 

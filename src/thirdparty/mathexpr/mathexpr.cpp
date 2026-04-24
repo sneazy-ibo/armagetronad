@@ -270,8 +270,10 @@ ROperation operator,(const ROperation& op1,const ROperation& op2)
 ROperation operator+(const ROperation& op1,const ROperation& op2)
 {
     if(op1.op==Num&&op2.op==Num)return op1.ValC+op2.ValC;
-    if(op1==0.)return op2;if(op2==0.)return op1;
-    if(op1.op==Opp)return op2-*(op1.mmb2);if(op2.op==Opp)return op1-*(op2.mmb2);
+    if(op1==0.)return op2;
+    if(op2==0.)return op1;
+    if(op1.op==Opp)return op2-*(op1.mmb2);
+    if(op2.op==Opp)return op1-*(op2.mmb2);
     ROperation resultat;
     resultat.op=Add;resultat.mmb1=new ROperation(op1);
     resultat.mmb2=new ROperation(op2);
@@ -281,8 +283,10 @@ ROperation operator+(const ROperation& op1,const ROperation& op2)
 ROperation operator-(const ROperation& op1,const ROperation& op2)
 {
     if(op1.op==Num&&op2.op==Num)return op1.ValC-op2.ValC;
-    if(op1==0.)return -op2;if(op2==0.)return op1;
-    if(op1.op==Opp)return -(op2+*(op1.mmb2));if(op2.op==Opp)return op1+*(op2.mmb2);
+    if(op1==0.)return -op2;
+    if(op2==0.)return op1;
+    if(op1.op==Opp)return -(op2+*(op1.mmb2));
+    if(op2.op==Opp)return op1+*(op2.mmb2);
     ROperation resultat;
     resultat.op=Sub;resultat.mmb1=new ROperation(op1);
     resultat.mmb2=new ROperation(op2);
@@ -293,8 +297,10 @@ ROperation operator*(const ROperation& op1,const ROperation& op2)
 {
     if(op1.op==Num&&op2.op==Num)return op1.ValC*op2.ValC;
     if(op1==0.||op2==0.)return 0.;
-    if(op1==1.)return op2;if(op2==1.)return op1;
-    if(op1.op==Opp)return -(*(op1.mmb2)*op2);if(op2.op==Opp)return -(op1**(op2.mmb2));
+    if(op1==1.)return op2;
+    if(op2==1.)return op1;
+    if(op1.op==Opp)return -(*(op1.mmb2)*op2);
+    if(op2.op==Opp)return -(op1**(op2.mmb2));
     ROperation resultat;
     resultat.op=Mult;resultat.mmb1=new ROperation(op1);
     resultat.mmb2=new ROperation(op2);
@@ -303,8 +309,11 @@ ROperation operator*(const ROperation& op1,const ROperation& op2)
 
 ROperation operator/(const ROperation& op1,const ROperation& op2)
 {if(op1.op==Num&&op2.op==Num)return (op2.ValC?op1.ValC/op2.ValC:ErrVal);
-    if(op1==0.0)return 0.;if(op2==1.)return op1;if(op2==0.)return ErrVal;
-    if(op1.op==Opp)return -(*(op1.mmb2)/op2);if(op2.op==Opp)return -(op1/(*(op2.mmb2)));
+    if(op1==0.0)return 0.;
+    if(op2==1.)return op1;
+    if(op2==0.)return ErrVal;
+    if(op1.op==Opp)return -(*(op1.mmb2)/op2);
+    if(op2.op==Opp)return -(op1/(*(op2.mmb2)));
     ROperation resultat;
     resultat.op=Div;resultat.mmb1=new ROperation(op1);
     resultat.mmb2=new ROperation(op2);
@@ -357,7 +366,7 @@ ROperation RFunction::operator()(const ROperation& op)
        ROperation op2=*pop;int i;
        RVar**ppvar2=new PRVar[nvars];char s[11]="";
        for(i=0;i<nvars;i++){
-       sprintf(s,";var%i;",i);
+       snprintf(s,sizeof(s),";var%i;",i);
        ppvar2[i]=new RVar(s,NULL);
        op2=op2.Substitute(*ppvar[i],(ROperation)*ppvar2[i]);
        }
@@ -524,7 +533,8 @@ void IsolateNumbers(char*&s,int nvar,RVar**ppvar,int nfunc,RFunction**ppfunc)//D
         if(s[i]=='('){i=SearchCorOpenbracket(s,i);if(i==-1)return;continue;};
         if(!ind&&IsNumeric(s[i])){i2=i;ind=1;};
     };
-    if(ind)InsStr(s,i2,'(');i++;InsStr(s,i,')');
+    if(ind)InsStr(s,i2,'(');
+    i++;InsStr(s,i,')');
 }
 
 ROperation::ROperation(char const*sp,int nvar,PRVar*ppvarp,int nfuncp,PRFunction*ppfuncp)
@@ -595,7 +605,8 @@ ROperation::ROperation(char const*sp,int nvar,PRVar*ppvarp,int nfuncp,PRFunction
                     if(IsFunction(s,j,nfuncp,ppfuncp))break;
                 }
             if(flag==0){flag=1;break;}
-                while(j>i&&s[j-1]!=')')j--;if(j<=i+1)break;
+                while(j>i&&s[j-1]!=')')j--;
+		if(j<=i+1)break;
                 InsStr(s,i,'(');InsStr(s,j+1,')');
                 i=j+1;
             }
@@ -780,8 +791,9 @@ ROperation ROperation::NthMember(int n) const
     PRFunction prf;
     if(op==Fun&&pfunc->type==1&&pfunc->op.NMembers()>1){
         prf=new RFunction(pfunc->op.NthMember(n),pfunc->nvars,pfunc->ppvar);
-        char*s=new char[strlen(pfunc->name)+10];
-        sprintf(s,"(%s_%i)",pfunc->name,n);prf->SetName(s);delete[]s;
+        auto len =strlen(pfunc->name)+10;
+        char*s=new char[len];
+        snprintf(s,len,"(%s_%i)",pfunc->name,n);prf->SetName(s);delete[]s;
         return(*prf)(*mmb2);
     }
     if(n==1){
@@ -863,8 +875,9 @@ case NthRoot:{ROperation interm=(*mmb2)^(1/(*mmb1));return interm.Diff(var);};
 
 char* ValToStr(float x)
 {
-    char*s=new char[30];
-    if(x==(float)3.141592653589793238462643383279L)sprintf(s,"pi");else sprintf(s,"%.16G",x);
+    const size_t size = 30;
+    char*s=new char[size];
+    if(x==(float)3.141592653589793238462643383279L)snprintf(s,size,"pi");else snprintf(s,size,"%.16G",x);
     return s;
 }
 
@@ -878,123 +891,124 @@ if(mmb1!=NULL){s1=mmb1->Expr();n+=strlen(s1);f=IsFunction(mmb1->op);}
     switch(op){
     case Num:return ValToStr(ValC);
     case Var:return CopyStr(pvar->name);
-    case Juxt:sprintf(s,"%s , %s",s1,s2);break;
+    case Juxt:snprintf(s,n,"%s , %s",s1,s2);break;
     case Add:
         f=f||(mmb1->op==Juxt);
         g=g||(mmb2->op==Juxt);
-        if(f&&g)sprintf(s,"(%s)+(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)+%s",s1,s2);else
-        if(g)sprintf(s,"%s+(%s)",s1,s2);else
-        sprintf(s,"%s+%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)+(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)+%s",s1,s2);else
+        if(g)snprintf(s,n,"%s+(%s)",s1,s2);else
+        snprintf(s,n,"%s+%s",s1,s2);
         break;
     case Sub:
         f=f||(mmb1->op==Juxt);
         g=g||(mmb2->op==Juxt||mmb2->op==Add||mmb2->op==Sub);
-        if(f&&g)sprintf(s,"(%s)-(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)-%s",s1,s2);else
-        if(g)sprintf(s,"%s-(%s)",s1,s2);else
-        sprintf(s,"%s-%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)-(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)-%s",s1,s2);else
+        if(g)snprintf(s,n,"%s-(%s)",s1,s2);else
+        snprintf(s,n,"%s-%s",s1,s2);
         break;
     case Opp:
-        if(mmb2->op==Add||mmb2->op==Sub||mmb2->op==Juxt)sprintf(s,"-(%s)",s2);else
-        sprintf(s,"-%s",s2);
+        if(mmb2->op==Add||mmb2->op==Sub||mmb2->op==Juxt)snprintf(s,n,"-(%s)",s2);else
+        snprintf(s,n,"-%s",s2);
         break;
     case Mult:
         f=f||(mmb1->op==Juxt||mmb1->op==Add||mmb1->op==Sub||mmb1->op==Opp||mmb1->op==Div);
         g=g||(mmb2->op==Juxt||mmb2->op==Add||mmb2->op==Sub||mmb2->op==Opp);
-        if(f&&g)sprintf(s,"(%s)*(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)*%s",s1,s2);else
-        if(g)sprintf(s,"%s*(%s)",s1,s2);else
-        sprintf(s,"%s*%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)*(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)*%s",s1,s2);else
+        if(g)snprintf(s,n,"%s*(%s)",s1,s2);else
+        snprintf(s,n,"%s*%s",s1,s2);
         break;
     case Div:
         f=f||(mmb1->op==Juxt||mmb1->op==Add||mmb1->op==Sub||mmb1->op==Opp||mmb1->op==Div);
         g=g||(mmb2->op==Juxt||mmb2->op==Add||mmb2->op==Sub||mmb2->op==Opp||mmb2->op==Mult||mmb2->op==Div);
-        if(f&&g)sprintf(s,"(%s)/(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)/%s",s1,s2);else
-        if(g)sprintf(s,"%s/(%s)",s1,s2);else
-        sprintf(s,"%s/%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)/(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)/%s",s1,s2);else
+        if(g)snprintf(s,n,"%s/(%s)",s1,s2);else
+        snprintf(s,n,"%s/%s",s1,s2);
         break;
     case Pow:
         f=(mmb1->op!=Num&&mmb1->op!=Var);
         g=(mmb2->op!=Num&&mmb2->op!=Var);
-        if(f&&g)sprintf(s,"(%s)^(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)^%s",s1,s2);else
-        if(g)sprintf(s,"%s^(%s)",s1,s2);else
-        sprintf(s,"%s^%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)^(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)^%s",s1,s2);else
+        if(g)snprintf(s,n,"%s^(%s)",s1,s2);else
+        snprintf(s,n,"%s^%s",s1,s2);
         break;
     case Sqrt:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"sqrt(%s)",s2);
-        else sprintf(s,"sqrt %s",s2);
+        if(g)snprintf(s,n,"sqrt(%s)",s2);
+        else snprintf(s,n,"sqrt %s",s2);
         break;
     case NthRoot:
         f=(mmb1->op!=Num&&mmb1->op!=Var);
         g=(mmb2->op!=Num&&mmb2->op!=Var);
-        if(f&&g)sprintf(s,"(%s)#(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)#%s",s1,s2);else
-        if(g)sprintf(s,"%s#(%s)",s1,s2);else
-        sprintf(s,"%s#%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)#(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)#%s",s1,s2);else
+        if(g)snprintf(s,n,"%s#(%s)",s1,s2);else
+        snprintf(s,n,"%s#%s",s1,s2);
         break;
     case E10:
         f=(mmb1->op!=Num&&mmb1->op!=Var);
         g=(mmb2->op!=Num&&mmb2->op!=Var);
-        if(f&&g)sprintf(s,"(%s)E(%s)",s1,s2);else
-        if(f)sprintf(s,"(%s)E%s",s1,s2);else
-        if(g)sprintf(s,"%sE(%s)",s1,s2);else
-        sprintf(s,"%sE%s",s1,s2);
+        if(f&&g)snprintf(s,n,"(%s)E(%s)",s1,s2);else
+        if(f)snprintf(s,n,"(%s)E%s",s1,s2);else
+        if(g)snprintf(s,n,"%sE(%s)",s1,s2);else
+        snprintf(s,n,"%sE%s",s1,s2);
         break;
     case Ln:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"log(%s)",s2);
-        else sprintf(s,"log %s",s2);
+        if(g)snprintf(s,n,"log(%s)",s2);
+        else snprintf(s,n,"log %s",s2);
         break;
     case Exp:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"exp(%s)",s2);
-        else sprintf(s,"exp %s",s2);
+        if(g)snprintf(s,n,"exp(%s)",s2);
+        else snprintf(s,n,"exp %s",s2);
         break;
     case Sin:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"sin(%s)",s2);
-        else sprintf(s,"sin %s",s2);
+        if(g)snprintf(s,n,"sin(%s)",s2);
+        else snprintf(s,n,"sin %s",s2);
         break;
     case Cos:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"cos(%s)",s2);
-        else sprintf(s,"cos %s",s2);
+        if(g)snprintf(s,n,"cos(%s)",s2);
+        else snprintf(s,n,"cos %s",s2);
         break;
     case Tg:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"tan(%s)",s2);
-        else sprintf(s,"tan %s",s2);
+        if(g)snprintf(s,n,"tan(%s)",s2);
+        else snprintf(s,n,"tan %s",s2);
         break;
     case Atan:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"atan(%s)",s2);
-        else sprintf(s,"atan %s",s2);
+        if(g)snprintf(s,n,"atan(%s)",s2);
+        else snprintf(s,n,"atan %s",s2);
         break;
     case Asin:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"asin(%s)",s2);
-        else sprintf(s,"asin %s",s2);
+        if(g)snprintf(s,n,"asin(%s)",s2);
+        else snprintf(s,n,"asin %s",s2);
         break;
     case Acos:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"acos(%s)",s2);
-        else sprintf(s,"acos %s",s2);
+        if(g)snprintf(s,n,"acos(%s)",s2);
+        else snprintf(s,n,"acos %s",s2);
         break;
     case Abs:
         g=(mmb2->op!=Num&&mmb2->op!=Var&&!g);
-        if(g)sprintf(s,"abs(%s)",s2);
-        else sprintf(s,"abs %s",s2);
+        if(g)snprintf(s,n,"abs(%s)",s2);
+        else snprintf(s,n,"abs %s",s2);
         break;
     case Fun:
-        sprintf(s,"%s(%s)",pfunc->name,s2);
+        snprintf(s,n,"%s(%s)",pfunc->name,s2);
         break;
     default:return CopyStr("Error");
     };
-    if(s1!=NULL)delete[] s1;if(s2!=NULL)delete[] s2;
+    if(s1!=NULL)delete[] s1;
+    if(s2!=NULL)delete[] s2;
     return s;
 }
 
@@ -1037,7 +1051,11 @@ void  Puiss10(float*&p)
     if(*p==ErrVal||fabs(*p)>DBL_MAX_10_EXP){*(--p)=ErrVal;return;};
     if(fabs(*(--p))<sqrtminfloat)*p=0;else if(*p==ErrVal||fabs(*p)>sqrtmaxfloat)
     {*p=ErrVal;return;};
-    *p*=pow10(*(p+1));}
+#ifdef HAVE_EXP10
+    *p*=exp10(*(p+1));}
+#else
+	*p*=pow(10, *(p+1));}
+#endif // _WIN32
 void  ArcTangente2(float*&p)
 {if(*p==ErrVal||fabs(*p)>inveps){*(--p)=ErrVal;return;};
     if(*(--p)==ErrVal||fabs(*p)>inveps){*p=ErrVal;return;};

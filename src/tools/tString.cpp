@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "tColor.h"
 #include "tLocale.h"
 #include "tConfiguration.h"
-#include "tException.h"
+// #include "tException.h"
 #include <ctype.h>
 #include <time.h>
 #include <string>
@@ -254,8 +254,8 @@ tString::tString( void )
 //!
 // *******************************************************************************
 
-tString::tString( BASE const & other )
-        : string( other )
+tString::tString(BASE const& other)
+    : string(other)
 {
 }
 
@@ -269,8 +269,38 @@ tString::tString( BASE const & other )
 //!
 // *******************************************************************************
 
-tString::tString( tString const & other )
-        : string( other )
+tString::tString(BASE&& other)
+    : string(other)
+{
+}
+
+// *******************************************************************************
+// *
+// *	tString
+// *
+// *******************************************************************************
+//!
+//!		@param	other source of copy operation
+//!
+// *******************************************************************************
+
+tString::tString(tString const& other)
+    : string(other)
+{
+}
+
+// *******************************************************************************
+// *
+// *	tString
+// *
+// *******************************************************************************
+//!
+//!		@param	other source of copy operation
+//!
+// *******************************************************************************
+
+tString::tString(tString&& other)
+    : string(other)
 {
 }
 

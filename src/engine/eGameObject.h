@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // #include "eGrid.h"
 #include "eCoord.h"
 #include "tSafePTR.h"
+#include "rSDL.h"
 
 class eGrid;
 class uActionPlayer;
@@ -138,6 +139,7 @@ public:
 
     virtual eCoord Position()const{return pos;}
     virtual eCoord Direction()const{return dir;}
+    virtual eCoord SmoothDirection()const{return dir;}
     virtual eCoord LastDirection()const{return dir;}
     virtual REAL DeathTime()const{return deathTime;}
     virtual REAL  Speed()const{return 20;}
@@ -220,8 +222,8 @@ public:
     virtual void RenderCockpitVirtual(bool primary=false);
 
     //sound output
-    virtual void SoundMix(unsigned char *dest,unsigned int len,
-                          int viewer,REAL rvol,REAL lvol){}
+    virtual void SoundMix(Sint16 *dest,unsigned int len,
+                          int viewer,REAL rvol,REAL lvol, REAL dopplerPitch){}
 
     // internal camera
     virtual eCoord CamDir()  const {return dir;}

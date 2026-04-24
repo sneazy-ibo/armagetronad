@@ -339,196 +339,6 @@ AC_DEFUN([AM_BINRELOC],
 	AC_SUBST(BINRELOC_LIBS)
 ])
 
-dnl @synopsis AX_BOOST([MINIMUM-VERSION])
-dnl
-dnl Test for the Boost C++ libraries of a particular version (or newer)
-dnl
-dnl If no path to the installed boost library is given the macro
-dnl searchs under /usr, /usr/local, and /opt, and evaluates the
-dnl $BOOST_ROOT environment variable. Further documentation is
-dnl available at <http://randspringer.de/boost/index.html>.
-dnl
-dnl This macro calls:
-dnl
-dnl   AC_SUBST(BOOST_CPPFLAGS) / AC_SUBST(BOOST_LDFLAGS)
-dnl
-dnl And sets:
-dnl
-dnl   HAVE_BOOST
-dnl
-dnl @category InstalledPackages
-dnl @category Cxx
-dnl @author Thomas Porschberg <thomas@randspringer.de>
-dnl @version 2006-06-15
-dnl @license AllPermissive
-
-AC_DEFUN([AX_BOOST_BASE],
-[
-AC_ARG_WITH([boost],
-	AS_HELP_STRING([--with-boost@<:@=DIR@:>@], [use boost (default is yes) - it is possible to specify the root directory for boost (optional)]),
-	[
-    if test "$withval" = "no"; then
-		AC_MSG_ERROR([Boost (boost.org) is required for compilation.])
-    elif test "$withval" = "yes"; then
-        want_boost="yes"
-        ac_boost_path=""
-    else
-	    want_boost="yes"
-        ac_boost_path="$withval"
-	fi
-    ],
-    [want_boost="yes"])
-
-if test "x$want_boost" = "xyes"; then
-	boost_lib_version_req=ifelse([$1], ,1.20.0,$1)
-	boost_lib_version_req_shorten=`expr $boost_lib_version_req : '\([[0-9]]*\.[[0-9]]*\)'`
-	boost_lib_version_req_major=`expr $boost_lib_version_req : '\([[0-9]]*\)'`
-	boost_lib_version_req_minor=`expr $boost_lib_version_req : '[[0-9]]*\.\([[0-9]]*\)'`
-	boost_lib_version_req_sub_minor=`expr $boost_lib_version_req : '[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)'`
-	if test "x$boost_lib_version_req_sub_minor" = "x" ; then
-		boost_lib_version_req_sub_minor="0"
-    	fi
-	WANT_BOOST_VERSION=`expr $boost_lib_version_req_major \* 100000 \+  $boost_lib_version_req_minor \* 100 \+ $boost_lib_version_req_sub_minor`
-	AC_MSG_CHECKING(for boostlib >= $boost_lib_version_req)
-	succeeded=no
-
-	dnl first we check the system location for boost libraries
-	dnl this location ist chosen if boost libraries are installed with the --layout=system option
-	dnl or if you install boost with RPM
-	if test "$ac_boost_path" != ""; then
-		BOOST_LDFLAGS="-L$ac_boost_path/lib"
-		BOOST_CPPFLAGS="-I$ac_boost_path/include"
-	else
-		for ac_boost_path_tmp in /usr /usr/local /opt ; do
-			if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
-				BOOST_LDFLAGS="-L$ac_boost_path_tmp/lib"
-				BOOST_CPPFLAGS="-I$ac_boost_path_tmp/include"
-				break;
-			fi
-		done
-	fi
-
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-	export CPPFLAGS
-
-	LDFLAGS_SAVED="$LDFLAGS"
-	LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
-	export LDFLAGS
-
-	AC_LANG_PUSH(C++)
-     	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-	@%:@include <boost/version.hpp>
-	]], [[
-	#if BOOST_VERSION >= $WANT_BOOST_VERSION
-	// Everything is okay
-	#else
-	#  error Boost version is too old
-	#endif
-	]])],[
-        AC_MSG_RESULT(yes)
-	succeeded=yes
-	found_system=yes
-       	],[
-       	])
-	AC_LANG_POP([C++])
-
-
-
-	dnl if we found no boost with system layout we search for boost libraries
-	dnl built and installed without the --layout=system option or for a staged(not installed) version
-	if test "x$succeeded" != "xyes"; then
-		_version=0
-		if test "$ac_boost_path" != ""; then
-               		BOOST_LDFLAGS="-L$ac_boost_path/lib"
-			if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
-				for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
-					_version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
-					V_CHECK=`expr $_version_tmp \> $_version`
-					if test "$V_CHECK" = "1" ; then
-						_version=$_version_tmp
-					fi
-					VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
-					BOOST_CPPFLAGS="-I$ac_boost_path/include/boost-$VERSION_UNDERSCORE"
-				done
-			fi
-		else
-			for ac_boost_path in /usr /usr/local /opt ; do
-				if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
-					for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
-						_version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
-						V_CHECK=`expr $_version_tmp \> $_version`
-						if test "$V_CHECK" = "1" ; then
-							_version=$_version_tmp
-	               					best_path=$ac_boost_path
-						fi
-					done
-				fi
-			done
-
-			VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
-			BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
-			BOOST_LDFLAGS="-L$best_path/lib"
-
-	    		if test "x$BOOST_ROOT" != "x"; then
-				if test -d "$BOOST_ROOT" && test -r "$BOOST_ROOT" && test -d "$BOOST_ROOT/stage/lib" && test -r "$BOOST_ROOT/stage/lib"; then
-					version_dir=`expr //$BOOST_ROOT : '.*/\(.*\)'`
-					stage_version=`echo $version_dir | sed 's/boost_//' | sed 's/_/./g'`
-			        	stage_version_shorten=`expr $stage_version : '\([[0-9]]*\.[[0-9]]*\)'`
-					V_CHECK=`expr $stage_version_shorten \>\= $_version`
-				        if test "$V_CHECK" = "1" ; then
-						AC_MSG_NOTICE(We will use a staged boost library from $BOOST_ROOT)
-						BOOST_CPPFLAGS="-I$BOOST_ROOT"
-						BOOST_LDFLAGS="-L$BOOST_ROOT/stage/lib"
-					fi
-				fi
-	    		fi
-		fi
-
-		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-		export CPPFLAGS
-		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
-		export LDFLAGS
-
-		AC_LANG_PUSH(C++)
-	     	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-		@%:@include <boost/version.hpp>
-		]], [[
-		#if BOOST_VERSION >= $WANT_BOOST_VERSION
-		// Everything is okay
-		#else
-		#  error Boost version is too old
-		#endif
-		]])],[
-        	AC_MSG_RESULT(yes)
-		succeeded=yes
-		found_system=yes
-       		],[
-	       	])
-		AC_LANG_POP([C++])
-	fi
-
-	if test "$succeeded" != "yes" ; then
-		if test "$_version" = "0" ; then
-			AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
-		else
-			AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
-		fi
-	else
-		AC_SUBST(BOOST_CPPFLAGS)
-		AC_SUBST(BOOST_LDFLAGS)
-		AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
-	fi
-
-        CPPFLAGS="$CPPFLAGS_SAVED"
-       	LDFLAGS="$LDFLAGS_SAVED"
-fi
-
-])
-
-])
-
-
 dnl @synopsis AC_LIB_WAD
 dnl
 dnl This macro searches for installed WAD library.
@@ -555,7 +365,7 @@ AC_DEFUN([AC_LIB_WAD],
         fi
 ])
 
-dnl Copyright © 2008 Steven G. Johnson <stevenj@alum.mit.edu> 
+dnl Copyright Â© 2008 Steven G. Johnson <stevenj@alum.mit.edu>
 dnl This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
 dnl This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
 dnl You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>. 
@@ -760,7 +570,7 @@ AC_LANG_RESTORE
 
 dnl GPLed checks whether the current version of GCC supports a certain flag
 dnl source: http://autoconf-archive.cryp.to/ax_cflags_gcc_option.html
-dnl Copyright © 2008 Guido U. Draheim <guidod@gmx.de>
+dnl Copyright Â© 2008 Guido U. Draheim <guidod@gmx.de>
 
 AC_DEFUN([AX_CFLAGS_GCC_OPTION_OLD], [dnl
 AS_VAR_PUSHDEF([FLAGS],[CFLAGS])dnl
@@ -907,3 +717,285 @@ AC_DEFUN([AX_CFLAGS_GCC_OPTION],[ifelse(m4_bregexp([$2],[-]),-1,
 
 AC_DEFUN([AX_CXXFLAGS_GCC_OPTION],[ifelse(m4_bregexp([$2],[-]),-1,
 [AX_CXXFLAGS_GCC_OPTION_NEW($@)],[AX_CXXFLAGS_GCC_OPTION_OLD($@)])])
+
+dnl include boost boost_thread detection
+m4_include(acinclude.d/ax_boost_base.m4)
+m4_include(acinclude.d/ax_boost_system.m4)
+m4_include(acinclude.d/ax_boost_thread.m4)
+
+# taken from https://github.com/curl/curl/blob/master/docs/libcurl/libcurl.m4 :
+
+#***************************************************************************
+#                                  _   _ ____  _
+#  Project                     ___| | | |  _ \| |
+#                             / __| | | | |_) | |
+#                            | (__| |_| |  _ <| |___
+#                             \___|\___/|_| \_\_____|
+#
+# Copyright (C) David Shaw <dshaw@jabberwocky.com>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. The terms
+# are also available at https://curl.se/docs/copyright.html.
+#
+# You may opt to use, copy, modify, merge, publish, distribute and/or sell
+# copies of the Software, and permit persons to whom the Software is
+# furnished to do so, under the terms of the COPYING file.
+#
+# This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
+# KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
+#
+###########################################################################
+# LIBCURL_CHECK_CONFIG ([DEFAULT-ACTION], [MINIMUM-VERSION],
+#                       [ACTION-IF-YES], [ACTION-IF-NO])
+# ----------------------------------------------------------
+#      David Shaw <dshaw@jabberwocky.com>   May-09-2006
+#
+# Checks for libcurl.  DEFAULT-ACTION is the string yes or no to
+# specify whether to default to --with-libcurl or --without-libcurl.
+# If not supplied, DEFAULT-ACTION is yes.  MINIMUM-VERSION is the
+# minimum version of libcurl to accept.  Pass the version as a regular
+# version number like 7.10.1. If not supplied, any version is
+# accepted.  ACTION-IF-YES is a list of shell commands to run if
+# libcurl was successfully found and passed the various tests.
+# ACTION-IF-NO is a list of shell commands that are run otherwise.
+# Note that using --without-libcurl does run ACTION-IF-NO.
+#
+# This macro #defines HAVE_LIBCURL if a working libcurl setup is
+# found, and sets @LIBCURL@ and @LIBCURL_CPPFLAGS@ to the necessary
+# values.  Other useful defines are LIBCURL_FEATURE_xxx where xxx are
+# the various features supported by libcurl, and LIBCURL_PROTOCOL_yyy
+# where yyy are the various protocols supported by libcurl.  Both xxx
+# and yyy are capitalized.  See the list of AH_TEMPLATEs at the top of
+# the macro for the complete list of possible defines.  Shell
+# variables $libcurl_feature_xxx and $libcurl_protocol_yyy are also
+# defined to 'yes' for those features and protocols that were found.
+# Note that xxx and yyy keep the same capitalization as in the
+# curl-config list (e.g. it's "HTTP" and not "http").
+#
+# Users may override the detected values by doing something like:
+# LIBCURL="-lcurl" LIBCURL_CPPFLAGS="-I/usr/myinclude" ./configure
+#
+# For the sake of sanity, this macro assumes that any libcurl that is found is
+# after version 7.7.2, the first version that included the curl-config script.
+# Note that it is important for people packaging binary versions of libcurl to
+# include this script!  Without curl-config, we can only guess what protocols
+# are available, or use curl_version_info to figure it out at runtime.
+
+AC_DEFUN([LIBCURL_CHECK_CONFIG],
+[
+  AH_TEMPLATE([LIBCURL_FEATURE_SSL],[Defined if libcurl supports SSL])
+  AH_TEMPLATE([LIBCURL_FEATURE_KRB4],[Defined if libcurl supports KRB4])
+  AH_TEMPLATE([LIBCURL_FEATURE_IPV6],[Defined if libcurl supports IPv6])
+  AH_TEMPLATE([LIBCURL_FEATURE_LIBZ],[Defined if libcurl supports libz])
+  AH_TEMPLATE([LIBCURL_FEATURE_ASYNCHDNS],[Defined if libcurl supports AsynchDNS])
+  AH_TEMPLATE([LIBCURL_FEATURE_IDN],[Defined if libcurl supports IDN])
+  AH_TEMPLATE([LIBCURL_FEATURE_SSPI],[Defined if libcurl supports SSPI])
+  AH_TEMPLATE([LIBCURL_FEATURE_NTLM],[Defined if libcurl supports NTLM])
+
+  AH_TEMPLATE([LIBCURL_PROTOCOL_HTTP],[Defined if libcurl supports HTTP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_HTTPS],[Defined if libcurl supports HTTPS])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_FTP],[Defined if libcurl supports FTP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_FTPS],[Defined if libcurl supports FTPS])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_FILE],[Defined if libcurl supports FILE])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_TELNET],[Defined if libcurl supports TELNET])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_LDAP],[Defined if libcurl supports LDAP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_DICT],[Defined if libcurl supports DICT])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_TFTP],[Defined if libcurl supports TFTP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_RTSP],[Defined if libcurl supports RTSP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_POP3],[Defined if libcurl supports POP3])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_IMAP],[Defined if libcurl supports IMAP])
+  AH_TEMPLATE([LIBCURL_PROTOCOL_SMTP],[Defined if libcurl supports SMTP])
+
+  AC_ARG_WITH(libcurl,
+AS_HELP_STRING([--with-libcurl=PREFIX],[look for the curl library in PREFIX/lib and headers in PREFIX/include]),
+     [_libcurl_with=$withval],[_libcurl_with=ifelse([$1],,[yes],[$1])])
+
+  if test "$_libcurl_with" != "no" ; then
+
+     AC_PROG_AWK
+
+     _libcurl_version_parse="eval $AWK '{split(\$NF,A,\".\"); X=256*256*A[[1]]+256*A[[2]]+A[[3]]; print X;}'"
+
+     _libcurl_try_link=yes
+
+     if test -d "$_libcurl_with" ; then
+        LIBCURL_CPPFLAGS="-I$withval/include"
+        _libcurl_ldflags="-L$withval/lib"
+        AC_PATH_PROG([_libcurl_config],[curl-config],[],
+                     ["$withval/bin"])
+     else
+        AC_PATH_PROG([_libcurl_config],[curl-config],[],[$PATH])
+     fi
+
+     if test x$_libcurl_config != "x" ; then
+        AC_CACHE_CHECK([for the version of libcurl],
+           [libcurl_cv_lib_curl_version],
+           [libcurl_cv_lib_curl_version=`$_libcurl_config --version | $AWK '{print $[]2}'`])
+
+        _libcurl_version=`echo $libcurl_cv_lib_curl_version | $_libcurl_version_parse`
+        _libcurl_wanted=`echo ifelse([$2],,[0],[$2]) | $_libcurl_version_parse`
+
+        if test $_libcurl_wanted -gt 0 ; then
+           AC_CACHE_CHECK([for libcurl >= version $2],
+              [libcurl_cv_lib_version_ok],
+              [
+              if test $_libcurl_version -ge $_libcurl_wanted ; then
+                 libcurl_cv_lib_version_ok=yes
+              else
+                 libcurl_cv_lib_version_ok=no
+              fi
+              ])
+        fi
+
+        if test $_libcurl_wanted -eq 0 || test x$libcurl_cv_lib_version_ok = xyes ; then
+           if test x"$LIBCURL_CPPFLAGS" = "x" ; then
+              LIBCURL_CPPFLAGS=`$_libcurl_config --cflags`
+           fi
+           if test x"$LIBCURL" = "x" ; then
+              LIBCURL=`$_libcurl_config --libs`
+
+              # This is so silly, but Apple actually has a bug in their
+              # curl-config script.  Fixed in Tiger, but there are still
+              # lots of Panther installs around.
+              case "${host}" in
+                 powerpc-apple-darwin7*)
+                    LIBCURL=`echo $LIBCURL | sed -e 's|-arch i386||g'`
+                 ;;
+              esac
+           fi
+
+           # All curl-config scripts support --feature
+           _libcurl_features=`$_libcurl_config --feature`
+
+           # Is it modern enough to have --protocols? (7.12.4)
+           if test $_libcurl_version -ge 461828 ; then
+              _libcurl_protocols=`$_libcurl_config --protocols`
+           fi
+        else
+           _libcurl_try_link=no
+        fi
+
+        unset _libcurl_wanted
+     fi
+
+     if test $_libcurl_try_link = yes ; then
+
+        # we did not find curl-config, so let's see if the user-supplied
+        # link line (or failing that, "-lcurl") is enough.
+        LIBCURL=${LIBCURL-"$_libcurl_ldflags -lcurl"}
+
+        AC_CACHE_CHECK([whether libcurl is usable],
+           [libcurl_cv_lib_curl_usable],
+           [
+           _libcurl_save_cppflags=$CPPFLAGS
+           CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
+           _libcurl_save_libs=$LIBS
+           LIBS="$LIBCURL $LIBS"
+
+           AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <curl/curl.h>]],[[
+/* Try to use a few common options to force a failure if we are
+   missing symbols or cannot link. */
+int x;
+curl_easy_setopt(NULL,CURLOPT_URL,NULL);
+x=CURL_ERROR_SIZE;
+x=CURLOPT_WRITEFUNCTION;
+x=CURLOPT_WRITEDATA;
+x=CURLOPT_ERRORBUFFER;
+x=CURLOPT_STDERR;
+x=CURLOPT_VERBOSE;
+if (x) {;}
+]])],libcurl_cv_lib_curl_usable=yes,libcurl_cv_lib_curl_usable=no)
+
+           CPPFLAGS=$_libcurl_save_cppflags
+           LIBS=$_libcurl_save_libs
+           unset _libcurl_save_cppflags
+           unset _libcurl_save_libs
+           ])
+
+        if test $libcurl_cv_lib_curl_usable = yes ; then
+
+           # Does curl_free() exist in this version of libcurl?
+           # If not, fake it with free()
+
+           _libcurl_save_cppflags=$CPPFLAGS
+           CPPFLAGS="$CPPFLAGS $LIBCURL_CPPFLAGS"
+           _libcurl_save_libs=$LIBS
+           LIBS="$LIBS $LIBCURL"
+
+           AC_CHECK_DECL([curl_free],[],
+              [AC_DEFINE([curl_free],[free],
+                [Define curl_free() as free() if our version of curl lacks curl_free.])],
+              [[#include <curl/curl.h>]])
+
+           CPPFLAGS=$_libcurl_save_cppflags
+           LIBS=$_libcurl_save_libs
+           unset _libcurl_save_cppflags
+           unset _libcurl_save_libs
+
+           AC_DEFINE(HAVE_LIBCURL,1,
+             [Define to 1 if you have a functional curl library.])
+           AC_SUBST(LIBCURL_CPPFLAGS)
+           AC_SUBST(LIBCURL)
+
+           for _libcurl_feature in $_libcurl_features ; do
+              AC_DEFINE_UNQUOTED(AS_TR_CPP(libcurl_feature_$_libcurl_feature),[1])
+              eval AS_TR_SH(libcurl_feature_$_libcurl_feature)=yes
+           done
+
+           if test "x$_libcurl_protocols" = "x" ; then
+
+              # We do not have --protocols, so just assume that all
+              # protocols are available
+              _libcurl_protocols="HTTP FTP FILE TELNET LDAP DICT TFTP"
+
+              if test x$libcurl_feature_SSL = xyes ; then
+                 _libcurl_protocols="$_libcurl_protocols HTTPS"
+
+                 # FTPS was not standards-compliant until version
+                 # 7.11.0 (0x070b00 == 461568)
+                 if test $_libcurl_version -ge 461568; then
+                    _libcurl_protocols="$_libcurl_protocols FTPS"
+                 fi
+              fi
+
+              # RTSP, IMAP, POP3 and SMTP were added in
+              # 7.20.0 (0x071400 == 463872)
+              if test $_libcurl_version -ge 463872; then
+                 _libcurl_protocols="$_libcurl_protocols RTSP IMAP POP3 SMTP"
+              fi
+           fi
+
+           for _libcurl_protocol in $_libcurl_protocols ; do
+              AC_DEFINE_UNQUOTED(AS_TR_CPP(libcurl_protocol_$_libcurl_protocol),[1])
+              eval AS_TR_SH(libcurl_protocol_$_libcurl_protocol)=yes
+           done
+        else
+           unset LIBCURL
+           unset LIBCURL_CPPFLAGS
+        fi
+     fi
+
+     unset _libcurl_try_link
+     unset _libcurl_version_parse
+     unset _libcurl_config
+     unset _libcurl_feature
+     unset _libcurl_features
+     unset _libcurl_protocol
+     unset _libcurl_protocols
+     unset _libcurl_version
+     unset _libcurl_ldflags
+  fi
+
+  if test x$_libcurl_with = xno || test x$libcurl_cv_lib_curl_usable != xyes ; then
+     # This is the IF-NO path
+     ifelse([$4],,:,[$4])
+  else
+     # This is the IF-YES path
+     ifelse([$3],,:,[$3])
+  fi
+
+  unset _libcurl_with
+])

@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <cmath>
 
 namespace Tools { class Direction; class Position; }
 
@@ -43,6 +44,7 @@ class tCoord{
 public:
     REAL x,y; //!< the stored coordinates
     explicit tCoord(REAL X=0,REAL Y=0):x(X),y(Y){} //!< Default constructor
+    tCoord(tCoord const &) = default;
 
     // Calculations:
     inline bool operator==(const tCoord &a) const; //!< Are the two coordinates close enough to each other to be considered equeal?
@@ -53,12 +55,12 @@ public:
     const tCoord& operator+=(tCoord const &other)    { x+=other.x; y+=other.y; return *this;} //!< adds two coordinates
     const tCoord& operator-=(tCoord const &other)    { x-=other.x; y-=other.y; return *this;} //!< substracts two coordinates
     tCoord operator*(REAL a) const      {return tCoord(x*a,y*a);} //!< stretches a coordinate by a factor from the center
+    tCoord& operator=(tCoord const &) = default;
     const tCoord& operator*=(REAL a)    { x*=a; y*=a; return *this;} //!< stretches a coordinate by a factor from the center
     const tCoord& operator*=(tCoord const &other)    { x*=other.x; y*=other.y; return *this;} //!< stretches a coordinate by a factor from the center
     REAL NormSquared()          const   {return x*x+y*y;} //!< returns the square of the distance to the origin
     REAL Norm()                 const   {return sqrt(NormSquared());} //!< returns the distance to the orign
     void Normalize()                    { *this *= 1/Norm(); } //!< normalizes the coordinate by setting the distance to the orign to 1 and keeping the ratio of the x and y coordinates
-    const tCoord &operator=(const tCoord &a){ x=a.x;y=a.y; return *this;  } //!< overwrites a coordinate with another one
 
     //! scalar product
     static REAL F(const tCoord &a,const tCoord &b){
@@ -98,9 +100,9 @@ private:
             REAL ta = Tangent(m_reference, a), tb = Tangent(m_reference, b);
 
             //check for 90 degree angles...
-            if(ta == NAN && tb == NAN) return fabs((m_reference-a).NormSquared()) < fabs((m_reference-b).NormSquared());
-            if(ta == NAN) return tb<0;
-            if(tb == NAN) return ta>0;
+            if(std::isnan(ta) && std::isnan(tb)) return fabs((m_reference-a).NormSquared()) < fabs((m_reference-b).NormSquared());
+            if(std::isnan(ta)) return tb<0;
+            if(std::isnan(tb)) return ta>0;
 
             //check for opposite sides
             if(ta>0 && tb<0) return true;

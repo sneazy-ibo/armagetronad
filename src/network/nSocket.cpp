@@ -268,6 +268,7 @@ static inline void Con_Printf(const char *x){
     con << x;
 }
 
+/*
 static inline void Con_SafePrintf(const char *x){
     con << x;
 }
@@ -275,6 +276,7 @@ static inline void Con_SafePrintf(const char *x){
 static inline void Con_DPrintf(const char *x){
     con << x;
 }
+*/
 
 #ifdef HAVE_SOCKLEN_T
 typedef socklen_t NET_SIZE;
@@ -860,9 +862,9 @@ char *ANET_AddrToString (const struct sockaddr *addr)
 {
     static char buffer[23];
     int haddr;
-    const struct sockaddr_in *addr_in = reinterpret_cast< const struct sockaddr_in * >( addr );
-    haddr = ntohl(addr_in->sin_addr.s_addr);
-    snprintf(buffer,22, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff, ntohs(addr_in->sin_port));
+
+    haddr = ntohl( reinterpret_cast<sockaddr_in const*>( addr )->sin_addr.s_addr );
+    snprintf( buffer, 22, "%d.%d.%d.%d:%d", ( haddr >> 24 ) & 0xff, ( haddr >> 16 ) & 0xff, ( haddr >> 8 ) & 0xff, haddr & 0xff, ntohs( reinterpret_cast<sockaddr_in const*>( addr )->sin_port ) );
     return buffer;
 }
 
@@ -1183,6 +1185,9 @@ public:
         }
 
         ClearAddressCore();
+
+        // only finally release this object in the main thread
+        tLambdaRunner::ScheduleForeground([keep = tJUST_CONTROLLED_PTR<nDNSResolver>(this)]() {});
     }
 
     void Wait()
@@ -1883,8 +1888,15 @@ int nSocket::Create( void )
     // initialize networking at OS level
     sn_InitOSNetworking();
 
+    int socktype = socktype_;
+#ifndef WIN32
+#ifndef MACOSX
+    socktype |= SOCK_CLOEXEC;
+#endif
+#endif
+
     // open new socket
-    socket_ = socket( family_, socktype_, protocol_ );
+    socket_ = socket( family_, socktype, protocol_ );
     if ( socket_ < 0 )
         return -1;
 
@@ -1894,17 +1906,32 @@ int nSocket::Create( void )
     // Tutorial on using Windows 98+ RSVP (QoS / Resource reSerVation Protocol)
     // http://msdn.microsoft.com/msdnmag/issues/01/04/qos/default.aspx
 
-    // set TOS to low latency ( see manpages getsockopt(2), ip(7) and socket(7) )
-    // maybe this works for Windows, too?
 #ifndef WIN32
-    char tos = IPTOS_LOWDELAY;
+    // set TOS to low latency ( see manpages getsockopt(2), ip(7) and socket(7) )
+    // maybe this works for Windows, too? Docs say "Do not use" :(
+    // https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ip-socket-options
+    // The alternative is poorly explained:
+    // https://learn.microsoft.com/en-us/windows/win32/winsock/ip-dscp-traffic-type
 
-    setsockopt( socket_, IPPROTO_IP, IP_TOS, &tos, sizeof(char) );
-#endif    
+    // The headers say the previously used IPTOS_LOWDELAY (0x10) is deprecated,
+    // so we use the new IPTOS_DSCP_AF32 (0x70) instead, which has new high bits
+    // set (0x60) which apparently mean "Flash". That's supposed to be fast, right?
+    // Even higher priorities would be available, but they seem like an overstep.
+    // Doku of the bits: https://blogs.manageengine.com/network/netflowanalyzer/2012/04/24/understanding-ip-precedence-tos-dscp.html
+    // For values, just see the headers.
+#ifndef IPTOS_DSCP_AF32
+    // not defined on macOS. Sadly, the call is then observerd to fail.
+    // IPTOS_LOWDELAY may be better, but fails as well.
+    constexpr char IPTOS_DSCP_AF32 = 0x70;
+#endif
+    char dscp = IPTOS_DSCP_AF32;
+
+    setsockopt( socket_, IPPROTO_IP, IP_TOS, &dscp, sizeof( dscp ) );
+#endif
 
     // unblock it
-    bool _true = true;
-    return ioctl (socket_, FIONBIO, reinterpret_cast<char *>(&_true)) == -1;
+    unsigned long _true = true;
+    return ioctl (socket_, FIONBIO, &_true) == -1;
 }
 
 // archives the binding procedure
@@ -2305,7 +2332,7 @@ public:
     {
         // start archive block if archiving is active
         Archiver archive;
-        if( archive.Initialize( recordingSectionRead ) )
+        if( archive.Initialize( recordingSectionRead, true ) )
         {
             // archive length of message
             archive.Archive( len );

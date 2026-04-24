@@ -3,16 +3,16 @@
 <plist version="1.0">
   <dict>
   	<key>CFBundleDevelopmentRegion</key>
-  	  <string>English</string>
+  	  <string>en</string>
   	  
   	<key>CFBundleExecutable</key>
-  	  <string>@progtitle@</string>
+  	  <string>.@bindir@/@progname@</string>
   	  
   	<key>CFBundleIconFile</key>
-  	  <string>desktop/os-x/armagetronad.icns</string>
+  	  <string>@progtitle@@progtitle_server@.icns</string>
   	  
   	<key>CFBundleIdentifier</key>
-  	  <string>org.armagetronad.@progname@</string>
+  	  <string>BUNDLE_ID</string>
 
 	<key>CFBundleGetInfoString</key>
 	  <string>@progtitle@ @version@, © The Armagetron Advanced Developer Team, 2003, 2013</string>
@@ -20,6 +20,9 @@
 	<key>NSHumanReadableCopyright</key>
 	  <string>© The Armagetron Advanced Developer Team, 2003, 2013</string>
 	
+	<key>NSHighResolutionCapable</key>
+	  <string>True</string>
+
 	<key>CFBundleShortVersionString</key>
 	  <string>@version@</string>
 

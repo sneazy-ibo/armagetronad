@@ -104,8 +104,6 @@ class rTextField{
     float nextx;          // x-coordinate the next char should go to for rendering
     float currentWidth;   //The current position where the next char will go to for caching
     bool multiline;        // linewrapping enabled?
-    FTFont *font;
-    sr_fontClass type;    //what is the type of this font?
 
     tColor color_;               //!< current color
     static tColor defaultColor_; //!< default color
@@ -124,6 +122,17 @@ public:
 
     rTextField(REAL Left,REAL Top,
                REAL Cheight, sr_fontClass Type);
+
+    // all the basic code assumes a 4:3 screen. We won't fix that here on 0.2.9.
+    // instead, users need to either multiply their witdh (and maybe left) with
+    // AspectWidthMultiplier() or their height (and Top) with AspectHeightMultiplier().
+    // Pick one for each context and stick with it. The Width modification should be
+    // the default.
+    static REAL AspectWidthMultiplier();
+    static REAL AspectHeightMultiplier();
+
+    // puts x/y right into the middle of a screen pixel given Width or Height.
+    static REAL Pixelize(REAL xy, int WidthHeight);
 
     virtual ~rTextField(); // for future extensions (buffered console?)
 
@@ -257,6 +266,12 @@ template<class T> rTextField & operator<<(rTextField &c,const T &x){
 }
 
 void DisplayText(REAL x,REAL y,REAL h,const char *text, sr_fontClass type,int center=0,
+                 int cursor=0,int cursorPos=0, rTextField::ColorMode colorMode = rTextField::COLOR_USE );
+
+void DisplayTextAutoWidth(REAL x,REAL y,const char *text,REAL h=rCHEIGHT_NORMAL,int center=0,
+                 int cursor=0,int cursorPos=0, rTextField::ColorMode colorMode = rTextField::COLOR_USE );
+
+void DisplayTextAutoHeight(REAL x,REAL y,const char *text,REAL w=rCWIDTH_NORMAL,int center=0,
                  int cursor=0,int cursorPos=0, rTextField::ColorMode colorMode = rTextField::COLOR_USE );
 
 // *******************************************************************************************

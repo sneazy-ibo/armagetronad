@@ -758,7 +758,7 @@ tMemManager::tMemManager(int s):size(s){//,blocks(1000),full_blocks(1000){
 
         std::ifstream l(leakname);
         while (l.good() && !l.eof()){
-            int cs,ln;
+            int cs = -1,ln = 0;
             l >> cs >> ln;
 
             if (cs>=0 && cs < MAXCHECKSUM && (ln < leaks[cs] || leaks[cs] == 0))
@@ -1246,7 +1246,7 @@ void tMemManBase::Check(){
 #ifdef WIN32
     LeaveCriticalSection(&mutex);
 #endif
-#endif
+#endif // DONTUSEMEMMANAGER
 }
 
 /*

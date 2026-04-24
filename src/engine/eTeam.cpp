@@ -36,7 +36,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <climits>
 
 #include "nProtoBuf.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "eTeam.pb.h"
+#pragma GCC diagnostic pop
+
 #include "aa_config.h"
 
 tString & operator << ( tString &s, const eTeam * team)
@@ -894,7 +899,6 @@ void eTeam::Enforce( int minTeams, int maxTeams, int maxImbalance)
         int    maxColorID = 0;
 
         int numTeams = 0;
-        int numHumanTeams = 0;
 
         int i;
         for ( i = teams.Len()-1; i>=0; --i )
@@ -907,9 +911,7 @@ void eTeam::Enforce( int minTeams, int maxTeams, int maxImbalance)
 
                 numTeams++;
 
-                if ( humans > 0 )
-                    numHumanTeams++;
-                else
+                if ( humans <= 0 )
                     ai = t;
 
                 if ( humans > maxP )
@@ -1060,9 +1062,9 @@ void eTeam::WritePlayers( eLadderLogWriter & writer, const eTeam *team )
     }
 }
 
-static eLadderLogWriter se_onlinePlayerWriter( "ONLINE_PLAYER", true, "player ping:float team access_level:int total_score:int" );
-static eLadderLogWriter se_onlineAIWriter( "ONLINE_AI", true, "player team total_score:int" );
-static eLadderLogWriter se_onlineTeamWriter( "ONLINE_TEAM", true, "team total_score:int" );
+static eLadderLogWriter se_onlinePlayerWriter( "ONLINE_PLAYER", true, "player ping:float team access_level:int total_score:int color_screen_name+" );
+static eLadderLogWriter se_onlineAIWriter( "ONLINE_AI", true, "player team total_score:int color_screen_name+" );
+static eLadderLogWriter se_onlineTeamWriter( "ONLINE_TEAM", true, "team total_score:int color_screen_name+" );
 static eLadderLogWriter se_numHumansWriter( "NUM_HUMANS", false, "number_humans:int" );
 
 // Writes the data for the ONLINE_PLAYER ladderlog event.
@@ -1083,6 +1085,7 @@ static bool se_WriteOnlinePlayerData( ePlayerNetID *player, eTeam *team )
             se_onlinePlayerWriter << "";
         se_onlinePlayerWriter << player->GetAccessLevel();
         se_onlinePlayerWriter << player->Score();
+        se_onlinePlayerWriter << player->GetUserName() << player->GetColoredName();
         se_onlinePlayerWriter.write();
     }
     else
@@ -1093,6 +1096,7 @@ static bool se_WriteOnlinePlayerData( ePlayerNetID *player, eTeam *team )
         else
             se_onlineAIWriter << "";
         se_onlineAIWriter << player->Score();
+        se_onlineAIWriter << player->GetUserName() << player->GetColoredName();
         se_onlineAIWriter.write();
     }
     return isHuman;    
@@ -1111,6 +1115,7 @@ void eTeam::WriteOnlinePlayers()
         eTeam *team = teams( i );
         se_onlineTeamWriter << team->GetLogName();
         se_onlineTeamWriter << team->Score();
+        se_onlineTeamWriter << team->GetColoredName();
         se_onlineTeamWriter.write();
 
         for ( int j = 0; j < team->players.Len(); j++)

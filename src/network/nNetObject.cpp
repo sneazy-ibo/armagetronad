@@ -43,8 +43,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "nProtoBuf.h"
 #include "nBinary.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "nNetObject.pb.h"
 #include "nNetObjectPrivate.pb.h"
+#pragma GCC diagnostic pop
 
 // #define DEBUG
 
@@ -573,6 +577,7 @@ void nNetObject::TakeOwnership(){
     if ( !this->createdLocally )
     {
         this->createdLocally = true;
+        this->owner = sn_myNetID;
         //		AddRef();
     }
 }
@@ -837,7 +842,7 @@ static void sn_DestroyObjectsHandler( Network::DestroyObjects const & destroy, n
         info.timeout=tSysTimeFloat()+nDeletedTimeout;
 
         // notify object of pending deletion
-        if (nNetObject *no=sn_netObjects[id])
+        if (tJUST_CONTROLLED_PTR<nNetObject> no=sn_netObjects[id])
         {
             tASSERT( !no->Owned() );
 
@@ -1374,11 +1379,6 @@ private:
             // delegate core work
             object->UnstreamControl( source, control );
         }
-        else
-        {
-            // ignore this message
-            nReadError( false );
-        }
     }
 
 public:
@@ -1617,6 +1617,9 @@ nMessageStreamer * nNetObjectDescriptorBase::SyncStreamer()
 }
 
 bool nNetObject::AcceptClientSync() const{
+    return AcceptClientSyncStatic();
+}
+bool nNetObject::AcceptClientSyncStatic(){
     return false;
 }
 
@@ -1865,8 +1868,8 @@ void nNetObject::ClearAllDeleted()
 {
     // forget about objects that were deleted in the past. The swap trick is to
     // avoid that the objects try to remove themselves from the list while it is cleared.
-    nDeletedInfos swap;
-    swap.swap( sn_netObjectsDeleted );
+    nDeletedInfos swap{std::move(sn_netObjectsDeleted)};
+    sn_netObjectsDeleted.clear();
     swap.clear();
 
     // send out object deletion messages
@@ -1909,11 +1912,14 @@ void nNetObject::ClearKnows(int user, bool clear){
     if (0<=user && user <=MAXCLIENTS){
         is_ready_to_get_objects[user]=false;
         for (int i=sn_netObjects.Len()-1;i>=0;i--){
-            nNetObject *no=sn_netObjects(i);
+            nNetObject* no=sn_netObjects(i);
             if (no){
+                nObserverPtr<nNetObject> noObserved{no};
                 no->knowsAbout[user].Reset();
 
                 no->DoBroadcastExistence();  // immediately transfer the thing
+                if(!noObserved)
+                    continue;
 
                 if (clear){
                     if (no->owner==user && user!=sn_myNetID){
@@ -1921,6 +1927,8 @@ void nNetObject::ClearKnows(int user, bool clear){
                         sn_BreakOnObjectID(i);
 #endif
                         bool destroy = no->ActionOnQuit();
+                        if(!noObserved)
+                          continue;
                         
                         // take ownership of the object in any case
                         no->createdLocally=true;
@@ -2081,7 +2089,9 @@ void sn_Sync(REAL timeout,bool sync_sn_netObjects, bool otherEnd){
             }
 
             // wait for all packets to be sent and the sync ack packet to be received
-            while ( sn_Connections[0].socket && ( sync_ack[0] == false || sn_Connections[0].ackPending>0 || sn_QueueLen(0)) &&
+            while ( sn_Connections[0].socket &&
+                    !tRecorder::DesyncedPlayback() &&
+                    ( sync_ack[0] == false || sn_Connections[0].ackPending>0 || sn_QueueLen(0)) &&
                     tSysTimeFloat()<endTime){
                 sn_Delay();
                 sn_Receive();

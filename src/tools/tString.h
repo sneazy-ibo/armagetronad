@@ -68,8 +68,10 @@ public:
     typedef BASE::value_type CHAR;      //!< the character class
 
     tString();                         //!< default constructor
-    tString(const BASE &);             //!< pseudo copy constructor
-    tString(const tString &);          //!< copy constructor
+    tString(BASE const&);              //!< pseudo copy constructor
+    tString(BASE&&);                   //!< pseudo move constructor
+    tString(tString const&);           //!< copy constructor
+    tString(tString&&);                //!< move constructor
     explicit tString(const CHAR *);    //!< conversion from C string
     template<typename T>
     tString(T begin, T end) : string(begin,end) {} //!< initialisation by iterators
@@ -84,6 +86,7 @@ public:
     WRAP_MUTATING_OPERATOR(=,BASE const &) // assignment from C++ string
 
     tString & operator =( tOutput const & other ); //!< assignment from output collector
+    tString & operator =( tString const & other ) = default;
 
     size_type Size() const;                        //!< Returns the size of the string in characters.
 
@@ -209,6 +212,8 @@ public:
     explicit tColoredString( const CHAR * other );          //!< Constructor from raw C string
     explicit tColoredString( const tOutput & other );       //!< Constructor from output gatherer
 
+    tColoredString & operator=( tColoredString const & other ) = default;
+  
     //! Assignment operators
     WRAP_MUTATING_OPERATOR(=,CHAR const *)    // assignment of C string
     WRAP_MUTATING_OPERATOR(=,BASE const &)    // assignment from C++ string

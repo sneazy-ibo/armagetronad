@@ -73,7 +73,7 @@ license you like.
 
 
 
-#include <json/json.h>
+#include "json/json.h"
 
 
 // //////////////////////////////////////////////////////////////////////
@@ -762,7 +762,7 @@ Reader::decodeNumber( Token &token )
                                                    : Value::maxLargestUInt;
    Value::LargestUInt threshold = maxIntegerValue / 10;
    Value::UInt lastDigitThreshold = Value::UInt( maxIntegerValue % 10 );
-   assert( lastDigitThreshold >=0  &&  lastDigitThreshold <= 9 );
+   assert( lastDigitThreshold <= 9 );
    Value::LargestUInt value = 0;
    while ( current < token.end_ )
    {
@@ -1025,7 +1025,7 @@ Reader::getLocationLineAndColumn( Location location ) const
    int line, column;
    getLocationLineAndColumn( location, line, column );
    char buffer[18+16+16+1];
-   sprintf( buffer, "Line %d, Column %d", line, column );
+   snprintf( buffer, sizeof(buffer), "Line %d, Column %d", line, column );
    return buffer;
 }
 
@@ -1696,7 +1696,7 @@ Value::CZString::CZString( const CZString &other )
 : cstr_( other.index_ != noDuplication &&  other.cstr_ != 0
                 ?  duplicateStringValue( other.cstr_ )
                 : other.cstr_ )
-   , index_( other.cstr_ ? (other.index_ == noDuplication ? noDuplication : duplicate)
+   , index_( other.cstr_ ? static_cast<ArrayIndex>(other.index_ == noDuplication ? noDuplication : duplicate)
                          : other.index_ )
 {
 }
@@ -2300,7 +2300,7 @@ Value::asInt64() const
       JSON_ASSERT_MESSAGE( value_.uint_ <= UInt64(maxInt64), "unsigned integer out of Int64 range" );
       return value_.uint_;
    case realValue:
-      JSON_ASSERT_MESSAGE( value_.real_ >= minInt64  &&  value_.real_ <= maxInt64, "Real out of Int64 range" );
+      JSON_ASSERT_MESSAGE( value_.real_ >= static_cast<double>(minInt64)  &&  value_.real_ <= static_cast<double>(maxInt64), "Real out of Int64 range" );
       return Int( value_.real_ );
    case booleanValue:
       return value_.bool_ ? 1 : 0;
@@ -2328,7 +2328,7 @@ Value::asUInt64() const
    case uintValue:
       return value_.uint_;
    case realValue:
-      JSON_ASSERT_MESSAGE( value_.real_ >= 0  &&  value_.real_ <= maxUInt64,  "Real out of UInt64 range" );
+      JSON_ASSERT_MESSAGE( value_.real_ >= 0  &&  value_.real_ <= static_cast<double>(maxUInt64),  "Real out of UInt64 range" );
       return UInt( value_.real_ );
    case booleanValue:
       return value_.bool_ ? 1 : 0;
@@ -3459,9 +3459,9 @@ std::string valueToString( double value )
 {
    char buffer[32];
 #if defined(_MSC_VER) && defined(__STDC_SECURE_LIB__) // Use secure version with visual studio 2005 to avoid warning. 
-   sprintf_s(buffer, sizeof(buffer), "%#.16g", value); 
+   sprintf_s(buffer, sizeof(buffer), "%#.16g", value);
 #else	
-   sprintf(buffer, "%#.16g", value); 
+   snprintf(buffer, sizeof(buffer), "%#.16g", value);
 #endif
    char* ch = buffer + strlen(buffer) - 1;
    if (*ch != '0') return buffer; // nothing to truncate, so save time

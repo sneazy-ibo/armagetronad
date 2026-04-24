@@ -33,10 +33,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "nNetObject.h"
 #include "nBinary.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "google/protobuf/message.h"
 #include "google/protobuf/descriptor.h"
 
 #include "nNetObject.pb.h"
+#pragma GCC diagnostic pop
 
 #include "nStreamMessage.h"
 #include "tLocale.h"
@@ -259,7 +262,7 @@ void nProtoBufMessageBase::Filter( nProtoBuf & buf )
         FieldDescriptor const * field = descriptor->field( i );
         tASSERT( field );
         
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             for( int j = r->REFL_GET( FieldSize, buf, field ) - 1; j >= 0; --j )
             {
@@ -468,7 +471,19 @@ void nProtoBufMessageBase::OnRead( unsigned char const * & buffer, unsigned char
 
 int nProtoBufMessageBase::Size() const
 {
-    return GetProtoBuf().ByteSize() + 5;
+#ifndef GOOGLE_PROTOBUF_VERSION
+#error protobuf version not defined
+#endif
+    auto rawByteSize = [&]()
+    {
+#if GOOGLE_PROTOBUF_VERSION >= 3001000
+        return GetProtoBuf().ByteSizeLong();
+#else
+        return GetProtoBuf().ByteSize();
+#endif
+    };
+
+    return rawByteSize() + 5;
 }
 
 nMessageTranslatorBase::nMessageTranslatorBase(){}
@@ -502,9 +517,9 @@ nMessageStreamer & nProtoBufDescriptorBase::GetDefaultStreamer()
     return streamer;
 }
 
-std::string const & nProtoBufDescriptorBase::DetermineName( nProtoBuf const & prototype )
+std::string nProtoBufDescriptorBase::DetermineName(nProtoBuf const& prototype)
 {
-    return GetDescriptor(prototype)->full_name();
+    return std::string(GetDescriptor(prototype)->full_name());
 }
 
 nProtoBufDescriptorBase::DescriptorMap const & nProtoBufDescriptorBase::GetDescriptorsByName()
@@ -613,7 +628,7 @@ void nProtoBufDescriptorBase::StreamFromDefault( nStreamMessage & in, nProtoBuf 
             continue;
         }
 
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             if ( i != 0 )
             {
@@ -779,7 +794,7 @@ void nProtoBufDescriptorBase::StreamToDefault( nProtoBuf const & in, nStreamMess
             continue;
         }
 
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             if ( i != 0 )
             {
@@ -911,7 +926,7 @@ void nProtoBufDescriptorBase::EstimateMessageDifference( nProtoBuf const & a,
         int weight = 0;
         bool differ = false;
 
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             continue;
         }
@@ -1001,7 +1016,7 @@ void nProtoBufDescriptorBase::DiffMessages( nProtoBuf const & base,
         FieldDescriptor const * field = descriptor->field( i );
         tASSERT( field );
 
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             continue;
         }
@@ -1074,7 +1089,7 @@ void nProtoBufDescriptorBase::ClearRepeated( nProtoBuf & message )
         FieldDescriptor const * field = descriptor->field( i );
         tASSERT( field );
 
-        if ( field->label() == FieldDescriptor::LABEL_REPEATED )
+        if ( field->is_repeated() )
         {
             // clear the field
             reflection->REFL_GET( ClearField, &message, field );
@@ -1204,16 +1219,20 @@ void nNetObjectDescriptorBase::PostCheck( nNetObject * object, nSenderInfo sende
       con << "Received object " << str << "\n";
     */
 #endif
-            
-    if ( sn_GetNetState()==nSERVER && !object->AcceptClientSync() )
+
+    if(!object)
+        return;
+
+    if (sn_GetNetState()==nSERVER && !object->AcceptClientSync())
     {
-        object->Release();
-        Cheater( sender.SenderID() ); // cheater!
-    }
-    else if ( static_cast< nNetObject* >( sn_netObjects[ object->ID() ] ) != object )
-    {
-        // object was unable to be registered
-        object->Release(); // silently delete it.
+#ifdef DEBUG
+        tERR_WARN("AcceptClientSync was supposed to be checked earler.");
+#endif
+        Cheater(sender.SenderID());
+
+        // deregister
+        if(sn_netObjects[ object->ID() ].operator->() == object)
+            sn_netObjects[ object->ID() ] = NULL;
     }
 }
 

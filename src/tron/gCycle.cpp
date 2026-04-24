@@ -73,8 +73,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // TODO: get rid of this
 #include "tDirectories.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 #include "gCycle.pb.h"
+
+#pragma GCC diagnostic pop
+
 #include "nProtoBuf.h"
+
+
 
 // also used in gWall.cpp
 bool sg_gnuplotDebug = false;
@@ -142,6 +150,10 @@ void gCycle::PrivateSettings()
 static REAL sg_speedCycleSound=15;
 static nSettingItem<REAL> c_ss("CYCLE_SOUND_SPEED",
                                sg_speedCycleSound);
+
+static REAL sg_speedCycleSoundMach=0.1f;
+static tSettingItem<REAL> c_ssm("CYCLE_SOUND_MACH",
+                               sg_speedCycleSoundMach);
 
 // time after spawning it takes the cycle to start building a wall
 static REAL sg_cycleWallTime=0.0;
@@ -238,6 +250,7 @@ public:
     virtual void ProcessImage(SDL_Surface *im);
 
     virtual void OnSelect(bool enforce);
+    using rSurfaceTexture::OnSelect;
 };
 
 gTextureCycle::gTextureCycle(rSurface const & surface, const gRealColor& color,bool repx,bool repy,bool w)
@@ -620,7 +633,7 @@ class Sensor: public gSensor
         tASSERT( cycle );
 
         // create
-        if ( &(*cycle->chatBot_) == 0 )
+        if ( cycle->chatBot_.get() == 0 )
             cycle->chatBot_.reset( new gCycleChatBot( cycle ) );
 
         return *cycle->chatBot_;
@@ -1202,7 +1215,7 @@ void gDestination::CopyFrom(const gCycleMovement &other)
     turns 		= other.GetTurns();
 
 #ifdef DEBUG
-    if (!isfinite(gameTime) || !isfinite(speed) || !isfinite(distance))
+    if (!std::isfinite(gameTime) || !std::isfinite(speed) || !std::isfinite(distance))
         st_Breakpoint();
 #endif
     if ( other.Owner() && other.Player() )
@@ -1648,7 +1661,7 @@ void gCycle::OnDropTempWall( gPlayerWall * wall, eCoord const & position, eCoord
     tRecorderSync< unsigned short >::Archive( "_ON_DROP_WALL", 8, idrec );
 
     // determine if the grinded wall is current enough
-    bool wallRight = ( currentWall && ( wall->NetWall() == currentWall || wall->NetWall() == currentWall ) );
+    bool wallRight = ( currentWall && ( wall->NetWall() == currentWall || wall->NetWall() == lastWall ) );
 
     // don't drop if we already dropped a short time ago
     if ( wallRight && currentWall->Edge()->Vec().NormSquared() < verletSpeed_ * verletSpeed_ * sg_minDropInterval * sg_minDropInterval )
@@ -2006,7 +2019,7 @@ bool gCycleExtrapolator::TimestepCore(REAL currentTime, bool calculateAccelerati
     // correct distance
     // distance = dest->distance - DistanceToDestination( *dest );
     // REAL distanceBefore = GetDistance();
-    tASSERT(isfinite(distance));
+    tASSERT(std::isfinite(distance));
 
     // delegate
     bool ret = false;
@@ -2375,8 +2388,8 @@ void gCycle::MyInitAfterCreation(){
     }
 
     // Start the cycle engine sound
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->PlayContinuous(CYCLE_MOTOR, this);
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.PlayContinuous(CYCLE_MOTOR, this);
 #endif // DEDICATED
 
     /*
@@ -2447,12 +2460,12 @@ void gCycle::MyInitAfterCreation(){
 
 void gCycle::InitAfterCreation(){
 #ifdef DEBUG
-    if (!isfinite(Speed()))
+    if (!std::isfinite(Speed()))
         st_Breakpoint();
 #endif
     gCycleMovement::InitAfterCreation();
 #ifdef DEBUG
-    if (!isfinite(Speed()))
+    if (!std::isfinite(Speed()))
         st_Breakpoint();
 #endif
     MyInitAfterCreation();
@@ -2488,8 +2501,8 @@ gCycle::~gCycle(){
 #endif
     // clear the destination list
 
-    eSoundMixer* mixer = eSoundMixer::GetMixer();
-    mixer->RemoveContinuous(CYCLE_MOTOR, this);
+    eSoundMixer& mixer = eSoundMixer::GetMixer();
+    mixer.RemoveContinuous(CYCLE_MOTOR, this);
 
     tDESTROY(engine);
 
@@ -2562,7 +2575,7 @@ static inline void rotate(eCoord &r,REAL angle){
 }
 
 #ifdef MACOSX
-// Sparks have a large performance problem on Macs. See http://forums.armagetronad.net/viewtopic.php?t=2167
+// Sparks have a large performance problem on Macs. See https://forums3.armagetronad.net/viewtopic.php?t=2167
 bool crash_sparks=false;
 #else
 bool crash_sparks=true;
@@ -2860,7 +2873,10 @@ bool gCycle::Timestep(REAL currentTime){
     {
         sn_ConsoleOut( "0xff7777Admin : 0xffff77BUG had to kill a cycle because it lagged behind in the simulation. Probably the invulnerability bug. Investigate!\n" );
         st_Breakpoint();
-        KillAt( pos );
+        if( Vulnerable() )
+            KillAt( pos );
+        else
+            Kill();
         ret = false;
     }
 #endif
@@ -2900,7 +2916,7 @@ static void DecaySmooth( REAL& smooth, REAL relSpeed, REAL minSpeed, REAL clamp 
 
     // apply minimal correction
     if ( fabs( speed ) < minSpeed )
-        speed = copysign ( minSpeed , smooth );
+        speed = std::copysign ( minSpeed , smooth );
 
     // don't overshoot
     if ( fabs( speed ) > fabs( smooth ) )
@@ -2931,9 +2947,9 @@ REAL sg_GetSparksDistance();
 
 
 bool gCycle::TimestepCore(REAL currentTime, bool calculateAcceleration ){
-    if (!isfinite(skew))
+    if (!std::isfinite(skew))
         skew=0;
-    if (!isfinite(skewDot))
+    if (!std::isfinite(skewDot))
         skewDot=0;
 
     // eCoord oldpos=pos;
@@ -2982,7 +2998,7 @@ bool gCycle::TimestepCore(REAL currentTime, bool calculateAcceleration ){
     //if ( 0 )
 
     REAL animts=currentTime-lastTimeAnim;
-    if (animts<0 || !isfinite(animts))
+    if (animts<0 || !std::isfinite(animts))
         animts=0;
     else
         lastTimeAnim=currentTime;
@@ -3777,6 +3793,11 @@ private:
     eCoord const * lastFakeDir_;
 };
 
+namespace
+{
+    auto const cycleTurnSoundVolume = 4.0f;
+}
+
 bool gCycle::DoTurn(int d)
 {
 #ifdef DELAYEDTURN_DEBUG
@@ -3803,8 +3824,8 @@ bool gCycle::DoTurn(int d)
 
         if ( gCycleMovement::DoTurn( d ) )
         {
-            eSoundMixer* mixer = eSoundMixer::GetMixer();
-            mixer->PushButton(CYCLE_TURN, Position());
+            eSoundMixer& mixer = eSoundMixer::GetMixer();
+            mixer.PushButton(CYCLE_TURN, *this, cycleTurnSoundVolume);
 
             sg_ArchiveCoord( pos, 1 );
 
@@ -4124,6 +4145,15 @@ gCycleWallsDisplayListManager::gCycleWallsDisplayListManager()
 {
 }
 
+gCycleWallsDisplayListManager::~gCycleWallsDisplayListManager()
+{
+    while(wallList_)
+        wallList_->Remove();
+    while(wallsWithDisplayList_)
+        wallsWithDisplayList_->Remove();
+}
+
+
 bool gCycleWallsDisplayListManager::CannotHaveList( REAL distance, gCycle const * cycle )
 {
     return
@@ -4324,8 +4354,8 @@ void gCycle::Render(const eCamera *cam){
     glProgramLocalParameter4fARB_ptr = (glProgramLocalParameter4fARB_Func) SDL_GL_GetProcAddress("glProgramLocalParameter4fARB");
 #endif
 #endif    
-    if (!isfinite(z) || !isfinite(pos.x) ||!isfinite(pos.y)||!isfinite(dir.x)||!isfinite(dir.y)
-            || !isfinite(skew))
+    if (!std::isfinite(z) || !std::isfinite(pos.x) ||!std::isfinite(pos.y)||!std::isfinite(dir.x)||!std::isfinite(dir.y)
+            || !std::isfinite(skew))
         st_Breakpoint();
     if (Alive()){
         //con << "Drawing cycle at " << pos << '\n';
@@ -4791,10 +4821,12 @@ void gCycle::Render2D(tCoord scale) const {
 static REAL fadeOutNameAfter = 5.0f;	/* 0: never show, < 0 always show */
 //static int fadeOutNameMode = 1;			// 0: never show, 1: show for fadeOutNameAfter, 2: always show
 static bool showOwnName = 0;			// show name on own cycle?
+static REAL fadeOutNameOpacity = 0.75f;
 
 static tSettingItem< bool > sg_showOwnName( "SHOW_OWN_NAME", showOwnName );
 //static tSettingItem< int > sg_fadeOutNameMode( "FADEOUT_NAME_MODE", showOwnName )
 static tSettingItem< REAL > sg_fadeOutNameAfter( "FADEOUT_NAME_DELAY", fadeOutNameAfter );
+static tSettingItem< REAL > sg_fadeOutNameOpacity( "FADEOUT_NAME_OPACITY", fadeOutNameOpacity );
 
 static bool sg_displayColoredNameOverCycles = true;		        // show colored names on cycles?
 
@@ -4808,7 +4840,7 @@ void gCycle::RenderName( const eCamera* cam ) {
     float modelviewMatrix[16], projectionMatrix[16];
     float x, y, z, w;
     float xp, yp, wp;
-    float alpha = 0.75;
+    float alpha = fadeOutNameOpacity;
 
     if (fadeOutNameAfter == 0) return; /* XXX put that in ::Render() */
     if ( !cam->RenderingMain() ) return; // no name in mirrored image
@@ -4863,8 +4895,8 @@ void gCycle::RenderName( const eCamera* cam ) {
             doname = false;
         } else if (now - timeCameIntoView > fadeOutNameAfter - 1) {
             /* start to fade out */
-            alpha = 0.75 - (now - timeCameIntoView -
-                            (fadeOutNameAfter - 1)) * 0.75;
+            alpha = fadeOutNameOpacity - (now - timeCameIntoView -
+                            (fadeOutNameAfter - 1)) * fadeOutNameOpacity;
         }
     }
 
@@ -4878,13 +4910,14 @@ void gCycle::RenderName( const eCamera* cam ) {
 
     glTranslatef(xp, yp, 0.);
     if(doname) {
-        glColor4f(1, 1, 1, alpha);
+        rTextField::SetBlendColor(tColor(1,1,1,alpha));
         tColoredString name;
         if(sg_displayColoredNameOverCycles)
             name << *this->player;
         else
             name << this->player->GetName();
         DisplayText(0, 0, rCHEIGHT_NORMAL, name, sr_fontCycleLabel, 0, 0);
+        rTextField::SetDefaultColor(tColor(1,1,1));
     }
     static cCockpit cycleCockpit(cCockpit::VIEWPORT_CYCLE);
     cycleCockpit.SetCycle(*this);
@@ -4924,8 +4957,8 @@ bool gCycle::RenderCockpitFixedBefore(bool){
     return true;
 }
 
-void gCycle::SoundMix(Uint8 *dest,unsigned int len,
-                      int viewer,REAL rvol,REAL lvol){
+void gCycle::SoundMix(Sint16 *dest,unsigned int len,
+                      int viewer,REAL rvol,REAL lvol, REAL dopplerPitch){
     if (Alive()){
         /*
           if (!cycle_run.alt){
@@ -4935,7 +4968,13 @@ void gCycle::SoundMix(Uint8 *dest,unsigned int len,
         */
 
         if (engine)
-            engine->Mix(dest,len,viewer,rvol,lvol,verletSpeed_/(sg_speedCycleSound * SpeedMultiplier()));
+        {
+            REAL const engineVolume = 0.3;
+
+            REAL const dopplerPitchAdjusted = sg_speedCycleSoundMach*dopplerPitch/sg_speedCycleSound;
+            REAL const dopplerFactor = dopplerPitchAdjusted > 0 ? 1 + dopplerPitchAdjusted : 1/(1 - dopplerPitchAdjusted);
+            engine->Mix(dest,len,viewer,rvol*engineVolume,lvol*engineVolume,dopplerFactor*verletSpeed_/(sg_speedCycleSound * SpeedMultiplier()));
+        }
 
 #if 0
         if (turning)
@@ -5227,6 +5266,7 @@ bool gCycle::Extrapolate( REAL dt )
 
 #ifdef DEBUG
     eCoord posBefore = extrapolator_->Position();
+    std::ignore = posBefore;
 #endif
 
     // calculate target time
@@ -5475,7 +5515,7 @@ void gCycle::ReadSync( Game::CycleSync const & syncX, nSenderInfo const & sender
         preRubberMalus = 1;
         if( syncX.has_rubber_effectiveness_compressed() )
         {
-            compressZeroOne.Read( syncX.rubber_effectiveness_compressed() );
+            preRubberMalus = compressZeroOne.Read( syncX.rubber_effectiveness_compressed() );
         }
 
         // undo skewing
@@ -5653,7 +5693,7 @@ void gCycle::ReadSync( Game::CycleSync const & syncX, nSenderInfo const & sender
         REAL ratio = (interpolatedDistance - bef->distance)/
                      (aft->distance - bef->distance);
 
-        if (!isfinite(ratio))
+        if (!std::isfinite(ratio))
             ratio = 0;
 
         // interpolate when the cycle was at the position the sync message was sent
@@ -5871,11 +5911,12 @@ void gCycle::SyncEnemy ( const eCoord& begWall)
                 tASSERT( fabs ( ( crossPos - lastSyncMessage_.pos ) * lastSyncMessage_.dir ) < 1 );
 
                 // update the old wall
-                if (currentWall) {
+                if (currentWall)
+                {
                     currentWall->Update(crossTime,crossPos);
 
-                    eSoundMixer* mixer = eSoundMixer::GetMixer();
-                    mixer->PushButton(CYCLE_TURN, crossPos);
+                    eSoundMixer& mixer = eSoundMixer::GetMixer();
+                    mixer.PushButton(CYCLE_TURN, *this, cycleTurnSoundVolume);
                 }
             }
         }

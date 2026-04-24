@@ -15,18 +15,21 @@ include $(top_srcdir)/Makefile.manual
 # what goes into the distribution
 EXTRA_DIST = README-DEVELOPER README-Subversion README-SDL \
 armagetron.kdevelop armagetron.kdevelop.pcs armagetron.kdevses tron.ico \
-models sound textures bootstrap.sh music accustomdir.m4 fingerprint \
-win32 major_version
+models sound textures bootstrap.sh music \
+acinclude.d/accustomdir.m4 acinclude.d/ax_boost_base.m4 acinclude.d/ax_boost_system.m4 acinclude.d/ax_boost_thread.m4\
+acinclude.d/ax_cxx_have_align.m4\
+fingerprint \
+win32 major_version Dockerfile language
 # language/update.py
 
 # resource is included as a subdir for the purpose of keeping this makefile short and delegating
 # resource management to a more appropriate place anyway
-SUBDIRS = src resource batch config desktop www-root
+SUBDIRS = src resource batch config desktop www-root docker/build
 
 # special tasks to do if we're building the master server
 if BUILDMASTER
-masterInstallTasks=	cd  $(DESTDIR)$(bindir); mv armagetronad_main_master$(EXEEXT) @prognamebase@-master$(executable_suffix)
-masterUninstallTasks=rm -f $(DESTDIR)$(bindir)/@prognamebase@-master$(executable_suffix)
+masterInstallTasks=	cd "$(DESTDIR)$(bindir)"; mv armagetronad_main_master$(EXEEXT) @prognamebase@-master$(executable_suffix)
+masterUninstallTasks=rm -f "$(DESTDIR)$(bindir)"/@prognamebase@-master$(executable_suffix)
 else
 masterInstallTasks=echo 'No tasks for the master server'
 masterUninstallTasks=echo 'No tasks for the master server'
@@ -38,6 +41,9 @@ languagedata=language/english_base.txt language/english_base_notranslate.txt lan
 nobase_dist_language_DATA=language/languages.txt.in $(languagedata) language/update.py
 
 # What gets installed
+
+nobase_language_DATA=language/languages.txt language/english_base.txt language/english_base_notranslate.txt language/american.txt language/british.txt\
+             language/deutsch.txt language/french.txt language/spanish.txt language/polish.txt language/russian.txt
 
 if NEEDDATA
 # install media data only when it is needed
@@ -115,8 +121,6 @@ nobase_music_DATA=music/titletrack.ogg  music/when.ogg music/doIknowyou.ogg\
 nobase_model_DATA=models/cycle_body.mod models/cycle_front.mod models/cycle_rear.mod
 endif
 
-nobase_language_DATA=language/languages.txt $(languagedata)
-
 doxy:
 	cd src/doc && doxygen Doxyfile
 	cd ../../
@@ -126,7 +130,7 @@ dist-hook-scm:
 #	replace dynamic version in configure.ac with the version this build is configured with,
 #   as well as default package and program name
 	sed \
-	-e "s/m4_include(version)//" \
+	-e "s/m4_include(version.m4)//" \
 	-e "s/AC_INIT(armagetronad,AUTOMATIC_VERSION)/AC_INIT(@prognamebase@,$(VERSION))/" \
 	-e "s/  progname=.*/  progname='@prognamebase@'/" \
 	-e "s/  progtitle=.*/  progtitle='@progtitle@'/" \
@@ -138,9 +142,9 @@ dist-hook-scm:
 	sed	-e "s,/ArmagetronDedicated,/@progtitle@@progtitle_server@," \
 	< @srcdir@/src/win32_ded/aa_config.h > $(distdir)/src/win32_ded/aa_config.h
 
-#   regenerate dependant files so they no longer reference to the file "version" which will be removed
+#   regenerate dependant files so they no longer reference to the file "version.m4" which will be removed
 	cp @srcdir@/bootstrap.sh $(distdir)
-	cd $(distdir); rm -f aa_config.h.in version; sh ./bootstrap.sh
+	cd $(distdir); rm -f aa_config.h.in version.m4; sh ./bootstrap.sh
 	rm -rf $(distdir)/autom4te.cache
 
 dist-hook:
@@ -150,21 +154,21 @@ dist-hook:
 #	clear SVN
 	find $(distdir) -depth -name .svn -exec rm -rf \{\} \;
 
-#   strip comments from translated files
-	cd $(distdir)/language; python ./update.py --dist
+#	clear git and bzr
+	rm -rf .git .bzr
+
+#   	strip comments from translated files
+	cd $(distdir)/language; `which python3 python python2 2> /dev/null | head -n 1` ./update.py --dist
 #	restore timestamps
 	cd $(distdir)/language; for f in *.txt; do test -r $$f.bak && touch -r $$f.bak $$f; done
 	rm -f $(distdir)/language/*.bak
 
 # 	generate ChangeLog and configure.ac
-	test -r $(srcdir)/version && $(MAKE) dist-hook-scm || echo "Version not from SCM, skipping version fixing."
-
-#   fix internal version info
-	mv $(distdir)/src/tTrueVersion.h $(distdir)/src/tFakeVersion.h
+	test -r $(srcdir)/version.m4 && $(MAKE) dist-hook-scm || echo "Version not from SCM, skipping version fixing."
 
 #   generate yaml version info
 	echo "---" > $(distdir)/version.yaml
-	sed -e 's,^.*TRUE_ARMAGETRONAD_,,' -e 's, \+,: ,' -e 's, *\([0-9a-Z]\+\)$$, "\1",' < $(distdir)/src/tFakeVersion.h >> $(distdir)/version.yaml
+	sed -e 's,^.*TRUE_ARMAGETRONAD_,,' -e 's, \+,: ,' -e 's, *\([0-9a-zA-Z]\+\)$$, "\1",' < $(distdir)/src/tTrueVersion.h >> $(distdir)/version.yaml
 
 if USE_UNINSTALL
 
@@ -173,9 +177,9 @@ uninstall_location=$(DESTDIR)${bindir}/${uninstaller}
 
 # generate and install uninstallation script
 install-uninstall: @srcdir@/batch/make/uninstall Makefile
-	$(install_sh_PROGRAM) $< $(uninstall_location)
-	rm $(uninstall_location)
-	ROOTDIR=$(ROOTDIR) DESTDIR=$(DESTDIR) MAKE="$(MAKE)" PREFIX="${prefix}" PROGTITLE="${progtitle}" PROGNAME="${progname}" SCRIPTDIR="${scriptdir}" sh $< $(uninstall_location) "$(external_uninstall_cmd)"
+	$(install_sh_PROGRAM) $< "$(uninstall_location)"
+	rm "$(uninstall_location)"
+	ROOTDIR=$(ROOTDIR) DESTDIR="$(DESTDIR)" MAKE="$(MAKE)" PREFIX="${prefix}" PROGTITLE="${progtitle}" PROGNAME="${progname}" SCRIPTDIR="${scriptdir}" sh $< "$(uninstall_location)" "$(external_uninstall_cmd)"
 else
 install-uninstall:
 endif
@@ -196,7 +200,7 @@ endif
 install-data-hook:
 #	install systemwide files
 if USE_SYSINSTALL
-	DESTDIR=$(DESTDIR) ROOTDIR=$(ROOTDIR) bash "$(DESTDIR)${scriptdir}/sysinstall" install "$(prefix)"
+	DESTDIR="$(DESTDIR)" ROOTDIR="$(ROOTDIR)" bash "$(DESTDIR)${scriptdir}/sysinstall" install "$(prefix)"
 endif
 if OS_X_TOOLKIT
 	${top_srcdir}/batch/make/symlink-relative "$(DESTDIR)${prefix}" --files-in-directory "$(DESTDIR)${aa_datadir}" --file-with-name "$(DESTDIR)${aa_sysconfdir}" config
@@ -206,16 +210,16 @@ if !BUILDDEDICATED
 
 	rm -rf "$(DESTDIR)${prefix}/../Frameworks"
 	cp -R "${ARMAGETRONAD_OS_X_TOOLKIT}/Frameworks" "$(DESTDIR)${prefix}/.."
-	
+
 	install_name_tool -rpath "${ARMAGETRONAD_OS_X_TOOLKIT}/Frameworks" "@executable_path/../../Frameworks" "$(DESTDIR)${prefix}/../MacOS/@progtitle@"
 endif
 endif
 
 uninstall-hook:
 #	delete executable and uninstaller
-	rm -f $(DESTDIR)${bindir}/@progname@$(executable_suffix)
+	rm -f "$(DESTDIR)${bindir}/@progname@$(executable_suffix)"
 if BUILDDEDICATED
-	rm -f $(DESTDIR)${bindir}/@prognamebase@-serverquery$(executable_suffix)
+	rm -f "$(DESTDIR)${bindir}/@prognamebase@-serverquery$(executable_suffix)"
 endif
 
 #	delegate to special tasks
@@ -232,7 +236,7 @@ endif
 uninstall-first:
 #	uninstall systemwide files
 if USE_SYSINSTALL
-	if test -z "$(AA_FAKE_UNINSTALL)"; then DESTDIR=$(DESTDIR) ROOTDIR=$(ROOTDIR) bash $(DESTDIR)${scriptdir}/sysinstall uninstall $(prefix); fi
+	if test -z "$(AA_FAKE_UNINSTALL)"; then DESTDIR="$(DESTDIR)" ROOTDIR=$(ROOTDIR) bash "$(DESTDIR)${scriptdir}"/sysinstall uninstall $(prefix); fi
 endif
 
 install-first:

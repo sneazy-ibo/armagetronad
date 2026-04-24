@@ -54,7 +54,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "nProtoBuf.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "zZone.pb.h"
+#pragma GCC diagnostic pop
 
 #include "zone/zZone.h"
 
@@ -173,16 +177,8 @@ void zZone::RemoveFromGame(void) {
 }
 
 void zZone::RemoveFromZoneList(void) {
-    std::deque<zZone *>::iterator pos_found =
-        std::find_if(
-            sz_Zones.begin(),
-            sz_Zones.end(),
-            std::bind2nd(
-                std::equal_to<zZone *>(),
-                this)
-        );
-    if(pos_found != sz_Zones.end())
-        sz_Zones.erase(pos_found);
+    auto it = std::remove(sz_Zones.begin(), sz_Zones.end(), this);
+    sz_Zones.erase(it, sz_Zones.end());
 }
 
 void

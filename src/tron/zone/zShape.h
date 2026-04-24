@@ -70,6 +70,7 @@ public:
     tFunction getPosY() {return posy_;};
     tPolynomial getRotation2() { return rotation2; };
     REAL GetCurrentScale() const;
+    void SetCurrentScale(REAL s);
     tFunction getScale() {return scale_;};
     rColor getColor() {return color_;};
 
@@ -210,7 +211,7 @@ private:
     virtual nNetObjectDescriptorBase const & DoGetDescriptor() const;
 };
 
-//typedef boost::shared_ptr<zShape> zShapePtr;
+//typedef std::shared_ptr<zShape> zShapePtr;
 #include "tSafePTR.h"
 typedef tJUST_CONTROLLED_PTR< zShape> zShapePtr;
 

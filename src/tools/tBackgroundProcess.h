@@ -32,6 +32,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "tThread.h"
 #include "tLockedQueue.h"
 #include "tSafePTR.h"
+#include "tMemManager.h"
+
+#include <utility>
 
 //! template that runs void member functions of reference countable objects
 template< class T > class tMemberFunctionRunnerTemplate
@@ -59,7 +62,15 @@ public:
     static void ScheduleBackground( T & object, void (T::*function)()  )
     {
         // schedule the task into a background thread
+#if BOOST_VERSION >= 105300
+        // attributes are not available on all supporting platforms. The version check is inprecise,
+        // that is simply the boost version that is in winlibs that has attributes available.
+        boost::thread::attributes threadAttributes;
+        threadAttributes.set_stack_size(8388608);
+        boost::thread(threadAttributes, tMemberFunctionRunnerTemplate<T>( object, function ) ).detach();
+#else
         boost::thread(tMemberFunctionRunnerTemplate<T>( object, function ) ).detach();
+#endif
     }
 
     //! schedule a task for execution in the next tToDo call
@@ -109,6 +120,45 @@ public:
     template< class T > static void ScheduleForeground( T & object, void (T::*function)() )
     {
         tMemberFunctionRunnerTemplate<T>::ScheduleForeground( object, function );
+    }
+};
+
+//! runs lambda functions or equivalents
+class tLambdaRunner
+{
+    template <typename F>
+    struct LambdaHolder : public tReferencable<LambdaHolder<F>>
+    {
+        LambdaHolder(LambdaHolder const&) = default;
+        LambdaHolder(LambdaHolder&&) = default;
+        LambdaHolder(F const& f) : f_{f} {};
+        LambdaHolder(F&& f) : f_{std::move(f)} {};
+
+        F f_;
+
+        void run()
+        {
+            f_();
+        }
+    };
+
+public:
+    //! runs a member function in a background thread
+    template <typename F>
+    static void ScheduleBackground(F&& f)
+    {
+        using T = LambdaHolder<F>;
+        auto* pHolder = tNEW(T)(std::move(f));
+        tMemberFunctionRunnerTemplate<T>::ScheduleBackground(*pHolder, &T::run);
+    }
+
+    //! runs a member function on the next call of st_DoToDo()
+    template <typename F>
+    static void ScheduleForeground(F&& f)
+    {
+        using T = LambdaHolder<F>;
+        auto* pHolder = tNEW(T)(std::move(f));
+        tMemberFunctionRunnerTemplate<T>::ScheduleForeground(*pHolder, &T::run);
     }
 };
 

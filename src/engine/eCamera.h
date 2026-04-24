@@ -214,9 +214,10 @@ public:
 
 #ifndef DEDICATED
     void Render();
-    void SoundMix(unsigned char *dest,unsigned int len);
+    void SoundMix(Sint16 *dest,unsigned int len);
+    void GetSoundVolume(eGameObject const &go, REAL &r, REAL &l, REAL &dopplerPitch) const; // calculates right and left volume factors of a game object
 private:
-    void SoundMixGameObject(unsigned char *dest,unsigned int len,eGameObject *go);
+    void SoundMixGameObject(Sint16 *dest,unsigned int len,eGameObject *go);
 public:
 #endif
 
@@ -257,6 +258,10 @@ private:
 
     enum HitCacheSize{ hitCacheSize = 3 };
     REAL hitCache_[hitCacheSize];
+
+    REAL _totalContinuousSoundVolume{};
+    REAL _totalContinuousSoundNormalizer{0};
+    REAL _totalContinuousSoundNormalizerSmoother{1};
 };
 
 /*

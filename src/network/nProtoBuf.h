@@ -355,7 +355,7 @@ public:
 
     nMessageStreamer & GetDefaultStreamer();
 
-    static std::string const & DetermineName( nProtoBuf const & prototype );
+    static std::string DetermineName(nProtoBuf const& prototype);
 
     //! dumb streaming to message
     inline void StreamTo( nProtoBuf const & in, nStreamMessage & out, StreamSections sections ) const
@@ -762,6 +762,13 @@ private:
     {
         if( PreCheck( GetNetObjectSync( message ), sender ) )
         {
+            if (sn_GetNetState()==nSERVER && !OBJECT::AcceptClientSyncStatic())
+            {
+                // client is not allowed to send objects of this type, kick and ignore
+                Cheater(sender.SenderID());
+                return;
+            }
+
             nNetObjectRegistrar registrar;
             tJUST_CONTROLLED_PTR< OBJECT > n=tNEW(OBJECT)( message, sender );
             n->InitAfterCreation();

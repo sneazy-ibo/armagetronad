@@ -37,7 +37,9 @@
 bool eMusicTrack::musicIsPlaying = 0;
 eMusicTrack* eMusicTrack::currentMusic = 0;
 
-eMusicTrack::eMusicTrack() {
+eMusicTrack::eMusicTrack()
+: m_mixer(eSoundMixer::GetMixer())
+{
 #ifdef HAVE_LIBSDL_MIXER
     // Do nothing constructor
     if(! currentMusic) currentMusic = this;
@@ -45,7 +47,9 @@ eMusicTrack::eMusicTrack() {
 #endif // DEDICATED
 }
 
-eMusicTrack::eMusicTrack(const char* filename, bool isinstalled) {
+eMusicTrack::eMusicTrack(const char* filename, bool isinstalled)
+: m_mixer(eSoundMixer::GetMixer())
+{
 #ifdef HAVE_LIBSDL_MIXER
     Init(isinstalled);
     // Load file
@@ -63,7 +67,6 @@ void eMusicTrack::Init(bool isinstalled) {
     m_Loop = false;
     m_Volume = 100;
     m_HasSong = false;
-    m_mixer = eSoundMixer::GetMixer();
     m_SequencePos = m_Tracklist.begin();
 #endif
 }
@@ -75,6 +78,7 @@ eMusicTrack::~eMusicTrack() {
 
     for(trackIter = m_Tracklist.begin(); trackIter != m_Tracklist.end(); trackIter++) {
         Mix_FreeMusic( (*trackIter).second );
+        (*trackIter).second = nullptr;
     }
 
     delete m_Playlist;
@@ -84,6 +88,7 @@ eMusicTrack::~eMusicTrack() {
 void eMusicTrack::UnloadSong() {
 #ifdef HAVE_LIBSDL_MIXER
     if(m_Music) Mix_FreeMusic(m_Music);
+    m_Music = nullptr;
     m_Pos = 0.0;
     m_StartTime = 0;
     m_HasSong = false;
@@ -96,6 +101,7 @@ bool eMusicTrack::LoadSong(tSong thesong) {
     m_Filename = thesong.location;
 
     if(m_Music) Mix_FreeMusic(m_Music);
+    m_Music = nullptr;
 
     extension = thesong.location.GetFileMimeExtension();
     if(extension == ".aatrack") {
@@ -188,7 +194,7 @@ void eMusicTrack::MusicFinished() {
     m_SequencePos++;
 
     if(m_SequencePos == m_Tracklist.end()) {
-        m_mixer->SongFinished();
+        m_mixer.SongFinished();
         return;
     }
     m_SequenceChange = true;

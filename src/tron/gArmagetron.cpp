@@ -98,8 +98,11 @@ public:
 
 
 private:
-    virtual bool DoAnalyze( tCommandLineParser & parser )
+    bool DoAnalyze( tCommandLineParser & parser, int pass ) override
     {
+        if(pass > 0)
+            return false;
+
         if ( parser.GetSwitch( "-fullscreen", "-f" ) )
         {
             fullscreen_=true;
@@ -126,7 +129,7 @@ private:
         return true;
     }
 
-    virtual void DoHelp( std::ostream & s )
+    void DoHelp( std::ostream & s ) override
     {                                      //
 #ifndef DEDICATED
         s << "-f, --fullscreen             : start in fullscreen mode\n";
@@ -340,10 +343,9 @@ static void welcome(){
 #endif
 
         // Start the music up
-        eSoundMixer* mixer;
-        mixer = eSoundMixer::GetMixer();
-        mixer->SetMode(TITLE_TRACK);
-        mixer->Update();
+        auto& mixer = eSoundMixer::GetMixer();
+        mixer.SetMode(TITLE_TRACK);
+        mixer.Update();
 
         // disable splash screen when recording (it's annoying)
         static const char * splashSection = "SPLASH";
@@ -620,8 +622,7 @@ void sg_SetIcon()
         SetClassLong( info.window, GCL_HICON, (LONG) icon );
     }
 #else
-    rSurface tex( "desktop/icons/medium/armagetronad.png" );
-    //    SDL_Surface *tex=IMG_Load( tDirectories::Data().GetReadPath( "textures/icon.png" ) );
+    rSurface tex( "textures/icon.png" );
 
     if (tex.GetSurface())
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -639,6 +640,11 @@ class gAutoStringArray
 public:
     ~gAutoStringArray()
     {
+#ifdef HAVE_CLEARENV
+        // Optional. Systems that don't have this function better make copies of putenv() arguments.
+        clearenv();
+#endif
+
         for ( std::vector< char * >::iterator i = strings.begin(); i != strings.end(); ++i )
         {
             free( *i );
@@ -661,6 +667,24 @@ void sg_PutEnv( char const * s )
 {
     static gAutoStringArray store;
     putenv( store.Store( s ) );
+}
+
+namespace
+{
+tString sn_configurationSavedInVersion{"0.2.8"};
+tConfItem<tString> sn_configurationSavedInVersionConf("SAVED_IN_VERSION",sn_configurationSavedInVersion);
+
+#ifndef DEDICATED
+struct SDLCleanup
+{
+    // no init, that requires parameters and gives a return
+    ~SDLCleanup(){SDL_Quit();}
+};
+struct SDLSoundCleanup
+{
+    ~SDLSoundCleanup(){eSoundMixer::ShutDown();}
+};
+#endif
 }
 
 int main(int argc,char **argv){
@@ -692,6 +716,15 @@ int main(int argc,char **argv){
             tString version( st_programVersion );
             tRecorder::Playback( versionSection, version );
             tRecorder::Record( versionSection, version );
+#ifndef DEDICATED
+            if(version != st_programVersion)
+            {
+#ifdef DEBUG
+                tERR_WARN( "Recording from a different version, consider at high risk of desync." );
+#endif
+                tRecorder::ActivateProbablyDesyncedPlayback();
+            }
+#endif
         }
 
         {
@@ -788,6 +821,19 @@ int main(int argc,char **argv){
         eLadderLogInitializer ladderlog;
         st_LoadConfig();
 
+        // migrate user configuration from previous versions
+        if(sn_configurationSavedInVersion != st_programVersion)
+        {
+            if(st_FirstUse)
+            {
+                sn_configurationSavedInVersion = "0.0";
+            }
+
+            tConfigMigration::Migrate(sn_configurationSavedInVersion);
+        }
+        if(tConfigMigration::SavedBefore(sn_configurationSavedInVersion, st_programVersion))
+            sn_configurationSavedInVersion = st_programVersion;
+
         // record and play back the recording debug level
         tRecorderSyncBase::GetDebugLevelPlayback();
 
@@ -852,6 +898,8 @@ int main(int argc,char **argv){
             sr_glOut=1;
             //std::cout << "checked mp\n";
 
+            SDLCleanup sdlCleanup; // call SDL_Quit later
+
             sr_glRendererInit();
 
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -861,12 +909,16 @@ int main(int argc,char **argv){
 #endif
             //std::cout << "set filter\n";
 
-            sg_SetIcon();
-
             tConsole::RegisterMessageCallback(&uMenu::Message);
             tConsole::RegisterIdleCallback(&uMenu::IdleInput);
 
+#ifndef NOSOUND
+            SDLSoundCleanup soundInitAndCleanup; // se_SoundInit() now, se_SoundExit() later
+#endif
+
             if (sr_InitDisplay()){
+
+                sg_SetIcon();
 
                 try
                 {
@@ -943,9 +995,7 @@ int main(int argc,char **argv){
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
             }
 
-            eSoundMixer::ShutDown();
 
-            SDL_Quit();
 #else // DEDICATED
             sr_glOut=0;
 

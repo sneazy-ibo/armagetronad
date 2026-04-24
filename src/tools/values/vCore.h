@@ -45,7 +45,7 @@ class Base;
 }
 }
 namespace Type {
-typedef boost::shared_ptr<Expr::Core::Base> BasePtr; //!< convinience definition for the use in derived classes
+typedef std::shared_ptr<Expr::Core::Base> BasePtr; //!< convinience definition for the use in derived classes
 
 typedef boost::variant<int, float, std::string> Variant;
 typedef std::deque<BasePtr> arglist;
@@ -68,6 +68,8 @@ public:
     Base(Base const &other); //!< Copy constructor
     virtual ~Base() { };
 
+    Base & operator =(Base const &) = default;
+  
     virtual Base *copy(void) const; //!< Returns an exact copy of this object
 
     virtual int GetInt(void) const; //!< Returns an integer using the current value

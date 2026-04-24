@@ -334,7 +334,7 @@ void sr_ReloadFont(void) {
 rTextField::rTextField(REAL Left,REAL Top,
                        REAL Cheight, sr_fontClass Type)
         :parIndent(0),
-left(Left),top(Top),cheight(Cheight),x(0),y(0),realx(0),nextx(Left),currentWidth(0),multiline(false),type(Type),cursor(0),cursorPos(0){
+left(Left),top(Top),cheight(Cheight),x(0),y(0),realx(0),nextx(Left),currentWidth(0),multiline(false),cursor(0),cursorPos(0){
     if (cheight*sr_screenHeight<18)
         cheight=18/REAL(sr_screenHeight);
 
@@ -349,6 +349,22 @@ left(Left),top(Top),cheight(Cheight),x(0),y(0),realx(0),nextx(Left),currentWidth
 
     cursor_x = -100;
     cursor_y = -100;
+}
+
+REAL rTextField::AspectWidthMultiplier()
+{
+    return std::min(((4.0f/3.0f)*sr_screenHeight)/sr_screenWidth,1.0f);
+}
+
+REAL rTextField::AspectHeightMultiplier()
+{
+    return std::min(((3.0f/4.0f)*sr_screenWidth)/sr_screenHeight,1.0f);
+}
+
+REAL rTextField::Pixelize(REAL xy, int WidthHeight)
+{
+    auto pixelIn = static_cast<int>(.5f * xy * WidthHeight);
+    return (2.0f*(pixelIn+.5f))/WidthHeight;
 }
 
 
@@ -566,7 +582,6 @@ rTextField & rTextField::StringOutput(const FTGL_CHAR * c, ColorMode colorMode)
             lastIsNewline = false;
             // count number of nonblank characters following
             FTGL_CHAR const * nextSpace = c+1;
-            int wordLen = 0;
             while ( *nextSpace != '\0' && *nextSpace != '\n' && !isblank(*nextSpace) )
             {
                 if (*nextSpace=='0' && my_strnlen(nextSpace, 8)>=8 && nextSpace[1]=='x' && colorMode != COLOR_IGNORE )
@@ -578,7 +593,6 @@ rTextField & rTextField::StringOutput(const FTGL_CHAR * c, ColorMode colorMode)
                 {
                     // count letter
                     nextSpace++;
-                    wordLen++;
                 }
             }
             FTGL_STRING str(c, nextSpace);
@@ -727,6 +741,19 @@ void DisplayText(REAL x,REAL y,REAL h,const char *t,sr_fontClass type,int center
     c.StringOutput(str.c_str(), colorMode );
 #endif
 }
+
+// only here for compatibility with stuff merged from 0.2.9
+void DisplayTextAutoWidth(REAL x, REAL y, const char *text, REAL h, int center, int cursor, int cursorPos, rTextField::ColorMode colorMode)
+{
+    DisplayText(x, y, h, text, sr_fontClass::sr_fontConsole, center, cursor, cursorPos, colorMode);
+}
+
+// only here for compatibility with stuff merged from 0.2.9
+void DisplayTextAutoHeight(REAL x, REAL y, const char *text, REAL w, int center, int cursor, int cursorPos, rTextField::ColorMode colorMode)
+{
+    DisplayText(x, y, w*(rCHEIGHT_NORMAL/rCWIDTH_NORMAL)*rTextField::AspectHeightMultiplier(), text, sr_fontClass::sr_fontConsole, center, cursor, cursorPos, colorMode);
+}
+
 // *******************************************************************************************
 // *
 // *	GetDefaultColor

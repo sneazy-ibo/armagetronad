@@ -163,14 +163,17 @@ zEffectorManager::Create(std::string const & typex)
 void
 zEffectorManager::Register(std::string const & type, std::string const & desc, NullFactory_t f)
 {
-    _effectors()[type] = boost::shared_ptr<NullFactory>(new NullFactory(f));
+    _effectors()[type] = std::shared_ptr<NullFactory>(new NullFactory(f));
 }
 void
 zEffectorManager::Register(std::string const & type, std::string const & desc, XMLFactory_t f)
 {
-    _effectors()[type] = boost::shared_ptr<XMLFactory>( new XMLFactory(f));
+    _effectors()[type] = std::shared_ptr<XMLFactory>( new XMLFactory(f));
 }
 
+
+bool sz_wz_player_win = true;
+static tSettingItem<bool> wzpw("WIN_ZONE_PLAYER_WIN",sz_wz_player_win);
 
 static zEffectorRegistration regWin("win", "", zEffectorWin::create);
 
@@ -189,7 +192,8 @@ void zEffectorWin::effect(gVectorExtra<ePlayerNetID *> &d_calculatedTargets)
     {
         sg_winZoneWriter << (*iter)->GetUserName();
         sg_winZoneWriter.write();
-        sg_DeclareWinner((*iter)->CurrentTeam(), message );
+        if(sz_wz_player_win)
+            sg_DeclareWinner((*iter)->CurrentTeam(), message );
     }
 }
 

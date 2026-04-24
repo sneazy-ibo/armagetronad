@@ -200,7 +200,7 @@ bool zFlagZone::Timestep( REAL time )
         //Check if player is alive or not. If yes, make the flag follow the owner. If not, send the flag home or drop it based on setting
         if(owner_->Player())
         {
-            if(!player->Object()->Alive())
+            if( player->wantsDrop || !player->Object()->Alive() )
             {
                 OwnerDropped();
             }
@@ -211,6 +211,7 @@ bool zFlagZone::Timestep( REAL time )
                 
                 owner_posX=owner_->Position().x;
                 owner_posY=owner_->Position().y;
+                /*
                 //shape->setPosX(tFunction(owner_->Position().x, (owner_->Direction().x * owner_->Speed())));
                 //shape->setPosY(tFunction(owner_->Position().y, (owner_->Direction().y * owner_->Speed())));
                 shape->setPosX(tFunction(owner_->Position().x, 0.0));
@@ -218,6 +219,7 @@ bool zFlagZone::Timestep( REAL time )
                 
                 //shape->setPosition(owner_->Position());
                 shape->RequestSync();
+                */
             }
         }
         
@@ -323,7 +325,11 @@ bool zFlagZone::Timestep( REAL time )
                 }
             }
         }
-
+    }
+    
+    if(owner_)
+    {
+        ePlayerNetID *player = owner_->Player();
         if (player)
         {
             // check if flag chat blinking is enabled
@@ -368,38 +374,46 @@ bool zFlagZone::Timestep( REAL time )
                 blinkUpdateTime_ = time;
                 blinkTrackUpdateTime_ = time;
 
+                REAL growthRate =
+                    (originalScale_ *
+                    (sg_flagBlinkEnd - sg_flagBlinkStart)) /
+                    onTime;
 
                 shape->setReferenceTime(time);
 
                 if (sg_flagBlinkTrackTime > 0)
                 {
                     //shape->Position() = owner_->Position();
-                    //shape->SetVelocity(owner_->Direction() * owner_->Speed());
+                    shape->setPosX(tFunction(owner_->Position().x, 0.0));
+                    shape->setPosY(tFunction(owner_->Position().y, 0.0));
+                    shape->SetVelocity(owner_->Direction() * owner_->Speed());
                 }
                 else
                 {
-                    //eCoord estimatedPosition =
-                       // (owner_->Position() +
-                       //  (owner_->Direction() *
-                       //   (sg_flagBlinkEstimatePosition * owner_->Speed() * onTime)));
+                    eCoord estimatedPosition =
+                        (owner_->Position() +
+                         (owner_->Direction() *
+                          (sg_flagBlinkEstimatePosition * owner_->Speed() * onTime)));
 
                     //shape->Position() = estimatedPosition;
+                    shape->setPosX(tFunction(estimatedPosition.x, 0.0));
+                    shape->setPosY(tFunction(estimatedPosition.y, 0.0));
                     //shape->SetVelocity(se_zeroCoord);
                 }
                 //do the blink
-                color.a_ = 75;
-                shape->setColor(color);
+                shape->SetCurrentScale(originalScale_ * sg_flagBlinkStart);
+                shape->setGrowth(growthRate);
                 shape->RequestSync();
             }
-            else if (color.a_ == 75)
+            else if (shape->GetCurrentScale() > 0)
             {
                 if (time >= (blinkUpdateTime_ + onTime))
                 {
                     // kill the blink until the next update time
                     shape->setReferenceTime(time);
                     //shape->SetVelocity(se_zeroCoord);
-                    color.a_ = 0;
-                    shape->setColor(color);
+                    shape->setGrowth(0);
+                    shape->SetCurrentScale(0);
                     shape->RequestSync();
                 }
                 else if ((sg_flagBlinkTrackTime > 0) &&
@@ -469,7 +483,7 @@ void zFlagZone::CheckSurvivor( void )
 void zFlagZone::OnRoundBegin( void )
 {
     // save the original radius, can't do this at construction
-    //originalRadius_ = GetRadius();
+    originalScale_ = shape->GetCurrentScale();
     
     //save the original position
     //homePosition_ = shape->getPosition();
@@ -630,9 +644,6 @@ void zFlagZone::OnEntry( gCycle * target, REAL time )
         owner_ = target;
         ownerTime_ = time;
         lastHoldScoreTime_ = time;
-        rColor setAlphaTakeColor = shape->getColor();
-        setAlphaTakeColor.a_ = 0;
-        shape->setColor(setAlphaTakeColor);
         shape->RequestSync();
         //DO later
         //ownerWarnedNotHome_ = false;
@@ -642,10 +653,14 @@ void zFlagZone::OnEntry( gCycle * target, REAL time )
 
         // diminish the flag and put it at the original location
         shape->setReferenceTime(lastTime);
+        /*
         shape->SetRotationSpeed( 0 );
         shape->SetRotationAcceleration( 0 );
         shape->RequestSync();
+        */
         positionUpdatePending_ = true;
+
+        target->Player()->hasDroppable = true;
 
         tColoredString playerName;
         playerName << *target->Player() << tColoredString::ColorString(1,1,1);
@@ -681,9 +696,8 @@ void zFlagZone::GoHome()
     flagHome_ = true;
     shape->setPosX(tFunction(homePosition_X,0.0));
     shape->setPosY(tFunction(homePosition_Y,0.0));
-    rColor GoHomeInterfaceColor = shape->getColor();
-    GoHomeInterfaceColor.a_ = 100;
-    shape->setColor(GoHomeInterfaceColor);
+    shape->setGrowth(0);
+    shape->SetCurrentScale(originalScale_);
     shape->RequestSync();
 }
 
@@ -723,9 +737,8 @@ void zFlagZone::OwnerDropped()
         flagHome_ = false;
         shape->setPosX(tFunction(owner_posX, 0.0));
         shape->setPosY(tFunction(owner_posY, 0.0));
-        rColor DropColor = shape->getColor();
-        DropColor.a_ = 100;
-        shape->setColor(DropColor);
+        shape->setGrowth(0);
+        shape->SetCurrentScale(originalScale_);
         shape->RequestSync();
         
         // remove the owner
@@ -746,6 +759,8 @@ void zFlagZone::RemoveOwner()
     {
         if (owner_->Player())
         {
+            owner_->Player()->hasDroppable = false;
+            owner_->Player()->wantsDrop = false;
             if (owner_->Player()->flagOverrideChat)
             {
                 owner_->Player()->flagOverrideChat = false;

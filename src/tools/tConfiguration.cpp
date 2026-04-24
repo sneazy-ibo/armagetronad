@@ -639,10 +639,11 @@ static std::vector< tString > st_Stringify( char const * vetos[] )
 
 static bool s_VetoPlayback( tString const & line )
 {
-    static char const * vetos_char[]=
+    static char const* vetos_char[] =
         { "USE_DISPLAYLISTS", "CHECK_ERRORS", "ZDEPTH", "SWAP_OPTIMIZE",
-          "COLORDEPTH", "FULLSCREEN ", "ARMAGETRON_LAST_WINDOWSIZE",
+          "COLORDEPTH", "FULLSCREEN ", "LOW_DPI_WINDOW", "ARMAGETRON_LAST_WINDOWSIZE",
           "ARMAGETRON_WINDOWSIZE", "ARMAGETRON_LAST_SCREENMODE",
+          "ARMAGETRON_VSYNC", "ARMAGETRON_VSYNC_LAST",
           "ARMAGETRON_SCREENMODE", "CUSTOM_SCREEN", "SOUND",
           "PASSWORD", "ADMIN_PASS",
           "ZTRICK", "MOUSE_GRAB", "PNG_SCREENSHOT", // "WHITE_SPARKS", "SPARKS",
@@ -922,12 +923,15 @@ tString extraConfig("NONE");
 class tExtraConfigCommandLineAnalyzer: public tCommandLineAnalyzer
 {
 private:
-    virtual bool DoAnalyze( tCommandLineParser & parser )
+    bool DoAnalyze( tCommandLineParser & parser, int pass ) override
     {
+        if(pass > 0)
+            return false;
+
         return parser.GetOption(extraConfig, "--extraconfig", "-e");
     }
 
-    virtual void DoHelp( std::ostream & s )
+    void DoHelp( std::ostream & s ) override
     {                                      //
         s << "-e, --extraconfig            : open an extra configuration file after\n"
         << "                               settings_dedicated.cfg\n";
@@ -1097,13 +1101,23 @@ void tConfItemLine::ReadVal(std::istream &s){
 
 
 void tConfItemLine::WriteVal(std::ostream &s){
-    tConfItem<tString>::WriteVal(s);
-
-    // double trailing backslash so it is read back as a single backslash, not
-    // a continued line (HACK: this would actually be the job of the calling function)
-    if ( target->Len() >= 2 &&
-            target->operator()(target->Len() - 2) == '\\' )
-        s << "\\";
+    // slow, but correct: escape special characters on the fly
+    int len = target->Len();
+    for(int i = 0; i < len; ++i)
+    {
+        char c = (*target)[i];
+        switch(c)
+        {
+            case 0:
+                continue;
+            case '\\':
+            case '\'':
+            case '"':
+            case ' ':
+                s << '\\';
+        }
+        s << c;
+    }
 }
 
 tConfItemFunc::tConfItemFunc
@@ -1202,3 +1216,119 @@ static tConfItemFunc st_Dummy10("SIMULATE_RECEIVE_PACKET_LOSS", &st_Dummy);
 static tConfItemFunc st_Dummy11("SIMULATE_SEND_PACKET_LOSS", &st_Dummy);
 #endif
 
+namespace
+{
+std::vector<tConfigMigration::Callback> &st_MigrationCallbacks()
+{
+    static std::vector<tConfigMigration::Callback> callbacks;
+    return callbacks;
+}
+
+#ifdef DEBUG
+struct tConfigMigrationTester
+{
+    tConfigMigrationTester()
+    {
+        tASSERT(!tConfigMigration::SavedBefore("0.2.9","0.2.9"));
+
+        auto AssertOrdered = [](char const *a, char const *b)
+        {
+            tASSERT(tConfigMigration::SavedBefore(a,b));
+            tASSERT(!tConfigMigration::SavedBefore(b,a));
+        };
+
+        AssertOrdered("0.2.8","0.2.9");
+        AssertOrdered("0.2.8","0.10.9");
+        AssertOrdered("0.4.0_alpha100","0.4.0_beta1");
+        AssertOrdered("0.4.0_beta229","0.4.0_rc1");
+        AssertOrdered("0.4.0_rc19","0.4.0");
+        AssertOrdered("0.","0.0");
+        AssertOrdered("0.","0.1");
+        AssertOrdered("0.","0.9");
+        AssertOrdered("0","0.");
+        AssertOrdered("0_","0");
+    }
+};
+
+static tConfigMigrationTester st_ConfigMigrationTester;
+#endif
+}
+
+tConfigMigration::tConfigMigration(tConfigMigration::Callback &&cb)
+{
+    st_MigrationCallbacks().push_back(std::move(cb));
+}
+
+void tConfigMigration::Migrate(const tString &savedInVersion)
+{
+    for(auto &callback: st_MigrationCallbacks())
+    {
+        callback(savedInVersion);
+    }
+}
+
+bool tConfigMigration::SavedBefore(char const *savedInVersion, char const *beforeVersion)
+{
+    char const *pA = savedInVersion, *pB = beforeVersion;
+    while(*pA && *pB)
+    {
+        // equality -> advance
+        if(*pA == *pB)
+        {
+            ++pA;
+            ++pB;
+            continue;
+        }
+
+        // non-number difference -> regular alphabetic order
+        if(!isdigit(*pA) || !isdigit(*pB))
+        {
+            return *pA < *pB;
+        }
+
+        // this leaves number differences.
+        auto lengthOfNumber = [](char const *pBegin)
+        {
+            auto *pC = pBegin;
+            while(isdigit(*pC))
+                ++pC;
+            return pC - pBegin;
+        };
+
+        // longer numbers are bigger
+        auto const lA = lengthOfNumber(pA);
+        auto const lB = lengthOfNumber(pB);
+        if(lA < lB)
+            return true;
+        if(lA > lB)
+            return false;
+
+        // equal length numbers can be compared digit by digit
+        while(isdigit(*pA))
+        {
+            if(*pA == *pB)
+            {
+                ++pA;
+                ++pB;
+                continue;
+            }
+
+            return *pA < *pB;
+        }
+    }
+    if(!*pA && !*pB)
+        return false;
+
+    // reversed order if one version string is longer than the other;
+    // we want _ to be less than nothing, but . more, and they sit on
+    // opposite sides of the digits.
+    if(!*pA)
+    {
+        return '9' >= *pB;
+    }
+    else
+    {
+        tASSERT(!*pB);
+        return '9' < *pA;
+    }
+}

@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+# sorts resources by their included name and version information
+# usage: call from the directory containing the resources or
+# call
+# sortresources.py <path_to_seach_and_sort>
+# use sortresources.py -h to get command line option help
 
 import sys, os
 
@@ -26,6 +31,3 @@ while not foundModule:
 
 if __name__ == "__main__":
     armabuild.resource.main(sys.argv[1:])
-
-
-    

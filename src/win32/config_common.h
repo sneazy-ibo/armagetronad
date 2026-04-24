@@ -9,7 +9,7 @@
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 
 // this one is included in winlibs as static library
-#define HAVE_LIBBOOST_THREAD
+#define HAVE_BOOST_THREAD
 #define BOOST_THREAD_USE_LIB
 
 // and disable warnings about those calls that can't be converted. We may want to look at
@@ -40,6 +40,9 @@
 #define WIN32
 #endif
 
+// not currently in our toolchain
+#undef HAVE_CXX_ALIGN
+
 // uncomment this line to compile a version that TRIES to be compatible
 // with Windows 9X. No guarantees.
 // #define SUPPORT_WIN9X
@@ -49,6 +52,10 @@
 
 // for now, no joystick support in Windows
 // #define NOJOYSTICK 1
+
+// do not exist
+#undef HAVE_CLEARENV
+#undef HAVE_EXP10
 
 // Define this for the particle library
 #define PARTICLEDLL_EXPORTS

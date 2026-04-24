@@ -219,10 +219,10 @@ uActionCamera eCamera::se_lookLeft("LOOK_LEFT",
 
 uActionCamera eCamera::se_switchView("SWITCH_VIEW", -160);
 
-uActionTooltip eCamera::se_glanceBackTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_BACK], 2 );
+uActionTooltip eCamera::se_glanceBackTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_BACK], 1 );
 uActionTooltip eCamera::se_glanceForwardTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_FORWARD], 1 );
-uActionTooltip eCamera::se_glanceRightTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_RIGHT], 3 );
-uActionTooltip eCamera::se_glanceLeftTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_LEFT], 3 );
+uActionTooltip eCamera::se_glanceRightTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_RIGHT], 1 );
+uActionTooltip eCamera::se_glanceLeftTooltip( uActionTooltip::Level_Advanced, eCamera::se_glance[GLANCE_LEFT], 1 );
 uActionTooltip eCamera::se_switchViewTooltip( uActionTooltip::Level_Advanced, eCamera::se_switchView, 2 );
 
 static REAL s_startFollowX = -30, s_startFollowY = -30, s_startFollowZ = 80;
@@ -294,6 +294,15 @@ static tSettingItem<bool>  s_glanceStacking("CAMERA_GLANCE_STACKING",se_glanceSt
 static tSettingItem<REAL> s_glanceRotSpeedBonus("CAMERA_GLANCE_ANGULAR_VELOCITY_BONUS",glanceAngularVelocityBonus);
 static tSettingItem<REAL> s_smartcamGlanceBack("CAMERA_SMART_GLANCING_BACK",smartcamGlancingBack);
 static tSettingItem<REAL> s_smartcamGlanceHeight("CAMERA_SMART_GLANCING_HEIGHT",smartcamGlancingHeight);
+
+static REAL se_cameraSoundReceiverSize = 4.0f;
+static tSettingItem< REAL > se_confCameraSoundReceiverSize( "SOUND_RECEIVER_SIZE", se_cameraSoundReceiverSize );
+
+static REAL se_cameraSoundReceiverSizeByDistance = 0.2f;
+static tSettingItem< REAL > se_confCameraSoundReceiverSizeByDistance( "SOUND_RECEIVER_SIZE_DISTANCE", se_cameraSoundReceiverSizeByDistance );
+
+static REAL se_cameraSoundSelfFactor = 0.25f;
+static tSettingItem< REAL > se_confCameraSoundSelfFactor( "SOUND_SELF_FACTOR", se_cameraSoundSelfFactor );
 
 // turn speed of internal camera
 static REAL s_inTurnSpeed=40;
@@ -489,8 +498,11 @@ static eGameObject * se_GetPleaseWatch()
 class rWatchCommandLineAnalyzer: public tCommandLineAnalyzer
 {
 private:
-    virtual bool DoAnalyze( tCommandLineParser & parser )
+    bool DoAnalyze( tCommandLineParser & parser, int pass ) override
     {
+        if(pass > 0)
+            return false;
+
         // get option
         tString name;
         if ( parser.GetOption( name, "--watch" ) )
@@ -504,7 +516,7 @@ private:
         return false;
     }
 
-    virtual void DoHelp( std::ostream & s )
+    void DoHelp( std::ostream & s ) override
     {                                      //
         s << "--watch <name>               : during playback, prefers to watch a player with that\n"
              "                               name (part) instead of the originally active player.";
@@ -514,6 +526,10 @@ static rWatchCommandLineAnalyzer se_WatchAnalyzer;
 #endif
 
 void eCamera::MyInit(){
+    // let the sound fade in from 0 to at most the default max volume for a single active engine
+    _totalContinuousSoundNormalizer = 0.0f;
+    _totalContinuousSoundNormalizerSmoother = 1.5f/std::min(1.0f, se_cameraSoundSelfFactor);
+
     if (localPlayer){
         if (cameraMain_) mode=localPlayer->startCamera; //PENDING:
         fov=localPlayer->startFOV;
@@ -1084,13 +1100,11 @@ public:
         REAL objectZ = 1.5;
         if ( camera_ )
             objectZ = camera_->CenterCamZ() * 2;
-        REAL heightLimit = ( .5 * zLimit_ * time + objectZ * ( 1 - time ) );
+        REAL heightLimit = .5 * ( .5 * zLimit_ * time + objectZ * ( 1 - time ) );
 
         // exit early if the wall does not obstruct view
-        if ( moved_ || !w || !owned->EdgeIsDangerous(w, time, alpha) || w->Height() <= heightLimit )
+        if ( moved_ || !w || !owned->EdgeIsDangerous( w, time, alpha ) || w->SeeHeight() <= heightLimit * .5 )
             return eContinue;
-
-        heightLimit *= .5f;
 
         // project camera position a bit to the other side of the wall:
         // get the two endpoints
@@ -1497,9 +1511,6 @@ bool eCamera::AutoSwitchIncam(){
         return false;
 }
 
-static inline void makefinite(REAL &x,REAL y=2){if (!isfinite(x)) x=y;}
-static inline void makefinite(eCoord &x){makefinite(x.x);makefinite(x.y);}
-
 // Smart camera settings
 
 // distance scale for tests measured relative to cycle speed
@@ -1594,6 +1605,9 @@ static tSettingItem<float> secimfd("CAMERA_IN_MAX_FOCUS_DISTANCE", se_cameraInMa
 
 #ifndef DEDICATED
 bool displaying=false;
+
+static inline void makefinite(REAL &x,REAL y=2){if (!std::isfinite(x)) x=y;}
+static inline void makefinite(eCoord &x){makefinite(x.x);makefinite(x.y);}
 
 void eCamera::Render(){
     if (!sr_glOut)
@@ -1846,6 +1860,14 @@ void eCamera::SwitchCenter(int d){
 }
 
 void eCamera::Timestep(REAL ts){
+    // adjust total sound volume; try yo do so smoothly
+    {
+        auto bestTotalContinuousSoundNormalizer = 1.0f/std::max(1.0f, sqrtf(_totalContinuousSoundVolume));
+        REAL tween = std::min(fabsf(ts), 0.1f) * (.5f + 2 * fabsf(bestTotalContinuousSoundNormalizer - _totalContinuousSoundNormalizer));
+        _totalContinuousSoundNormalizerSmoother = (_totalContinuousSoundNormalizerSmoother + tween*bestTotalContinuousSoundNormalizer)/(1.0f+tween);
+        _totalContinuousSoundNormalizer = (_totalContinuousSoundNormalizer + tween*_totalContinuousSoundNormalizerSmoother)/(1.0f+tween);
+    }
+
     // find net player
     if (!netPlayer && localPlayer)
     {
@@ -2502,27 +2524,41 @@ void eCamera::s_Timestep(eGrid *grid, REAL time){
 
 #ifndef DEDICATED
 
-void eCamera::SoundMix(Uint8 *dest,unsigned int len){
+void eCamera::SoundMix(Sint16 *dest,unsigned int len){
     tASSERT_THIS();
 
-    if (id>=0){
-        eGameObject *c=Center();
-        for(int i=grid->gameObjects.Len()-1;i>=0;i--){
-            eGameObject *go=grid->gameObjects(i);
-            SoundMixGameObject(dest,len,go);
+    auto mix = [&]()
+    {
+        _totalContinuousSoundVolume = 0.0;
+        if (id>=0){
+            eGameObject *c=Center();
+            for(int i=grid->gameObjects.Len()-1;i>=0;i--){
+                eGameObject *go=grid->gameObjects(i);
+                SoundMixGameObject(dest,len,go);
+            }
+            if (c && c->id<0)
+                SoundMixGameObject(dest,len,c);
         }
-        if (c && c->id<0)
-            SoundMixGameObject(dest,len,c);
+    };
+
+    mix();
+
+    // don't allow things to become too loud due to slow smoothing
+    constexpr REAL maxLoundnessOvershoot = 2.0;
+    if(_totalContinuousSoundVolume * _totalContinuousSoundNormalizer * _totalContinuousSoundNormalizer > maxLoundnessOvershoot)
+    {
+        _totalContinuousSoundNormalizer = maxLoundnessOvershoot/sqrtf(_totalContinuousSoundVolume);
+        // mix();
     }
 }
 
+// calculates right and left volume factors of a game object
+void eCamera::GetSoundVolume(eGameObject const &go, REAL &r, REAL &l, REAL &dopplerPitch) const
+{
+    auto *c = Center();
 
-void eCamera::SoundMixGameObject(Uint8 *dest,unsigned int len,eGameObject *go){
-    if(!go)
-        return;
-    
-    eCoord vec((go->pos-pos).Turn(dir.Conj()));
-    REAL dist_squared=vec.NormSquared()+(z-go->z)*(z-go->z);
+    eCoord vec((go.pos-pos).Turn(dir.Conj()));
+    REAL dist_squared=vec.NormSquared()+(z-go.z)*(z-go.z);
 
     //dist_squared*=.1;
     if (dist_squared<1)
@@ -2532,24 +2568,69 @@ void eCamera::SoundMixGameObject(Uint8 *dest,unsigned int len,eGameObject *go){
 
 #define MAXVOL .4
 
-    REAL l=(dist*.5+vec.y)/dist_squared;
-    REAL r=(dist*.5-vec.y)/dist_squared;
+    dopplerPitch = 0;
+
+    // calculate normalized l and r component (between 0 and 1)
+    l=(dist*.5+vec.y)/dist;
+    r=(dist*.5-vec.y)/dist;
+
+    auto soundReceiverRadius = se_cameraSoundReceiverSize;
+
+    if (&go==c){
+        dist = 0;
+    }
+    else if(c)
+    {
+        {
+            auto dz = z - c->z;
+            soundReceiverRadius += se_cameraSoundReceiverSizeByDistance*sqrt((pos - c->pos).NormSquared() + dz*dz);
+        }
+        {
+            // for loudness, the distance to the center object should matter
+            auto dz = (go.z - c->z);
+            vec = go.pos - c->pos;
+            dist = sqrt(vec.NormSquared() + dz*dz);
+        }
+
+        {
+            dopplerPitch = -go.Speed()*(tCoord::F(go.SmoothDirection(), vec));
+            if(c)
+                dopplerPitch += c->Speed()*(tCoord::F(c->SmoothDirection(), vec));
+            dopplerPitch /= se_cameraSoundReceiverSize + vec.Norm();
+        }
+    }
+
+    auto volumeByDistance = soundReceiverRadius/(soundReceiverRadius + dist);
+
+    l *= volumeByDistance;
+    r *= volumeByDistance;
 
     if (l<0) l=0;
     if (r<0) r=0;
     if (l>MAXVOL) l=MAXVOL;
     if (r>MAXVOL) r=MAXVOL;
 
-    if (go==Center()){
-        if (mode==CAMERA_IN || mode==CAMERA_SMART_IN)
-            l=r=.2;
-        else if (mode!=CAMERA_FREE){
-            l*=.9;
-            r*=.9;
-        }
+}
+
+
+void eCamera::SoundMixGameObject(Sint16 *dest,unsigned int len,eGameObject *go){
+    if(!go)
+        return;
+
+    REAL l, r, dopplerPitch;
+    GetSoundVolume(*go, r, l, dopplerPitch);
+
+    if (Center() == go){
+        l *= se_cameraSoundSelfFactor;
+        r *= se_cameraSoundSelfFactor;
     }
 
-    go->SoundMix(dest,len,id,r,l);
+    _totalContinuousSoundVolume += r + l;
+
+    r *= _totalContinuousSoundNormalizer;
+    l *= _totalContinuousSoundNormalizer;
+
+    go->SoundMix(dest, len, id, r, l, dopplerPitch);
 }
 
 #endif
