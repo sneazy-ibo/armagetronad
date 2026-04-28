@@ -97,6 +97,7 @@ zFlagZone::zFlagZone( eGrid * grid )
 
 zFlagZone::~zFlagZone( void )
 {
+    RemoveOwner();
 }
 
 static float sg_flagChatBlinkTime = -1;
