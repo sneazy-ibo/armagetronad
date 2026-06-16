@@ -14,7 +14,7 @@
 #include "uMenu.h"
 
 /* Use this flag to determine whether we use SDLMain.nib or not */
-#define		SDL_USE_NIB_FILE	1
+#define		SDL_USE_NIB_FILE	0
 
 
 static int    gArgc;
@@ -220,10 +220,9 @@ int main (int argc, const char *argv[])
 	
 	MacOSX_SetCWD(gArgv);
 #if SDL_USE_NIB_FILE
-    [SDLApplication poseAsClass:[NSApplication class]];
     NSApplicationMain (argc, argv);
 #else
-    CustomApplicationMain (argc, argv);
+    NSApplicationMain (argc, argv);
 #endif
     return 0;
 }

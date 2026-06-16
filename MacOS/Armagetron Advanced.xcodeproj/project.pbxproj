@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -22,8 +22,6 @@
 		9B8A49BE0D3708E10094FB81 /* Create Full Release */ = {
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 9B8A49C90D37095A0094FB81 /* Build configuration list for PBXAggregateTarget "Create Full Release" */;
-			buildPhases = (
-			);
 			dependencies = (
 				9B8A49FD0D374AC90094FB81 /* PBXTargetDependency */,
 				9B8A49FF0D374ACD0094FB81 /* PBXTargetDependency */,
@@ -156,7 +154,6 @@
 		8C11CAAB095A2B6E007AE0EA /* uMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5EFA089EEC7E007E21DC /* uMenu.cpp */; };
 		8C6EF51D08A32A0500816348 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C6EF51B08A32A0500816348 /* InfoPlist.strings */; };
 		8CAD9141095A37DD00DA0ECC /* rConsoleCout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CAD9140095A37DD00DA0ECC /* rConsoleCout.cpp */; };
-		8CB97AB0096265A800AE8BCD /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6032089EF32F007E21DC /* SDLMain.nib */; };
 		8CB97AB1096265A800AE8BCD /* AUTHORS in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6039089EF359007E21DC /* AUTHORS */; };
 		8CB97AB2096265A800AE8BCD /* config in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA603B089EF359007E21DC /* config */; };
 		8CB97AB3096265A800AE8BCD /* language in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA603D089EF359007E21DC /* language */; };
@@ -165,7 +162,6 @@
 		8CB97AB6096265A800AE8BCD /* sound in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6040089EF359007E21DC /* sound */; };
 		8CB97AB7096265A800AE8BCD /* textures in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6041089EF359007E21DC /* textures */; };
 		8CB97AB8096265A800AE8BCD /* Armagetron Advanced.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA62E008A01A55007E21DC /* Armagetron Advanced.icns */; };
-		8CB97AB9096265A800AE8BCD /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA646108A065A8007E21DC /* Info.plist */; };
 		8CB97ABA096265A800AE8BCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C6EF51B08A32A0500816348 /* InfoPlist.strings */; };
 		8CB97AC1096265A800AE8BCD /* SDLMain.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5E08089EEC5B007E21DC /* SDLMain.mm */; };
 		8CB97AC2096265A800AE8BCD /* eAdvWall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5E10089EEC7C007E21DC /* eAdvWall.cpp */; };
@@ -267,8 +263,8 @@
 		8CB97B23096265A800AE8BCD /* uMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5EFA089EEC7E007E21DC /* uMenu.cpp */; };
 		8CB97B25096265A800AE8BCD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		8CB97B29096265A800AE8BCD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CBA60B0089F00F2007E21DC /* OpenGL.framework */; };
-		8CB97B450962677F00AE8BCD /* libxml2.2.6.22.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 8CB97B3F0962676B00AE8BCD /* libxml2.2.6.22.dylib */; };
-		8CB97BAC096271B000AE8BCD /* libpng12.0.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 8CB97BAA0962719600AE8BCD /* libpng12.0.dylib */; };
+		8CB97B450962677F00AE8BCD /* libxml2.2.6.22.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 8CB97B3F0962676B00AE8BCD /* libxml2.2.6.22.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		8CB97BAC096271B000AE8BCD /* libpng12.0.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 8CB97BAA0962719600AE8BCD /* libpng12.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		8CBA5E0A089EEC5B007E21DC /* SDLMain.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5E08089EEC5B007E21DC /* SDLMain.mm */; };
 		8CBA5EFD089EEC7E007E21DC /* eAdvWall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5E10089EEC7C007E21DC /* eAdvWall.cpp */; };
 		8CBA5EFF089EEC7E007E21DC /* eAuthentication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5E12089EEC7C007E21DC /* eAuthentication.cpp */; };
@@ -367,7 +363,6 @@
 		8CBA5FDB089EEC7E007E21DC /* uInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5EF6089EEC7D007E21DC /* uInput.cpp */; };
 		8CBA5FDD089EEC7E007E21DC /* uInputQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5EF8089EEC7E007E21DC /* uInputQueue.cpp */; };
 		8CBA5FDF089EEC7E007E21DC /* uMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA5EFA089EEC7E007E21DC /* uMenu.cpp */; };
-		8CBA6033089EF32F007E21DC /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6032089EF32F007E21DC /* SDLMain.nib */; };
 		8CBA6043089EF359007E21DC /* AUTHORS in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA6039089EF359007E21DC /* AUTHORS */; };
 		8CBA6045089EF359007E21DC /* config in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA603B089EF359007E21DC /* config */; };
 		8CBA6047089EF359007E21DC /* language in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA603D089EF359007E21DC /* language */; };
@@ -381,13 +376,13 @@
 		9B5414A50A45C78200745CE6 /* libpng.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A20A45C78200745CE6 /* libpng.framework */; };
 		9B5414A60A45C78200745CE6 /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL_image.framework */; };
 		9B5414A70A45C78200745CE6 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL.framework */; };
-		9B5414DB0A45C78D00745CE6 /* libpng.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A20A45C78200745CE6 /* libpng.framework */; };
-		9B5414DC0A45C78D00745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL_image.framework */; };
-		9B5414DD0A45C78D00745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL.framework */; };
+		9B5414DB0A45C78D00745CE6 /* libpng.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A20A45C78200745CE6 /* libpng.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5414DC0A45C78D00745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5414DD0A45C78D00745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9B5414E90A45C7CB00745CE6 /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL_image.framework */; };
 		9B5414EA0A45C7CB00745CE6 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL.framework */; };
-		9B54150F0A45C7D700745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL_image.framework */; };
-		9B5415100A45C7D700745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL.framework */; };
+		9B54150F0A45C7D700745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5415100A45C7D700745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9B5E119F0D5EBCD700175ABB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CBA62A1089F1A95007E21DC /* config.h */; };
 		9B5E11AA0D5EBD1600175ABB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CAD9136095A379B00DA0ECC /* config.h */; };
 		9B5E11BF0D5EC32500175ABB /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5E11BE0D5EC32500175ABB /* CoreServices.framework */; };
@@ -404,7 +399,7 @@
 		9B865B720F4B3445003FCD2C /* eChat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B865B700F4B3445003FCD2C /* eChat.cpp */; };
 		9B865B740F4B3445003FCD2C /* eChat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B865B700F4B3445003FCD2C /* eChat.cpp */; };
 		9BA977200F1EC45500F02184 /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */; };
-		9BA9773D0F1EC49700F02184 /* SDL_mixer.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */; };
+		9BA9773D0F1EC49700F02184 /* SDL_mixer.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D01641340D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
 		D01641350D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
 		D01641360D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
@@ -444,9 +439,8 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		8CB97ABB096265A800AE8BCD /* Copy Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 10;
+			dstSubfolder = Frameworks;
 			files = (
 				9B54150F0A45C7D700745CE6 /* SDL_image.framework in Copy Frameworks */,
 				9B5415100A45C7D700745CE6 /* SDL.framework in Copy Frameworks */,
@@ -457,13 +451,11 @@
 				64E439270D64FC4100CA7EC4 /* rDisplayList.h in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8CBA5DD5089EEBB3007E21DC /* Copy Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 10;
+			dstSubfolder = Frameworks;
 			files = (
 				9BA9773D0F1EC49700F02184 /* SDL_mixer.framework in Copy Frameworks */,
 				9B5414DB0A45C78D00745CE6 /* libpng.framework in Copy Frameworks */,
@@ -471,7 +463,6 @@
 				9B5414DD0A45C78D00745CE6 /* SDL.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -696,7 +687,6 @@
 		8CBA5EF9089EEC7E007E21DC /* uInputQueue.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = uInputQueue.h; sourceTree = "<group>"; };
 		8CBA5EFA089EEC7E007E21DC /* uMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = uMenu.cpp; sourceTree = "<group>"; };
 		8CBA5EFB089EEC7E007E21DC /* uMenu.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = uMenu.h; sourceTree = "<group>"; };
-		8CBA6032089EF32F007E21DC /* SDLMain.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = SDLMain.nib; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Versions/A/Resources/SDLMain.nib; sourceTree = "<absolute>"; };
 		8CBA6039089EF359007E21DC /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = AUTHORS; path = ../AUTHORS; sourceTree = SOURCE_ROOT; };
 		8CBA603B089EF359007E21DC /* config */ = {isa = PBXFileReference; lastKnownFileType = folder; name = config; path = ../config; sourceTree = SOURCE_ROOT; };
 		8CBA603D089EF359007E21DC /* language */ = {isa = PBXFileReference; lastKnownFileType = folder; name = language; path = ../language; sourceTree = SOURCE_ROOT; };
@@ -729,16 +719,13 @@
 /* Begin PBXFrameworksBuildPhase section */
 		8C11CA40095A268E007AE0EA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				9B78706A0D5E4FD20088A96F /* libZThread.a in Frameworks */,
 				9B5E11C10D5EC32500175ABB /* CoreServices.framework in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8CB97B24096265A800AE8BCD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				8CB97B25096265A800AE8BCD /* Cocoa.framework in Frameworks */,
 				8CB97B29096265A800AE8BCD /* OpenGL.framework in Frameworks */,
@@ -747,11 +734,9 @@
 				6459A1320D2AE2B40042EFE8 /* libpng.framework in Frameworks */,
 				9B5E11C00D5EC32500175ABB /* CoreServices.framework in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8D11072E0486CEB800E47090 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				8CBA60B1089F00F2007E21DC /* OpenGL.framework in Frameworks */,
@@ -761,7 +746,6 @@
 				9B5E11BF0D5EC32500175ABB /* CoreServices.framework in Frameworks */,
 				9BA977200F1EC45500F02184 /* SDL_mixer.framework in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -799,7 +783,6 @@
 				8CBA603F089EF359007E21DC /* resource */,
 				8CBA6040089EF359007E21DC /* sound */,
 				8CBA6041089EF359007E21DC /* textures */,
-				8CBA6032089EF32F007E21DC /* SDLMain.nib */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -1186,19 +1169,15 @@
 /* Begin PBXHeadersBuildPhase section */
 		9B5E11A10D5EBCDE00175ABB /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				9B5E119F0D5EBCD700175ABB /* config.h in Headers */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B5E11AC0D5EBD2400175ABB /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				9B5E11AA0D5EBD1600175ABB /* config.h in Headers */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
@@ -1214,8 +1193,6 @@
 				8C11CA40095A268E007AE0EA /* Frameworks */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = "Armagetron Advanced Dedicated";
 			productName = "Armagetron Advanced Dedicated";
@@ -1237,8 +1214,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = "Armagetron Advanced 10.2.8";
 			productInstallPath = "$(HOME)/Applications";
 			productName = "Armagetron Advanced";
@@ -1258,10 +1233,9 @@
 				8D11072E0486CEB800E47090 /* Frameworks */,
 				8C6EF3CA08A3168C00816348 /* Sort Package */,
 				8CEA127508A67DE4005E93C1 /* Change libpng */,
+				8CEA127508A67DE4005E93C2 /* ShellScript */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = "Armagetron Advanced";
 			productInstallPath = "$(HOME)/Applications";
@@ -1274,10 +1248,20 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2650;
+			};
 			buildConfigurationList = 8CBA5D48089EE60D007E21DC /* Build configuration list for PBXProject "Armagetron Advanced" */;
-			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+				Base,
+				English,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* Armagetron Advanced */;
+			preferredProjectObjectVersion = 100;
 			projectDirPath = "";
 			projectRoot = ..;
 			targets = (
@@ -1294,9 +1278,7 @@
 /* Begin PBXResourcesBuildPhase section */
 		8CB97AAF096265A800AE8BCD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
-				8CB97AB0096265A800AE8BCD /* SDLMain.nib in Resources */,
 				8CB97AB1096265A800AE8BCD /* AUTHORS in Resources */,
 				8CB97AB2096265A800AE8BCD /* config in Resources */,
 				8CB97AB3096265A800AE8BCD /* language in Resources */,
@@ -1305,17 +1287,13 @@
 				8CB97AB6096265A800AE8BCD /* sound in Resources */,
 				8CB97AB7096265A800AE8BCD /* textures in Resources */,
 				8CB97AB8096265A800AE8BCD /* Armagetron Advanced.icns in Resources */,
-				8CB97AB9096265A800AE8BCD /* Info.plist in Resources */,
 				8CB97ABA096265A800AE8BCD /* InfoPlist.strings in Resources */,
 				64C038B70D2E84E500810BB1 /* config_common.h.in in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8D1107290486CEB800E47090 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
-				8CBA6033089EF32F007E21DC /* SDLMain.nib in Resources */,
 				8CBA6043089EF359007E21DC /* AUTHORS in Resources */,
 				8CBA6045089EF359007E21DC /* config in Resources */,
 				8CBA6047089EF359007E21DC /* language in Resources */,
@@ -1326,183 +1304,277 @@
 				8CBA62E108A01A55007E21DC /* Armagetron Advanced.icns in Resources */,
 				8C6EF51D08A32A0500816348 /* InfoPlist.strings in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		8C6EF3CA08A3168C00816348 /* Sort Package */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Sort Package";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Author: Daniel Harple\n# Purpose:\n# \tGet rid of useless files, and move some files to their correct positions\n\ntarget_build=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\n\n# Xcode copies this file over to Resources/, not where it belongs.\nrm -f \"${target_build}/Contents/Resources/Info.plist\"\n\n# Move InfoPlist.strings to the correct spot (we should really fix this correctly)\nif [ ! -d \"${target_build}/Contents/Resources/English.lproj\" ]\nthen\n\tmkdir \"${target_build}/Contents/Resources/English.lproj\"\n\tmv \"${target_build}/Contents/Resources/InfoPlist.strings\" \"${target_build}/Contents/Resources/English.lproj/InfoPlist.strings\"\nfi\n\n# App sometimes loads this icon if it exists, so we remove it.\nrm -f \"${target_build}/Contents/Resources/textures/icon.png\"\n\n# Remove useless files\nfor a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\" \".cvsignore\"\ndo\n\tfind \"${target_build}/Contents\" -name \"${a}\" -exec rm -f \\{\\} \\;\ndone\n\n# Remove the proto/ directory\nrm -rf \"${target_build}/Contents/Resources/resource/proto\"\n";
+			shellScript = (
+				"# Author: Daniel Harple",
+				"# Purpose:",
+				"# \tGet rid of useless files, and move some files to their correct positions",
+				"",
+				"target_build=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"",
+				"",
+				"# Xcode copies this file over to Resources/, not where it belongs.",
+				"rm -f \"${target_build}/Contents/Resources/Info.plist\"",
+				"",
+				"# Move InfoPlist.strings to the correct spot (we should really fix this correctly)",
+				"if [ ! -d \"${target_build}/Contents/Resources/English.lproj\" ]",
+				"then",
+				"\tmkdir \"${target_build}/Contents/Resources/English.lproj\"",
+				"\tmv \"${target_build}/Contents/Resources/InfoPlist.strings\" \"${target_build}/Contents/Resources/English.lproj/InfoPlist.strings\"",
+				"fi",
+				"",
+				"# App sometimes loads this icon if it exists, so we remove it.",
+				"rm -f \"${target_build}/Contents/Resources/textures/icon.png\"",
+				"",
+				"# Remove useless files",
+				"for a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\" \".cvsignore\"",
+				"do",
+				"\tfind \"${target_build}/Contents\" -name \"${a}\" -exec rm -f \\{\\} \\;",
+				"done",
+				"",
+				"# Remove the proto/ directory",
+				"rm -rf \"${target_build}/Contents/Resources/resource/proto\"",
+				"",
+				"# Sign the binary manually (workaround for Xcode -no_adhoc_codesign issue)",
+				"codesign --force --sign - --timestamp=none --deep \"${target_build}\"",
+				"",
+			);
 		};
 		8CA7C30608B71B3B00BE10F2 /* Sort Resources */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Sort Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Sort map resources\n\ntop_level=..\n\n# Only run this script when it is a CVS build\nif [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]\nthen\n\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"\nfi";
+			shellScript = (
+				"# Sort map resources",
+				"",
+				"top_level=..",
+				"",
+				"# Only run this script when it is a CVS build",
+				"if [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]",
+				"then",
+				"\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"",
+				"fi",
+				"",
+			);
 		};
 		8CAD9172095A3BB700DA0ECC /* Process Files */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Process Files";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Replace tags and move *.in files\n\nbuild_tools_dir=build_tools\n\nruby \"${build_tools_dir}/process_files.rb\"";
+			shellScript = (
+				"# Replace tags and move *.in files",
+				"",
+				"build_tools_dir=build_tools",
+				"",
+				"ruby \"${build_tools_dir}/process_files.rb\"",
+				"",
+			);
 		};
 		8CAD917A095A3BD000DA0ECC /* Sort Resources */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Sort Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Sort map resources\n\ntop_level=..\n\n# Only run this script when it is a CVS build\nif [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]\nthen\n\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"\nfi";
+			shellScript = (
+				"# Sort map resources",
+				"",
+				"top_level=..",
+				"",
+				"# Only run this script when it is a CVS build",
+				"if [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]",
+				"then",
+				"\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"",
+				"fi",
+				"",
+			);
 		};
 		8CB97AAD096265A800AE8BCD /* Process Files */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Process Files";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Replace tags and move *.in files\n\nbuild_tools_dir=build_tools\n\nruby \"${build_tools_dir}/process_files.rb\"";
+			shellScript = (
+				"# Replace tags and move *.in files",
+				"",
+				"build_tools_dir=build_tools",
+				"",
+				"ruby \"${build_tools_dir}/process_files.rb\"",
+				"",
+			);
 		};
 		8CB97AAE096265A800AE8BCD /* Sort Resources */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Sort Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Sort map resources\n\ntop_level=..\n\n# Only run this script when it is a CVS build\nif [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]\nthen\n\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"\nfi";
+			shellScript = (
+				"# Sort map resources",
+				"",
+				"top_level=..",
+				"",
+				"# Only run this script when it is a CVS build",
+				"if [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]",
+				"then",
+				"\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"",
+				"fi",
+				"",
+			);
 		};
 		8CB97B2B096265A800AE8BCD /* Sort Package */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Sort Package";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Author: Daniel Harple\n# Purpose:\n# \tGet rid of useless files, and move some files to their correct positions\n\ntarget_build=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\n\n# Xcode copies this file over to Resources/, not where it belongs.\nrm -f \"${target_build}/Contents/Resources/Info.plist\"\n\n# Move InfoPlist.strings to the correct spot (we should really fix this correctly)\nif [ ! -d \"${target_build}/Contents/Resources/English.lproj\" ]\nthen\n\tmkdir \"${target_build}/Contents/Resources/English.lproj\"\n\tmv \"${target_build}/Contents/Resources/InfoPlist.strings\" \"${target_build}/Contents/Resources/English.lproj/InfoPlist.strings\"\nfi\n\n# App sometimes loads this icon if it exists, so we remove it.\nrm -f \"${target_build}/Contents/Resources/textures/icon.png\"\n\n# Remove useless files\nfor a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\" \".cvsignore\"\ndo\n\tfind \"${target_build}/Contents\" -name \"${a}\" -exec rm -f \\{\\} \\;\ndone\n\n# Remove the proto/ directory\nrm -rf \"${target_build}/Contents/Resources/resource/proto\"\n";
+			shellScript = (
+				"# Author: Daniel Harple",
+				"# Purpose:",
+				"# \tGet rid of useless files, and move some files to their correct positions",
+				"",
+				"target_build=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"",
+				"",
+				"# Xcode copies this file over to Resources/, not where it belongs.",
+				"rm -f \"${target_build}/Contents/Resources/Info.plist\"",
+				"",
+				"# Move InfoPlist.strings to the correct spot (we should really fix this correctly)",
+				"if [ ! -d \"${target_build}/Contents/Resources/English.lproj\" ]",
+				"then",
+				"\tmkdir \"${target_build}/Contents/Resources/English.lproj\"",
+				"\tmv \"${target_build}/Contents/Resources/InfoPlist.strings\" \"${target_build}/Contents/Resources/English.lproj/InfoPlist.strings\"",
+				"fi",
+				"",
+				"# App sometimes loads this icon if it exists, so we remove it.",
+				"rm -f \"${target_build}/Contents/Resources/textures/icon.png\"",
+				"",
+				"# Remove useless files",
+				"for a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\" \".cvsignore\"",
+				"do",
+				"\tfind \"${target_build}/Contents\" -name \"${a}\" -exec rm -f \\{\\} \\;",
+				"done",
+				"",
+				"# Remove the proto/ directory",
+				"rm -rf \"${target_build}/Contents/Resources/resource/proto\"",
+				"",
+			);
 		};
 		8CB97B2C096265A800AE8BCD /* Change Dependencies */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Change Dependencies";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "install_name_tool -change /usr/local/lib/libxml2.2.dylib \\\n@executable_path/../Frameworks/libxml2.2.6.22.dylib \\\n\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/Contents/MacOS/${PRODUCT_NAME}\"\n\ninstall_name_tool -change /usr/local/lib/libpng12.0.dylib \\\n@executable_path/../Frameworks/libpng12.0.dylib \\\n\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/Contents/MacOS/${PRODUCT_NAME}\"";
+			shellScript = (
+				"install_name_tool -change /usr/local/lib/libxml2.2.dylib \\",
+				"@executable_path/../Frameworks/libxml2.2.6.22.dylib \\",
+				"\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/Contents/MacOS/${PRODUCT_NAME}\"",
+				"",
+				"install_name_tool -change /usr/local/lib/libpng12.0.dylib \\",
+				"@executable_path/../Frameworks/libpng12.0.dylib \\",
+				"\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/Contents/MacOS/${PRODUCT_NAME}\"",
+				"",
+			);
 		};
 		8CBA6203089F11BE007E21DC /* Process Files */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Process Files";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Replace tags and move *.in files\n\nbuild_tools_dir=build_tools\n\nruby \"${build_tools_dir}/process_files.rb\"";
+			shellScript = (
+				"# Replace tags and move *.in files",
+				"",
+				"build_tools_dir=build_tools",
+				"",
+				"ruby \"${build_tools_dir}/process_files.rb\"",
+				"",
+			);
 		};
 		8CEA127508A67DE4005E93C1 /* Change libpng */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
 			name = "Change libpng";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "# Change the libpng to the one in the Frameworks/ directory\n# UPDATE: moved to libpng framework. This is not needed anymore. It is kept here for future reference.\n\n# install_name_tool -change /usr/local/lib/libpng12.0.dylib @executable_path/../Frameworks/libpng12.0.dylib \\\n# \"${TARGET_BUILD_DIR}/${TARGET_NAME}.app/Contents/MacOS/${TARGET_NAME}\"\n";
+			shellScript = (
+				"# Change the libpng to the one in the Frameworks/ directory",
+				"# UPDATE: moved to libpng framework. This is not needed anymore. It is kept here for future reference.",
+				"",
+				"# install_name_tool -change /usr/local/lib/libpng12.0.dylib @executable_path/../Frameworks/libpng12.0.dylib \\",
+				"# \"${TARGET_BUILD_DIR}/${TARGET_NAME}.app/Contents/MacOS/${TARGET_NAME}\"",
+				"",
+			);
+		};
+		8CEA127508A67DE4005E93C2 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			shellPath = /bin/sh;
+			shellScript = (
+				"codesign --force --sign - --timestamp=none --deep \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"",
+			);
+			showEnvVarsInLog = 0;
 		};
 		9B8A49B80D3708A30094FB81 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "TMPDIR=\"${TEMP_FILES_DIR}\"\nto_package_dir=$(mktemp -dt armagetronad)\nversion=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")\nfinal_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-dedicated-${version}.macosx-universal\"\n\ntest -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"\n\nprog_dir=\"${to_package_dir}/Armagetron Advanced Dedicated\"\nmkdir \"${prog_dir}\"\n\ncp \"${TARGET_BUILD_DIR}/armagetronad-dedicated\" \"${prog_dir}\"\nfor copy_me in \"../config\" \"../language\" \"../resource\"\ndo\n\tcp -R \"${copy_me}\" \"${prog_dir}\"\ndone\n\n\nrm -rf \"${prog_dir}/resource/proto\"\nfind \"${prog_dir}\" -depth -type d -name .svn -exec rm -rf \\{\\} \\;\nfor a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\"\ndo\n\tfind \"${prog_dir}\" -name \"${a}\" -exec rm -f \\{\\} \\;\ndone\n\n\nuncompressed_dmg=$(./build_tools/dmg-create \"${to_package_dir}\" \"Armagetron Advanced Dedicated\")\n\n./build_tools/dmg-convert \"${uncompressed_dmg}\" \"${final_dmg}\"\nrm \"${uncompressed_dmg}\"\nrm -r \"${to_package_dir}\"\n";
+			shellScript = (
+				"TMPDIR=\"${TEMP_FILES_DIR}\"",
+				"to_package_dir=$(mktemp -dt armagetronad)",
+				"version=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")",
+				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-dedicated-${version}.macosx-universal\"",
+				"",
+				"test -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"",
+				"",
+				"prog_dir=\"${to_package_dir}/Armagetron Advanced Dedicated\"",
+				"mkdir \"${prog_dir}\"",
+				"",
+				"cp \"${TARGET_BUILD_DIR}/armagetronad-dedicated\" \"${prog_dir}\"",
+				"for copy_me in \"../config\" \"../language\" \"../resource\"",
+				"do",
+				"\tcp -R \"${copy_me}\" \"${prog_dir}\"",
+				"done",
+				"",
+				"",
+				"rm -rf \"${prog_dir}/resource/proto\"",
+				"find \"${prog_dir}\" -depth -type d -name .svn -exec rm -rf \\{\\} \\;",
+				"for a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\"",
+				"do",
+				"\tfind \"${prog_dir}\" -name \"${a}\" -exec rm -f \\{\\} \\;",
+				"done",
+				"",
+				"",
+				"uncompressed_dmg=$(./build_tools/dmg-create \"${to_package_dir}\" \"Armagetron Advanced Dedicated\")",
+				"",
+				"./build_tools/dmg-convert \"${uncompressed_dmg}\" \"${final_dmg}\"",
+				"rm \"${uncompressed_dmg}\"",
+				"rm -r \"${to_package_dir}\"",
+				"",
+			);
 		};
 		9B8A49C10D3709170094FB81 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -l";
-			shellScript = "TMPDIR=\"${TEMP_FILES_DIR}\"\nto_package_dir=$(mktemp -dt armagetronad)\nversion=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")\nfinal_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-${version}.macosx-universal\"\n\ntest -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"\n\ncp -R \"${BUILT_PRODUCTS_DIR}/Armagetron Advanced.app\" \"${to_package_dir}\"\n\nif [ -n \"${AA_RECORDER_APP}\" ]\nthen\n\tcp -R \"${AA_RECORDER_APP}\" \"${to_package_dir}\"\nfi\n\nuncompressed_dmg=$(./build_tools/dmg-create \"${to_package_dir}\" \"Armagetron Advanced\")\n\n./build_tools/dmg-convert \"${uncompressed_dmg}\" \"${final_dmg}\"\nrm \"${uncompressed_dmg}\"\nrm -r \"${to_package_dir}\"";
+			shellScript = (
+				"TMPDIR=\"${TEMP_FILES_DIR}\"",
+				"to_package_dir=$(mktemp -dt armagetronad)",
+				"version=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")",
+				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-${version}.macosx-universal\"",
+				"",
+				"test -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"",
+				"",
+				"cp -R \"${BUILT_PRODUCTS_DIR}/Armagetron Advanced.app\" \"${to_package_dir}\"",
+				"",
+				"if [ -n \"${AA_RECORDER_APP}\" ]",
+				"then",
+				"\tcp -R \"${AA_RECORDER_APP}\" \"${to_package_dir}\"",
+				"fi",
+				"",
+				"uncompressed_dmg=$(./build_tools/dmg-create \"${to_package_dir}\" \"Armagetron Advanced\")",
+				"",
+				"./build_tools/dmg-convert \"${uncompressed_dmg}\" \"${final_dmg}\"",
+				"rm \"${uncompressed_dmg}\"",
+				"rm -r \"${to_package_dir}\"",
+				"",
+			);
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8C11CA3F095A268E007AE0EA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				8C11CA49095A2B6E007AE0EA /* action_api.cpp in Sources */,
 				8C11CA4A095A2B6E007AE0EA /* actions.cpp in Sources */,
@@ -1608,11 +1680,9 @@
 				D01641360D904A6600FC0A23 /* tColor.cpp in Sources */,
 				9B865B740F4B3445003FCD2C /* eChat.cpp in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8CB97AC0096265A800AE8BCD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				8CB97AC1096265A800AE8BCD /* SDLMain.mm in Sources */,
 				8CB97AC2096265A800AE8BCD /* eAdvWall.cpp in Sources */,
@@ -1719,11 +1789,9 @@
 				64E439280D64FC4100CA7EC4 /* rGL.cpp in Sources */,
 				D01641350D904A6600FC0A23 /* tColor.cpp in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8D11072C0486CEB800E47090 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				8CBA5E0A089EEC5B007E21DC /* SDLMain.mm in Sources */,
 				8CBA5EFD089EEC7E007E21DC /* eAdvWall.cpp in Sources */,
@@ -1831,7 +1899,6 @@
 				D01641340D904A6600FC0A23 /* tColor.cpp in Sources */,
 				9B865B720F4B3445003FCD2C /* eChat.cpp in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -1870,11 +1937,12 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		8C11CA47095A269A007AE0EA /* Debug */ = {
+		8C11CA47095A269A007AE0EA /* Debug configuration for PBXNativeTarget "Armagetron Advanced Dedicated" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -1897,7 +1965,6 @@
 					"-lm",
 				);
 				OTHER_REZFLAGS = "";
-				PREBINDING = NO;
 				PRODUCT_NAME = "armagetronad-dedicated";
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
@@ -1908,10 +1975,12 @@
 			};
 			name = Debug;
 		};
-		8C11CA48095A269A007AE0EA /* Release */ = {
+		8C11CA48095A269A007AE0EA /* Release configuration for PBXNativeTarget "Armagetron Advanced Dedicated" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 1;
@@ -1934,7 +2003,6 @@
 					"-lm",
 				);
 				OTHER_REZFLAGS = "";
-				PREBINDING = NO;
 				PRODUCT_NAME = "armagetronad-dedicated";
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
@@ -1945,22 +2013,29 @@
 			};
 			name = Release;
 		};
-		8CB97B2E096265A800AE8BCD /* Debug */ = {
+		8CB97B2E096265A800AE8BCD /* Debug configuration for PBXNativeTarget "Armagetron Advanced 10.2.8" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(LOCAL_LIBRARY_DIR)/Frameworks/ArmagetronAdvanced/current\"";
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "../src/macosx/Armagetron Advanced_Prefix.pch";
-				GCC_VERSION = 3.3;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1970,6 +2045,7 @@
 					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1978,6 +2054,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../Library/Frameworks/Platforms/10.2\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(LOCAL_LIBRARY_DIR)/Frameworks/ArmagetronAdvanced/current\"";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
@@ -1986,35 +2063,39 @@
 					"-lpthread",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
-				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
 				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
 				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
-				PREBINDING = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
-				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
+				SDKROOT = macosx26.5;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
-		8CB97B2F096265A800AE8BCD /* Release */ = {
+		8CB97B2F096265A800AE8BCD /* Release configuration for PBXNativeTarget "Armagetron Advanced 10.2.8" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(LOCAL_LIBRARY_DIR)/Frameworks/ArmagetronAdvanced/current\"";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 2;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "../src/macosx/Armagetron Advanced_Prefix.pch";
-				GCC_VERSION = 3.3;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
@@ -2024,6 +2105,7 @@
 					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2032,7 +2114,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(LOCAL_LIBRARY_DIR)/Frameworks/ArmagetronAdvanced/current\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../Library/Frameworks/Platforms/10.2\"";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
@@ -2041,27 +2123,26 @@
 					"-lpthread",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
-				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
 				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
 				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
-				PREBINDING = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
-				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
+				SDKROOT = macosx26.5;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
-		8CBA5D45089EE60D007E21DC /* Debug */ = {
+		8CBA5D45089EE60D007E21DC /* Debug configuration for PBXNativeTarget "Armagetron Advanced" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/ArmagetronAdvanced/current/;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2077,42 +2158,40 @@
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
-					"$(OTHER_LDFLAGS_QUOTED_3)",
 					"-lxml2",
 					"-lz",
 					"-lpthread",
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
-				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
-				PREBINDING = NO;
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
-		8CBA5D46089EE60D007E21DC /* Release */ = {
+		8CBA5D46089EE60D007E21DC /* Release configuration for PBXNativeTarget "Armagetron Advanced" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/ArmagetronAdvanced/current/;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 1;
@@ -2129,118 +2208,184 @@
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
-					"$(OTHER_LDFLAGS_QUOTED_3)",
 					"-lxml2",
 					"-lz",
 					"-lpthread",
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
-				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
-				PREBINDING = NO;
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
-		8CBA5D49089EE60D007E21DC /* Debug */ = {
+		8CBA5D49089EE60D007E21DC /* Debug configuration for PBXProject "Armagetron Advanced" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_VERSION_i386 = 4.0;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
 				SDKROOT_i386 = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
-		8CBA5D4A089EE60D007E21DC /* Release */ = {
+		8CBA5D4A089EE60D007E21DC /* Release configuration for PBXProject "Armagetron Advanced" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 1;
 				GCC_VERSION_i386 = 4.0;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = macosx;
 				SDKROOT_i386 = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Release;
 		};
-		9B8A49BA0D3708A30094FB81 /* Debug */ = {
+		9B8A49BA0D3708A30094FB81 /* Debug configuration for PBXAggregateTarget "Create Dedicated Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "Create Release";
 			};
 			name = Debug;
 		};
-		9B8A49BB0D3708A30094FB81 /* Release */ = {
+		9B8A49BB0D3708A30094FB81 /* Release configuration for PBXAggregateTarget "Create Dedicated Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = "Create Release";
 				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
-		9B8A49BF0D3708E10094FB81 /* Debug */ = {
+		9B8A49BF0D3708E10094FB81 /* Debug configuration for PBXAggregateTarget "Create Full Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = Aggregate;
 			};
 			name = Debug;
 		};
-		9B8A49C00D3708E10094FB81 /* Release */ = {
+		9B8A49C00D3708E10094FB81 /* Release configuration for PBXAggregateTarget "Create Full Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = Aggregate;
 				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
-		9B8A49C30D3709180094FB81 /* Debug */ = {
+		9B8A49C30D3709180094FB81 /* Debug configuration for PBXAggregateTarget "Create Client Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "Create Client Release";
 			};
 			name = Debug;
 		};
-		9B8A49C40D3709180094FB81 /* Release */ = {
+		9B8A49C40D3709180094FB81 /* Release configuration for PBXAggregateTarget "Create Client Release" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = "Create Client Release";
 				ZERO_LINK = NO;
 			};
@@ -2252,64 +2397,57 @@
 		8C11CA46095A269A007AE0EA /* Build configuration list for PBXNativeTarget "Armagetron Advanced Dedicated" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8C11CA47095A269A007AE0EA /* Debug */,
-				8C11CA48095A269A007AE0EA /* Release */,
+				8C11CA47095A269A007AE0EA /* Debug configuration for PBXNativeTarget "Armagetron Advanced Dedicated" */,
+				8C11CA48095A269A007AE0EA /* Release configuration for PBXNativeTarget "Armagetron Advanced Dedicated" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		8CB97B2D096265A800AE8BCD /* Build configuration list for PBXNativeTarget "Armagetron Advanced 10.2.8" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8CB97B2E096265A800AE8BCD /* Debug */,
-				8CB97B2F096265A800AE8BCD /* Release */,
+				8CB97B2E096265A800AE8BCD /* Debug configuration for PBXNativeTarget "Armagetron Advanced 10.2.8" */,
+				8CB97B2F096265A800AE8BCD /* Release configuration for PBXNativeTarget "Armagetron Advanced 10.2.8" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		8CBA5D44089EE60D007E21DC /* Build configuration list for PBXNativeTarget "Armagetron Advanced" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8CBA5D45089EE60D007E21DC /* Debug */,
-				8CBA5D46089EE60D007E21DC /* Release */,
+				8CBA5D45089EE60D007E21DC /* Debug configuration for PBXNativeTarget "Armagetron Advanced" */,
+				8CBA5D46089EE60D007E21DC /* Release configuration for PBXNativeTarget "Armagetron Advanced" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		8CBA5D48089EE60D007E21DC /* Build configuration list for PBXProject "Armagetron Advanced" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8CBA5D49089EE60D007E21DC /* Debug */,
-				8CBA5D4A089EE60D007E21DC /* Release */,
+				8CBA5D49089EE60D007E21DC /* Debug configuration for PBXProject "Armagetron Advanced" */,
+				8CBA5D4A089EE60D007E21DC /* Release configuration for PBXProject "Armagetron Advanced" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9B8A49C70D37095A0094FB81 /* Build configuration list for PBXAggregateTarget "Create Client Release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9B8A49C30D3709180094FB81 /* Debug */,
-				9B8A49C40D3709180094FB81 /* Release */,
+				9B8A49C30D3709180094FB81 /* Debug configuration for PBXAggregateTarget "Create Client Release" */,
+				9B8A49C40D3709180094FB81 /* Release configuration for PBXAggregateTarget "Create Client Release" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9B8A49C80D37095A0094FB81 /* Build configuration list for PBXAggregateTarget "Create Dedicated Release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9B8A49BA0D3708A30094FB81 /* Debug */,
-				9B8A49BB0D3708A30094FB81 /* Release */,
+				9B8A49BA0D3708A30094FB81 /* Debug configuration for PBXAggregateTarget "Create Dedicated Release" */,
+				9B8A49BB0D3708A30094FB81 /* Release configuration for PBXAggregateTarget "Create Dedicated Release" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9B8A49C90D37095A0094FB81 /* Build configuration list for PBXAggregateTarget "Create Full Release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9B8A49BF0D3708E10094FB81 /* Debug */,
-				9B8A49C00D3708E10094FB81 /* Release */,
+				9B8A49BF0D3708E10094FB81 /* Debug configuration for PBXAggregateTarget "Create Full Release" */,
+				9B8A49C00D3708E10094FB81 /* Release configuration for PBXAggregateTarget "Create Full Release" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
