@@ -39,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "uInputQueue.h"
 //#include "eTess.h"
 #include "rTexture.h"
+#ifndef DEDICATED
+#include <SDL_image.h>
+#endif
 #include "tConfiguration.h"
 #include "tRandom.h"
 #include "tRecorder.h"
@@ -814,6 +817,9 @@ int SDL_main(int argc,char **argv){
             }
             SDLCleanup sdlCleanup; // call SDL_Quit later
 
+            // Initialize SDL2_image for texture loading
+            IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
+
             sr_glRendererInit();
 
             SDL_SetEventFilter((SDL_EventFilter)filter, NULL);
@@ -892,6 +898,7 @@ int SDL_main(int argc,char **argv){
                 //std::cout << "saved\n";
 
                 //    cleanup(grid);
+                IMG_Quit();
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
             }
 #else

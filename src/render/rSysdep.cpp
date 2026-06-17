@@ -565,6 +565,10 @@ void sr_LimitFPS()
 }
 
 void rSysDep::SwapGL(){
+    // ponytail: ensure GL context is current before each frame
+    if (sr_window && sr_glcontext)
+        SDL_GL_MakeCurrent(sr_window, sr_glcontext);
+
     if ( s_benchmark )
     {
         static PerformanceCounter counter;
