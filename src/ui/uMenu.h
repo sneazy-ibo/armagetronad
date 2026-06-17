@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "rSDL.h"
 #ifndef DEDICATED
-#include <SDL_events.h>
+// SDL_events.h is included via SDL2/SDL.h in rSDL.h
 #endif
 
 #include <deque>

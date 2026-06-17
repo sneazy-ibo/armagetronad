@@ -3904,7 +3904,7 @@ public:
                 return true;
             }
             // exclude modifier keys from possible control triggers
-            else if ( e.key.keysym.sym < SDLK_NUMLOCK || e.key.keysym.sym > SDLK_COMPOSE )
+            else if ( e.key.keysym.sym < SDLK_RETURN || e.key.keysym.sym > SDLK_RGUI )
             {
                 // maybe it's an instant chat button?
                 try

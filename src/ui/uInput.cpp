@@ -121,7 +121,7 @@ public:
         tString in;
         int keysym;
         s >> keysym;
-        if (keysym>=0){
+        if (keysym>=0 && keysym < SDLK_NEWLAST){
             tASSERT(keysym < SDLK_NEWLAST);
             s >> in;
             if (uBindPlayer::IsKeyWord(in))
@@ -343,8 +343,8 @@ int uPlayerPrototype::Num(){return nextid;}
 
 static char const * keyname(int sym){
 #ifndef DEDICATED
-    if (sym<=SDLK_LAST)
-        return SDL_GetKeyName(static_cast<SDLKey>(sym));
+    if (sym<=SDLK_UNKNOWN)
+        return SDL_GetKeyName(static_cast<SDL_Keycode>(sym));
     else switch (sym){
         case SDLK_MOUSE_X_PLUS: return "Mouse right";
         case SDLK_MOUSE_X_MINUS: return "Mouse left";
@@ -454,7 +454,7 @@ public:
             break;
 
         case SDL_KEYDOWN:{
-                SDL_keysym &c=e.key.keysym;
+                SDL_Keysym &c=e.key.keysym;
                 if(!active){
                     if (c.sym==SDLK_DELETE || c.sym==SDLK_BACKSPACE)
                     {
@@ -664,7 +664,7 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
     default:
         break;
     }
-    if (sym>=0 && keymap[sym]){
+    if (sym>=0 && sym<SDLK_NEWLAST && keymap[sym] && keymap[sym]->act){
         REAL realpm=pm;
         if (keymap[sym]->act->type==uAction::uINPUT_ANALOG)
             pm*=ts*key_sensitivity;

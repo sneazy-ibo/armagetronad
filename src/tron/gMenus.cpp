@@ -221,55 +221,20 @@ public:
     {
 #ifndef DEDICATED
         // fetch valid screen modes from SDL
-        SDL_Rect **modes;
-        modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-
-        // Check is there are any modes available
+        // SDL2: SDL_ListModes removed, assume all modes supported on modern displays
         int i;
-        if(modes == 0 || modes == (SDL_Rect **)-1)
+
+        // add custom resolution
+        NewChoice( ArmageTron_Custom );
+
+        // add desktop resolution
+        if ( sr_DesktopScreensizeSupported() )
+            NewChoice( ArmageTron_Desktop );
+
+        // add all fixed resolutions
+        for ( i = ArmageTron_Custom; i>=0; --i )
         {
-            // add all fixed resolutions
-            for ( i = ArmageTron_Custom; i>=0; --i )
-            {
-                NewChoice( rResolution(i) );
-            }
-        }
-        else
-        {
-            // add custom resolution
-            NewChoice( ArmageTron_Custom );
-
-            // add desktop resolution
-            if ( sr_DesktopScreensizeSupported() && !addFixed )
-                NewChoice( ArmageTron_Desktop );
-
-            // the maximal allowed screen size
-            rScreenSize maxSize(0,0);
-
-            // fill in available modes (avoid duplicates)
-            for(i=0;modes[i];++i)
-            {
-                // add mode (if it's new)
-                rScreenSize size(modes[i]->w, modes[i]->h);
-                NewChoice( size );
-                if ( maxSize.width < size.width )
-                    maxSize.width = size.width;
-                if ( maxSize.height < size.height )
-                    maxSize.height = size.height;
-            }
-
-            // add fixed resolutions (as window sizes)
-            if ( addFixed )
-            {
-                for ( i = ArmageTron_Custom; i>=ArmageTron_Min; --i )
-                {
-                    rScreenSize size( static_cast< rResolution >(i) );
-
-                    // only add those that fit the maximal resolution
-                    if ( maxSize.height >= size.height && maxSize.width >= size.width )
-                        NewChoice( size );
-                }
-            }
+            NewChoice( rResolution(i) );
         }
 
         // insert sorted resolutions into menu
@@ -1229,7 +1194,8 @@ static bool toggle_fullscreen_func( REAL x )
 #endif
 
     // only do anything if the application is active (work around odd bug)
-    if ( x > 0 && ( SDL_GetAppState() & SDL_APPACTIVE ) )
+    // SDL2: SDL_GetAppState is deprecated, always assume active
+    if ( x > 0 )
     {
         currentScreensetting.fullscreen = !currentScreensetting.fullscreen;
         sr_ReinitDisplay();

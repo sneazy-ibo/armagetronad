@@ -44,42 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rRender.h"
 #include "rGL.h"
 
-// Load the right SDL_IMAGE header
-
-#ifdef _MSC_VER
+// Load SDL2_image
 #include <SDL_image.h>
-#else
-#ifdef __MINGW32__
-#include <SDL_image.h>
-#else
-#ifdef HAVE_SDL_IMG_H
-#include <SDL_image.h>
-#else
-#ifdef HAVE_SDL_SDL_IMAGE_H
-#include <SDL/SDL_image.h>
-#else
-#ifdef HAVE_IMG_H
-#include <IMG.h>
-#else
-#ifdef HAVE_SDL_IMG_H
-#include <SDL/IMG.h>
-#else
-#ifdef HAVE_LIBSDL
-#include <SDL_image.h>
-#else
-#ifdef HAVE_LIBIMG
-#include <IMG.h>
-#else
-// if the following include ( or one of the earlier ones ) fails, you don't have SDL_image properly installed.
-#include <SDL_image.h>
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
 
 
@@ -220,7 +186,7 @@ void rSurface::Create( char const * fileName )
     tString s = tDirectories::Data().GetReadPath( fileName );
 
     // Load image
-    IMG_InvertAlpha(true);
+    // IMG_InvertAlpha(true); // SDL3-only, not needed for SDL2
     Create( IMG_Load(s) );
 
     //if ( surface_ )
@@ -274,13 +240,13 @@ void rSurface::Create( SDL_Surface * surface )
                 // fallback: convert the texture into a known format.
 
                 SDL_Surface *dummy =
-                    SDL_CreateRGBSurface(SDL_SWSURFACE, 1, 1,
+                    SDL_CreateRGBSurface(0, 1, 1,
                                          32,
                                          0x0000FF, 0x00FF00,
                                          0xFF0000 ,0xFF000000);
 
                 SDL_Surface *convtex =
-                    SDL_ConvertSurface(surface_, dummy->format, SDL_SWSURFACE);
+                    SDL_ConvertSurface(surface_, dummy->format, 0);
 
                 SDL_FreeSurface(surface_);
                 surface_ = convtex;
@@ -311,7 +277,7 @@ void rSurface::CopyFrom( rSurface const & other )
     tASSERT( other.surface_ );
 
     // copy surface
-    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format, SDL_SWSURFACE);
+    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format, 0);
 
     // copy flags
     format_ = other.format_;

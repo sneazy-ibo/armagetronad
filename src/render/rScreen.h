@@ -93,7 +93,17 @@ extern rScreenSettings currentScreensetting;
 extern rScreenSettings lastSuccess;
 
 struct SDL_Surface;
-extern SDL_Surface *sr_screen;
+#ifndef DEDICATED
+#include "rSDL.h"
+#endif
+
+#ifndef DEDICATED
+extern SDL_Window *sr_window;
+extern SDL_GLContext sr_glcontext;
+#endif
+
+// ponytail: SDL2 compatibility - sr_screen maps to sr_window for boolean checks
+#define sr_screen ((SDL_Surface*)sr_window)
 
 extern int sr_screenWidth,sr_screenHeight;
 

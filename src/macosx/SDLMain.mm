@@ -4,7 +4,8 @@
 
 */
 #import <AppKit/AppKit.h>
-#import <SDL/SDL.h>
+#define SDL_MAIN_HANDLED
+#import <SDL.h>
 #import "SDLMain.h"
 #import <sys/param.h> /* for MAXPATHLEN */
 #import <unistd.h>
@@ -34,10 +35,10 @@ static BOOL   gFinderLaunch;
 #endif
 
 SDL_Event event;
-@interface SDLApplication : NSApplication
+@interface ATApplication : NSApplication
 @end
 
-@implementation SDLApplication
+@implementation ATApplication
 /* Invoked from the Quit menu item */
 
 - (void)terminate:(id)sender
@@ -222,7 +223,11 @@ int main (int argc, const char *argv[])
 #if SDL_USE_NIB_FILE
     NSApplicationMain (argc, argv);
 #else
-    NSApplicationMain (argc, argv);
+    // ponytail: modern macOS needs explicit delegate setup
+    [NSApplication sharedApplication];
+    SDLMain *delegate = [[SDLMain alloc] init];
+    [NSApp setDelegate:delegate];
+    [NSApp run];
 #endif
     return 0;
 }

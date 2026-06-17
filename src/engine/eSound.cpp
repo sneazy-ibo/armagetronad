@@ -128,14 +128,14 @@ static bool se_SoundInitPrepare()
         char * arg = "SDL_AUDIODRIVER=" STRING(DEFAULT_SDL_AUDIODRIVER);
         putenv(arg);
 
-        if ( SDL_InitSubSystem(SDL_INIT_AUDIO) >= 0 )
+        if ( SDL_Init(SDL_INIT_AUDIO) >= 0 )
             return true;
 
         putenv("SDL_AUDIODRIVER=");
     }
 
     // if that fails, try what the user wanted
-    return ( SDL_InitSubSystem(SDL_INIT_AUDIO) >= 0 );
+    return ( SDL_Init(SDL_INIT_AUDIO) >= 0 );
 }
 #endif
 #endif

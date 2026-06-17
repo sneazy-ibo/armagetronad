@@ -835,8 +835,8 @@ bool uMenuItemString::Event(SDL_Event &e){
     if (e.type!=SDL_KEYDOWN)
         return false;
     bool ret=true;
-    SDL_keysym &c=e.key.keysym;
-    SDLMod mod = c.mod;
+    SDL_Keysym &c=e.key.keysym;
+    Uint16 mod = c.mod;
     bool moveWordLeft, moveWordRight, deleteWordLeft, deleteWordRight, moveBeginning, moveEnd, killForwards;
     moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards = false;
 
@@ -857,7 +857,7 @@ bool uMenuItemString::Event(SDL_Event &e){
         }
     }
     // For moving to extremes of the line
-    else if (mod & KMOD_META) {
+    else if (mod & KMOD_GUI) {
         if (c.sym == SDLK_LEFT) {
             moveBeginning = true;
         }
@@ -950,7 +950,8 @@ bool uMenuItemString::Event(SDL_Event &e){
         //        c.sym = SDLK_DOWN;
     }
     else {
-        if (32 <= c.unicode  && c.unicode < 256)
+        // SDL2: use keysym.sym for printable characters instead of unicode
+        if (32 <= c.sym  && c.sym < 256)
         {
             ret=true;
 
@@ -962,7 +963,7 @@ bool uMenuItemString::Event(SDL_Event &e){
 
                 // guarantee proper null termination
                 (*content)[content->Len()-1]='\0';
-                (*content)[cursorPos]=c.unicode;
+                (*content)[cursorPos]=c.sym;
                 cursorPos++;
             }
         }
@@ -1016,7 +1017,7 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
     // flag indicating that the event was handled
     bool ret = false;
 #ifndef DEDICATED
-    SDLMod mod = e.key.keysym.mod;
+    Uint16 mod = e.key.keysym.mod;
 
     if (e.type == SDL_KEYDOWN
             && ((e.key.keysym.sym == SDLK_UP)

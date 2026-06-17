@@ -374,15 +374,15 @@
 		8CBA62E108A01A55007E21DC /* Armagetron Advanced.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8CBA62E008A01A55007E21DC /* Armagetron Advanced.icns */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		9B5414A50A45C78200745CE6 /* libpng.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A20A45C78200745CE6 /* libpng.framework */; };
-		9B5414A60A45C78200745CE6 /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL_image.framework */; };
-		9B5414A70A45C78200745CE6 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL.framework */; };
+		9B5414A60A45C78200745CE6 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL2_image.framework */; };
+		9B5414A70A45C78200745CE6 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL2.framework */; };
 		9B5414DB0A45C78D00745CE6 /* libpng.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A20A45C78200745CE6 /* libpng.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		9B5414DC0A45C78D00745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		9B5414DD0A45C78D00745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		9B5414E90A45C7CB00745CE6 /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL_image.framework */; };
-		9B5414EA0A45C7CB00745CE6 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL.framework */; };
-		9B54150F0A45C7D700745CE6 /* SDL_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		9B5415100A45C7D700745CE6 /* SDL.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5414DC0A45C78D00745CE6 /* SDL2_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A30A45C78200745CE6 /* SDL2_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5414DD0A45C78D00745CE6 /* SDL2.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414A40A45C78200745CE6 /* SDL2.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5414E90A45C7CB00745CE6 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL2_image.framework */; };
+		9B5414EA0A45C7CB00745CE6 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL2.framework */; };
+		9B54150F0A45C7D700745CE6 /* SDL2_image.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E70A45C7CB00745CE6 /* SDL2_image.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9B5415100A45C7D700745CE6 /* SDL2.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5414E80A45C7CB00745CE6 /* SDL2.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9B5E119F0D5EBCD700175ABB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CBA62A1089F1A95007E21DC /* config.h */; };
 		9B5E11AA0D5EBD1600175ABB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CAD9136095A379B00DA0ECC /* config.h */; };
 		9B5E11BF0D5EC32500175ABB /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5E11BE0D5EC32500175ABB /* CoreServices.framework */; };
@@ -398,8 +398,8 @@
 		9B78706A0D5E4FD20088A96F /* libZThread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B7870670D5E4FD20088A96F /* libZThread.a */; };
 		9B865B720F4B3445003FCD2C /* eChat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B865B700F4B3445003FCD2C /* eChat.cpp */; };
 		9B865B740F4B3445003FCD2C /* eChat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B865B700F4B3445003FCD2C /* eChat.cpp */; };
-		9BA977200F1EC45500F02184 /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */; };
-		9BA9773D0F1EC49700F02184 /* SDL_mixer.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9BA977200F1EC45500F02184 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL2_mixer.framework */; };
+		9BA9773D0F1EC49700F02184 /* SDL2_mixer.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA9771F0F1EC45500F02184 /* SDL2_mixer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D01641340D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
 		D01641350D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
 		D01641360D904A6600FC0A23 /* tColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D01641330D904A6600FC0A23 /* tColor.cpp */; };
@@ -437,33 +437,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		8CB97ABB096265A800AE8BCD /* Copy Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			dstPath = "";
-			dstSubfolder = Frameworks;
-			files = (
-				9B54150F0A45C7D700745CE6 /* SDL_image.framework in Copy Frameworks */,
-				9B5415100A45C7D700745CE6 /* SDL.framework in Copy Frameworks */,
-				8CB97BAC096271B000AE8BCD /* libpng12.0.dylib in Copy Frameworks */,
-				8CB97B450962677F00AE8BCD /* libxml2.2.6.22.dylib in Copy Frameworks */,
-				9B69F6260A63E1A700F5F2E4 /* eLagCompensation.h in Copy Frameworks */,
-				64956AEC0D410F6A00C501B8 /* gFriends.h in Copy Frameworks */,
-				64E439270D64FC4100CA7EC4 /* rDisplayList.h in Copy Frameworks */,
-			);
-			name = "Copy Frameworks";
-		};
-		8CBA5DD5089EEBB3007E21DC /* Copy Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			dstPath = "";
-			dstSubfolder = Frameworks;
-			files = (
-				9BA9773D0F1EC49700F02184 /* SDL_mixer.framework in Copy Frameworks */,
-				9B5414DB0A45C78D00745CE6 /* libpng.framework in Copy Frameworks */,
-				9B5414DC0A45C78D00745CE6 /* SDL_image.framework in Copy Frameworks */,
-				9B5414DD0A45C78D00745CE6 /* SDL.framework in Copy Frameworks */,
-			);
-			name = "Copy Frameworks";
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -700,10 +673,10 @@
 		8CBA646108A065A8007E21DC /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../src/macosx/Info.plist; sourceTree = SOURCE_ROOT; };
 		8D1107320486CEB800E47090 /* Armagetron Advanced.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Armagetron Advanced.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B5414A20A45C78200745CE6 /* libpng.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libpng.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/libpng.framework; sourceTree = "<absolute>"; };
-		9B5414A30A45C78200745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework; sourceTree = "<absolute>"; };
-		9B5414A40A45C78200745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL.framework; sourceTree = "<absolute>"; };
-		9B5414E70A45C7CB00745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework; sourceTree = "<absolute>"; };
-		9B5414E80A45C7CB00745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework; sourceTree = "<absolute>"; };
+		9B5414A30A45C78200745CE6 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework; sourceTree = "<absolute>"; };
+		9B5414A40A45C78200745CE6 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework; sourceTree = "<absolute>"; };
+		9B5414E70A45C7CB00745CE6 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework; sourceTree = "<absolute>"; };
+		9B5414E80A45C7CB00745CE6 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework; sourceTree = "<absolute>"; };
 		9B5E11BE0D5EC32500175ABB /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		9B5FE82D0D57B2FC004AC137 /* nAuthentication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nAuthentication.h; sourceTree = "<group>"; };
 		9B5FE82E0D57B2FC004AC137 /* nAuthentication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nAuthentication.cpp; sourceTree = "<group>"; };
@@ -712,7 +685,7 @@
 		9B7870670D5E4FD20088A96F /* libZThread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libZThread.a; path = /Library/Frameworks/ArmagetronAdvanced/current/libZThread.a; sourceTree = "<absolute>"; };
 		9B865B6F0F4B3445003FCD2C /* eChat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eChat.h; sourceTree = "<group>"; };
 		9B865B700F4B3445003FCD2C /* eChat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = eChat.cpp; sourceTree = "<group>"; };
-		9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework; sourceTree = "<absolute>"; };
+		9BA9771F0F1EC45500F02184 /* SDL2_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_mixer.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL2_mixer.framework; sourceTree = "<absolute>"; };
 		D01641330D904A6600FC0A23 /* tColor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tColor.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -729,8 +702,8 @@
 			files = (
 				8CB97B25096265A800AE8BCD /* Cocoa.framework in Frameworks */,
 				8CB97B29096265A800AE8BCD /* OpenGL.framework in Frameworks */,
-				9B5414E90A45C7CB00745CE6 /* SDL_image.framework in Frameworks */,
-				9B5414EA0A45C7CB00745CE6 /* SDL.framework in Frameworks */,
+				9B5414E90A45C7CB00745CE6 /* SDL2_image.framework in Frameworks */,
+				9B5414EA0A45C7CB00745CE6 /* SDL2.framework in Frameworks */,
 				6459A1320D2AE2B40042EFE8 /* libpng.framework in Frameworks */,
 				9B5E11C00D5EC32500175ABB /* CoreServices.framework in Frameworks */,
 			);
@@ -741,10 +714,10 @@
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				8CBA60B1089F00F2007E21DC /* OpenGL.framework in Frameworks */,
 				9B5414A50A45C78200745CE6 /* libpng.framework in Frameworks */,
-				9B5414A60A45C78200745CE6 /* SDL_image.framework in Frameworks */,
-				9B5414A70A45C78200745CE6 /* SDL.framework in Frameworks */,
+				9B5414A60A45C78200745CE6 /* SDL2_image.framework in Frameworks */,
+				9B5414A70A45C78200745CE6 /* SDL2.framework in Frameworks */,
 				9B5E11BF0D5EC32500175ABB /* CoreServices.framework in Frameworks */,
-				9BA977200F1EC45500F02184 /* SDL_mixer.framework in Frameworks */,
+				9BA977200F1EC45500F02184 /* SDL2_mixer.framework in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -1146,9 +1119,9 @@
 			children = (
 				9B5414A20A45C78200745CE6 /* libpng.framework */,
 				9B7870670D5E4FD20088A96F /* libZThread.a */,
-				9B5414A40A45C78200745CE6 /* SDL.framework */,
-				9B5414A30A45C78200745CE6 /* SDL_image.framework */,
-				9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */,
+				9B5414A40A45C78200745CE6 /* SDL2.framework */,
+				9B5414A30A45C78200745CE6 /* SDL2_image.framework */,
+				9BA9771F0F1EC45500F02184 /* SDL2_mixer.framework */,
 			);
 			name = current;
 			sourceTree = "<group>";
@@ -1156,8 +1129,8 @@
 		9B5414E60A45C7B900745CE6 /* 10.2.8 */ = {
 			isa = PBXGroup;
 			children = (
-				9B5414E70A45C7CB00745CE6 /* SDL_image.framework */,
-				9B5414E80A45C7CB00745CE6 /* SDL.framework */,
+				9B5414E70A45C7CB00745CE6 /* SDL2_image.framework */,
+				9B5414E80A45C7CB00745CE6 /* SDL2.framework */,
 				8CB97BAA0962719600AE8BCD /* libpng12.0.dylib */,
 				8CB97B3F0962676B00AE8BCD /* libxml2.2.6.22.dylib */,
 			);
@@ -1206,7 +1179,6 @@
 				8CB97AAD096265A800AE8BCD /* Process Files */,
 				8CB97AAE096265A800AE8BCD /* Sort Resources */,
 				8CB97AAF096265A800AE8BCD /* Resources */,
-				8CB97ABB096265A800AE8BCD /* Copy Frameworks */,
 				8CB97AC0096265A800AE8BCD /* Sources */,
 				8CB97B24096265A800AE8BCD /* Frameworks */,
 				8CB97B2B096265A800AE8BCD /* Sort Package */,
@@ -1227,7 +1199,6 @@
 				8CBA6203089F11BE007E21DC /* Process Files */,
 				8CA7C30608B71B3B00BE10F2 /* Sort Resources */,
 				8D1107290486CEB800E47090 /* Resources */,
-				8CBA5DD5089EEBB3007E21DC /* Copy Frameworks */,
 				9B5E11A10D5EBCDE00175ABB /* Headers */,
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
@@ -2039,10 +2010,10 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
+					/Library/Frameworks/ArmagetronAdvanced/current/,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
@@ -2063,10 +2034,10 @@
 					"-lpthread",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
 				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
-				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
+				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current -lxml2";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				SDKROOT = macosx26.5;
@@ -2099,10 +2070,10 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
+					/Library/Frameworks/ArmagetronAdvanced/current/,
 				);
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
@@ -2123,10 +2094,10 @@
 					"-lpthread",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
 				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
-				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
+				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current -lxml2";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				SDKROOT = macosx26.5;
@@ -2150,9 +2121,9 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_mixer.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
 					/usr/include/libxml2,
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
@@ -2174,8 +2145,8 @@
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
@@ -2200,9 +2171,9 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_mixer.framework/Headers,
+					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
 					/usr/include/libxml2,
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
@@ -2224,8 +2195,8 @@
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;

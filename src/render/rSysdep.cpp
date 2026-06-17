@@ -45,8 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tRecorder.h"
 
 #ifndef DEDICATED
-#include "SDL_thread.h"
-#include "SDL_mutex.h"
+#include <SDL_thread.h>
 
 #include <png.h>
 #define SCREENSHOT_PNG_BITDEPTH 8
@@ -97,7 +96,7 @@ Window  win;
 bool  rSysDep::InitGL(){
     SDL_SysWMinfo system;
     SDL_VERSION(&system.version);
-    if (!SDL_GetWMInfo(&system)){
+    if (!SDL_GetWindowWMInfo(sr_window, &system)){
         std::cerr << "Video information not available!\n";
         return(false);
     }
@@ -209,7 +208,8 @@ bool  rSysDep::InitGL(){
 
 void  rSysDep::ExitGL(){
     SDL_SysWMinfo system;
-    SDL_GetWMInfo(&system);
+    SDL_VERSION(&system.version);
+    SDL_GetWindowWMInfo(sr_window, &system);
 
     /*
     #ifdef HAVE_FXMESA
@@ -311,9 +311,9 @@ static void make_screenshot(){
     SDL_Surface *image;
     SDL_Surface *temp;
     int idx;
-    image = SDL_CreateRGBSurface(SDL_SWSURFACE, sr_screenWidth, sr_screenHeight,
-                                 24, 0x0000FF, 0x00FF00, 0xFF0000 ,0);
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE, sr_screenWidth, sr_screenHeight,
+    image = SDL_CreateRGBSurface(0, sr_screenWidth, sr_screenHeight,
+                                  24, 0x0000FF, 0x00FF00, 0xFF0000 ,0);
+    temp = SDL_CreateRGBSurface(0, sr_screenWidth, sr_screenHeight,
                                 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
 
     // make upside down screenshot
@@ -511,7 +511,7 @@ void rSysDep::StartNetSyncThread( rNetIdler * idler )
         sr_netLock = SDL_CreateMutex();
 
     // start thread
-    sr_netSyncThread = SDL_CreateThread( sr_NetSyncThread, sr_netLock );
+    sr_netSyncThread = SDL_CreateThread( sr_NetSyncThread, "NetSync", sr_netLock );
     if ( !sr_netSyncThread )
         return;
 
@@ -660,7 +660,13 @@ void rSysDep::SwapGL(){
 
 #if defined(SDL_OPENGL)
     if (lastSuccess.useSDL)
-        SDL_GL_SwapBuffers();
+    {
+        static int debugCount = 0;
+        if (++debugCount < 5) {
+            fprintf(stderr, "DEBUG: SDL_GL_SwapWindow frame %d\n", debugCount); fflush(stderr);
+        }
+        SDL_GL_SwapWindow(sr_window);
+    }
     //#elif defined(HAVE_FXMESA)
     //fxMesaSwapBuffers();
 #endif
