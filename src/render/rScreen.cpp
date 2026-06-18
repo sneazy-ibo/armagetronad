@@ -342,6 +342,13 @@ rScreenSettings::rScreenSettings( rResolution r, bool fs, rColorDepth cd, bool s
 }
 
 void sr_ReinitDisplay(){
+    // ponytail: guard against rapid reinit calls causing loop
+    static double lastReinit = 0;
+    double now = tRealSysTimeFloat();
+    if (now - lastReinit < 0.5)
+        return;
+    lastReinit = now;
+
     sr_ExitDisplay();
     if (!sr_InitDisplay()){
         tERR_ERROR("Oops. Failed to reinit video hardware. "
@@ -528,10 +535,10 @@ static bool lowlevel_sr_InitDisplay(){
                  flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;  // ponytail: SDL2 flag for single-display fullscreen, SDL_WINDOW_FULLSCREEN spans all displays
  #endif
 
-            sr_window = SDL_CreateWindow("Armagetron Advanced",
+             sr_window = SDL_CreateWindow("Armagetron Advanced",
                 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                 sr_screenWidth, sr_screenHeight, flags);
-            if (!sr_window)
+             if (!sr_window)
             {
                 // Try windowed mode as fallback
                 flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;

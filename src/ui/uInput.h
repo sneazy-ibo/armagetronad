@@ -224,7 +224,7 @@ public:
 #define SDLK_MOUSE_BUTTON_5 (SDLK_UNKNOWN+11)
 #define SDLK_MOUSE_BUTTON_6 (SDLK_UNKNOWN+12)
 #define SDLK_MOUSE_BUTTON_7 (SDLK_UNKNOWN+13)
-#define SDLK_NEWLAST        (SDLK_UNKNOWN+14)
+#define SDLK_NEWLAST        (SDLK_UNKNOWN+4096)  // ponytail: increased for SDL2 keycode range
 #define MOUSE_BUTTONS 7
 
 // one key_action for every keysym

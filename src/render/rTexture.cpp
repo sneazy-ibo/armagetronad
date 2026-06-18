@@ -184,6 +184,7 @@ void rSurface::Create( char const * fileName )
     // find path of image
     // tString s = tResourceManager::locateResource("", fileName);
     tString s = tDirectories::Data().GetReadPath( fileName );
+    // fprintf(stderr, "DEBUG: Loading texture '%s' -> path='%s'\n", fileName, (const char*)s); fflush(stderr);
 
     // Load image
     // IMG_InvertAlpha(true); // SDL3-only, not needed for SDL2

@@ -521,10 +521,10 @@ int filter(void *userdata, SDL_Event *tEvent){
 
         if (tEvent->type==SDL_WINDOWEVENT)
         {
-            // Jonathans fullscreen bugfix.
-#ifdef MACOSX
-            if (currentScreensetting.fullscreen ^ lastSuccess.fullscreen) return false;
-#endif
+            // Jonathans fullscreen bugfix - disabled for SDL2
+            // #ifdef MACOSX
+            //     if (currentScreensetting.fullscreen ^ lastSuccess.fullscreen) return false;
+            // #endif
             if (tEvent->window.event == SDL_WINDOWEVENT_FOCUS_GAINED ||
                 tEvent->window.event == SDL_WINDOWEVENT_FOCUS_LOST)
             {
@@ -558,11 +558,10 @@ void Update_netPlayer();
 void sg_SetIcon()
 {
 #ifndef DEDICATED
-    rSurface tex( "textures/icon.png" );
-    //    SDL_Surface *tex=IMG_Load( tDirectories::Data().GetReadPath( "textures/icon.png" ) );
-
-    if (tex.GetSurface())
-        SDL_SetWindowIcon(sr_window, tex.GetSurface());
+    // Skip icon loading for now - path resolution issue
+    // rSurface tex( "textures/icon.png" );
+    // if (tex.GetSurface())
+    //     SDL_SetWindowIcon(sr_window, tex.GetSurface());
 #endif
 }
 
