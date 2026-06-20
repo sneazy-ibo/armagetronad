@@ -350,14 +350,14 @@ static int const su_scancodeBase = 2048;
 
 static bool su_IsScancodeIndex( int sym )
 {
-    return sym >= su_scancodeBase && sym < su_scancodeBase + SDL_NUM_SCANCODES;
+    return sym >= su_scancodeBase && sym < su_scancodeBase + SDL_SCANCODE_COUNT;
 }
 
-static int su_KeyIndex( SDL_Keysym const & key )
+static int su_KeyIndex( SDL_KeyboardEvent const & key )
 {
-    if ( key.sym >= 0 && key.sym < SDLK_NEWLAST )
+    if ( key.key >= 0 && key.key < SDLK_NEWLAST )
     {
-        return key.sym;
+        return key.key;
     }
 
     if ( key.scancode > SDL_SCANCODE_UNKNOWN )
@@ -457,7 +457,7 @@ public:
     virtual bool Event(SDL_Event &e){
         int sym=-1;
         switch (e.type){
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             if(active){
                 REAL xrel=e.motion.xrel;
                 REAL yrel=-e.motion.yrel;
@@ -481,7 +481,7 @@ public:
             }
 
             break;
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
             if(active){
                 int button=e.button.button;
                 if (button<=MOUSE_BUTTONS)
@@ -491,7 +491,7 @@ public:
             }
             break;
 
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             if ( active )
             {
                 int y = e.wheel.y;
@@ -508,10 +508,9 @@ public:
             }
             break;
 
-        case SDL_KEYDOWN:{
-                SDL_Keysym &c=e.key.keysym;
+        case SDL_EVENT_KEY_DOWN:{
                 if(!active){
-                    if (c.sym==SDLK_DELETE || c.sym==SDLK_BACKSPACE)
+                    if (e.key.key==SDLK_DELETE || e.key.key==SDLK_BACKSPACE)
                     {
                         for(int keysym=SDLK_NEWLAST-1;keysym>=0;keysym--)
                             if(keymap[keysym] &&
@@ -526,8 +525,8 @@ public:
 
                 active=0;
 
-                if (c.sym!=SDLK_ESCAPE)
-                    sym=su_KeyIndex(c);
+                if (e.key.key!=SDLK_ESCAPE)
+                    sym=su_KeyIndex(e.key);
                 else
                     return true;
             }
@@ -672,7 +671,7 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
 
 
     switch (e.type){
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_MOTION:
         if ( !su_mouseGrab ||
                 e.motion.x!=sr_screenWidth/2 || e.motion.x!=sr_screenHeight/2)
         {
@@ -693,20 +692,20 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
         return true; // no fuss: allways pretend to have handled this.
         break;
 
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:{
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP:{
             int button=e.button.button;
             if (button<=MOUSE_BUTTONS){
                 sym=SDLK_MOUSE_BUTTON_1+button-1;
             }
         }
-        if (e.type==SDL_MOUSEBUTTONDOWN)
+        if (e.type==SDL_EVENT_MOUSE_BUTTON_DOWN)
             pm=1;
         else
             pm=-1;
         break;
 
-    case SDL_MOUSEWHEEL:
+    case SDL_EVENT_MOUSE_WHEEL:
     {
         int y = e.wheel.y;
         if ( e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED )
@@ -728,17 +727,17 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
         return false;
     }
 
-    case SDL_KEYDOWN:
+    case SDL_EVENT_KEY_DOWN:
         // Ignore auto-repeat key-downs during gameplay: an action should fire
         // once per physical press. (SDL2 replacement for SDL_EnableKeyRepeat(0,0).)
         if ( e.key.repeat )
             return true;
-        sym=su_KeyIndex(e.key.keysym);
+        sym=su_KeyIndex(e.key);
         pm=1;
         break;
 
-    case SDL_KEYUP:
-        sym=su_KeyIndex(e.key.keysym);
+    case SDL_EVENT_KEY_UP:
+        sym=su_KeyIndex(e.key);
         pm=-1;
         break;
 

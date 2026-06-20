@@ -49,8 +49,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef SDL_OPENGL
+#ifndef __APPLE__
 #ifndef DIRTY
 #define DIRTY
+#endif
 #endif
 #endif
 
@@ -439,32 +441,33 @@ static bool lowlevel_sr_InitDisplay(){
         sr_desktopWidth = 800;
         sr_desktopHeight = 600;
 
-        // SDL2: use desktop mode of the display under the mouse cursor
+        // SDL3: use desktop mode of the display under the mouse cursor
         {
-            int displayIndex = 0;
-            int mouseX = 0;
-            int mouseY = 0;
-            SDL_GetGlobalMouseState( &mouseX, &mouseY );
-            int numDisplays = SDL_GetNumVideoDisplays();
+            float mouseXf = 0, mouseYf = 0;
+            SDL_GetGlobalMouseState( &mouseXf, &mouseYf );
+            int mouseX = (int)mouseXf, mouseY = (int)mouseYf;
+            int numDisplays = 0;
+            SDL_DisplayID *displays = SDL_GetDisplays( &numDisplays );
+            SDL_DisplayID displayID = displays && numDisplays > 0 ? displays[0] : 0;
             for ( int i = 0; i < numDisplays; ++i )
             {
                 SDL_Rect bounds;
-                if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
+                if ( SDL_GetDisplayBounds( displays[i], &bounds ) &&
                      mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
                      mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
                 {
-                    displayIndex = i;
+                    displayID = displays[i];
                     break;
                 }
             }
+            SDL_free( displays );
 
-            SDL_DisplayMode dm;
-            if (SDL_GetCurrentDisplayMode(displayIndex, &dm) == 0)
+            const SDL_DisplayMode *dm = displayID ? SDL_GetCurrentDisplayMode( displayID ) : nullptr;
+            if (dm)
             {
-                sr_desktopWidth  = dm.w;
-                sr_desktopHeight = dm.h;
-                desktopCD    = dm.format ? __builtin_popcount(dm.format & 0xFF) : 24;
-                // approximate RGB depths from format
+                sr_desktopWidth  = dm->w;
+                sr_desktopHeight = dm->h;
+                desktopCD    = dm->format ? __builtin_popcount(dm->format & 0xFF) : 24;
                 desktopCD_R  = 8;
                 desktopCD_G  = 8;
                 desktopCD_B  = 8;
@@ -480,8 +483,6 @@ static bool lowlevel_sr_InitDisplay(){
             s << o;
             SDL_SetWindowTitle(sr_window, s);
         }
-
-        SDL_StartTextInput();
 
         int singleCD_R	= 5;
         int singleCD_G	= 5;
@@ -527,68 +528,57 @@ static bool lowlevel_sr_InitDisplay(){
             sr_screenHeight = sr_desktopHeight;
         }
 
-        // SDL2: create window and GL context
+        // SDL3: create window and GL context
         {
-             Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-             int numDisplays = SDL_GetNumVideoDisplays();
-             int displayIndex = 0;
-             if ( sr_lastDisplayIndex >= 0 && sr_lastDisplayIndex < numDisplays )
+             SDL_WindowFlags flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+             int numDisplays = 0;
+             SDL_DisplayID *displays = SDL_GetDisplays( &numDisplays );
+             SDL_DisplayID displayID = displays && numDisplays > 0 ? displays[0] : 0;
+             if ( sr_lastDisplayIndex > 0 )
              {
-                 // recreating the window (e.g. after applying settings): stay on
-                 // the same monitor instead of jumping to where the mouse is
-                 displayIndex = sr_lastDisplayIndex;
+                 // recreating the window: stay on the same monitor
+                 displayID = (SDL_DisplayID)sr_lastDisplayIndex;
              }
-             else
+             else if ( displays )
              {
                  // first launch: open on the monitor under the mouse cursor
-                 int mouseX = 0;
-                 int mouseY = 0;
-                 SDL_GetGlobalMouseState( &mouseX, &mouseY );
+                 float mouseXf = 0, mouseYf = 0;
+                 SDL_GetGlobalMouseState( &mouseXf, &mouseYf );
+                 int mouseX = (int)mouseXf, mouseY = (int)mouseYf;
                  for ( int i = 0; i < numDisplays; ++i )
                  {
                      SDL_Rect bounds;
-                     if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
+                     if ( SDL_GetDisplayBounds( displays[i], &bounds ) &&
                           mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
                           mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
                      {
-                         displayIndex = i;
+                         displayID = displays[i];
                          break;
                      }
                  }
              }
+             SDL_free( displays );
 
   #ifndef FORCE_WINDOW
-             // Create the window in windowed mode first so it is placed on the
-             // intended display, then promote it to fullscreen-desktop. Creating
-             // directly with the fullscreen flag makes SDL2 ignore the position
-             // hint and put the window on a default monitor.
              bool const wantFullscreen = currentScreensetting.fullscreen;
   #else
              bool const wantFullscreen = false;
   #endif
 
-             // Position/size the window for creation. For fullscreen-desktop we
-             // create at the target display's own bounds: a window sized to the
-             // configured resolution can be larger than the target monitor, which
-             // makes the OS relocate it to whichever display fits (jumping screens).
-             int createX = SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex);
-             int createY = SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex);
+             // SDL3: CreateWindow no longer takes position; set it after creation.
              int createW = sr_screenWidth;
              int createH = sr_screenHeight;
-             if (wantFullscreen)
+             if (wantFullscreen && displayID)
              {
                  SDL_Rect bounds;
-                 if (SDL_GetDisplayBounds(displayIndex, &bounds) == 0)
+                 if (SDL_GetDisplayBounds(displayID, &bounds))
                  {
-                     createX = bounds.x;
-                     createY = bounds.y;
                      createW = bounds.w;
                      createH = bounds.h;
                  }
              }
 
-             sr_window = SDL_CreateWindow("Armagetron Advanced",
-                createX, createY, createW, createH, flags);
+             sr_window = SDL_CreateWindow("Armagetron Advanced", createW, createH, flags);
             if (!sr_window)
             {
                 lastError.Clear();
@@ -598,9 +588,15 @@ static bool lowlevel_sr_InitDisplay(){
                 return false;
             }
 
+             // Position window on the correct display
+             if (displayID && !wantFullscreen)
+                 SDL_SetWindowPosition(sr_window,
+                     SDL_WINDOWPOS_CENTERED_DISPLAY(displayID),
+                     SDL_WINDOWPOS_CENTERED_DISPLAY(displayID));
+
              if (wantFullscreen)
              {
-                 if (SDL_SetWindowFullscreen(sr_window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+                 if (!SDL_SetWindowFullscreen(sr_window, true))
                  {
                      // fall back to windowed mode if fullscreen fails
                      currentScreensetting.fullscreen = false;
@@ -627,6 +623,7 @@ static bool lowlevel_sr_InitDisplay(){
                  return false;
              }
              SDL_GL_MakeCurrent(sr_window, sr_glcontext);  // ponytail: critical - makes GL context active for rendering
+             SDL_StartTextInput(sr_window);
 
              // apply vsync (SDL2: set after context creation, not via GL attribute)
              switch (currentScreensetting.vSync)
@@ -635,7 +632,7 @@ static bool lowlevel_sr_InitDisplay(){
                  // prefer adaptive/late-swap-tearing: best for variable-refresh
                  // (G-Sync/FreeSync) displays. Falls back to plain vsync where
                  // the driver doesn't support it.
-                 if ( SDL_GL_SetSwapInterval( -1 ) != 0 )
+                 if ( !SDL_GL_SetSwapInterval( -1 ) )
                      SDL_GL_SetSwapInterval( 1 );
                  break;
              case ArmageTron_VSync_Off:
@@ -651,7 +648,7 @@ static bool lowlevel_sr_InitDisplay(){
              int drawableW = 0;
              int drawableH = 0;
              SDL_GetWindowSize( sr_window, &windowW, &windowH );
-             SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
+             SDL_GetWindowSizeInPixels( sr_window, &drawableW, &drawableH );
 
              // ponytail: render and viewport sizes should follow actual drawable size
              sr_screenWidth = drawableW > 0 ? drawableW : windowW;
@@ -722,9 +719,9 @@ static bool lowlevel_sr_InitDisplay(){
 #endif
     {
         if(currentScreensetting.fullscreen)
-            SDL_ShowCursor(SDL_DISABLE);
+            SDL_HideCursor();
         else
-            SDL_ShowCursor(SDL_ENABLE);
+            SDL_ShowCursor();
     }
 
 #ifdef WIN32
@@ -802,7 +799,7 @@ static bool lowlevel_sr_InitDisplay(){
         SDL_Delay(100);
         while (SDL_PollEvent(&evt))
         {
-            if (evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
+            if (evt.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
                 focused = true;
         }
     }
@@ -916,10 +913,10 @@ void sr_ExitDisplay(){
 
     if (sr_window){
         // remember the monitor so the recreated window stays put
-        int displayIndex = SDL_GetWindowDisplayIndex(sr_window);
+        int displayIndex = (int)SDL_GetDisplayForWindow(sr_window);
         if (displayIndex >= 0)
             sr_lastDisplayIndex = displayIndex;
-        SDL_GL_DeleteContext(sr_glcontext);
+        SDL_GL_DestroyContext(sr_glcontext);
         sr_glcontext = NULL;
         SDL_DestroyWindow(sr_window);
         sr_window = NULL;

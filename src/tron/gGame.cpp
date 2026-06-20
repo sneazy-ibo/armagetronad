@@ -90,7 +90,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef DEDICATED
 #include "rSDL.h"
-#include <SDL_thread.h>
+#include <SDL3/SDL_thread.h>
 
 #ifdef DEBUG
 #ifndef WIN32
@@ -4223,10 +4223,10 @@ bool gGame::GameLoop(bool input){
 
             if (!su_HandleEvent(tEvent, false))
                 switch (tEvent.type){
-                case SDL_MOUSEBUTTONDOWN:
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     break;
-                case SDL_KEYDOWN:
-                    switch (tEvent.key.keysym.sym){
+                case SDL_EVENT_KEY_DOWN:
+                    switch (tEvent.key.key){
 
                     case(27):
                                     //                                case('q'):

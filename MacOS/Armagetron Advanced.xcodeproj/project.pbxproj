@@ -568,10 +568,7 @@
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				8CBA60B1089F00F2007E21DC /* OpenGL.framework in Frameworks */,
 				9B5414A50A45C78200745CE6 /* libpng.framework in Frameworks */,
-				9B5414A60A45C78200745CE6 /* SDL2_image.framework in Frameworks */,
-				9B5414A70A45C78200745CE6 /* SDL2.framework in Frameworks */,
 				9B5E11BF0D5EC32500175ABB /* CoreServices.framework in Frameworks */,
-				9BA977200F1EC45500F02184 /* SDL2_mixer.framework in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -1628,9 +1625,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_mixer.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
+					/opt/homebrew/include,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
 					/usr/include/libxml2,
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
@@ -1640,20 +1635,22 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/lib,
+					/opt/homebrew/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
+					"-lSDL3",
 					"-lxml2",
 					"-lz",
 					"-lpthread",
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL3_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL3_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
@@ -1678,9 +1675,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_mixer.framework/Headers,
-					/Library/Frameworks/ArmagetronAdvanced/current/SDL2_image.framework/Headers,
+					/opt/homebrew/include,
 					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
 					/usr/include/libxml2,
 					/Library/Frameworks/ArmagetronAdvanced/current/include,
@@ -1690,20 +1685,22 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/lib,
+					/opt/homebrew/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS_QUOTED_1)",
 					"$(OTHER_LDFLAGS_QUOTED_2)",
+					"-lSDL3",
 					"-lxml2",
 					"-lz",
 					"-lpthread",
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-framework SDL2_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-framework SDL2_mixer";
+				OTHER_LDFLAGS_QUOTED_1 = "-lSDL3_image";
+				OTHER_LDFLAGS_QUOTED_2 = "-lSDL3_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;

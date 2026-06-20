@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#include "eTess.h"
 #include "rTexture.h"
 #ifndef DEDICATED
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 #endif
 #include "tConfiguration.h"
 #include "tRandom.h"
@@ -65,6 +65,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef DEDICATED
 #include "rRender.h"
 #include "rSDL.h"
+#include <SDL3/SDL_main.h>
 #endif
 
 // data structure for command line parsing
@@ -327,7 +328,7 @@ static void welcome(){
             timeout = tSysTimeFloat() + 6;
 
             uInputProcessGuard inputProcessGuard;
-            while ((!su_GetSDLInput(tEvent) || tEvent.type!=SDL_KEYDOWN) &&
+            while ((!su_GetSDLInput(tEvent) || tEvent.type!=SDL_EVENT_KEY_DOWN) &&
                     tSysTimeFloat() < timeout)
             {
                 if ( sr_glOut )
@@ -491,11 +492,11 @@ int filter(void *userdata, SDL_Event *tEvent){
         RecursionGuard guard( recursion );
 
         // boss key or OS X quit command
-        if ((tEvent->type==SDL_KEYDOWN && tEvent->key.keysym.sym==27 &&
-                tEvent->key.keysym.mod & KMOD_SHIFT) ||
-                (tEvent->type==SDL_KEYDOWN && tEvent->key.keysym.sym==113 &&
-                 tEvent->key.keysym.mod & KMOD_GUI) ||
-                (tEvent->type==SDL_QUIT)){
+        if ((tEvent->type==SDL_EVENT_KEY_DOWN && tEvent->key.key==27 &&
+                tEvent->key.mod & SDL_KMOD_SHIFT) ||
+                (tEvent->type==SDL_EVENT_KEY_DOWN && tEvent->key.key==113 &&
+                 tEvent->key.mod & SDL_KMOD_GUI) ||
+                (tEvent->type==SDL_EVENT_QUIT)){
             // sn_SetNetState(nSTANDALONE);
             // sn_Receive();
 
@@ -507,56 +508,49 @@ int filter(void *userdata, SDL_Event *tEvent){
             return false;
         }
 
-        if (tEvent->type==SDL_MOUSEMOTION)
+        if (tEvent->type==SDL_EVENT_MOUSE_MOTION)
             if (tEvent->motion.x==sr_screenWidth/2 && tEvent->motion.y==sr_screenHeight/2)
                 return 0;
         if (su_mouseGrab &&
-                tEvent->type!=SDL_MOUSEBUTTONDOWN &&
-                tEvent->type!=SDL_MOUSEBUTTONUP &&
+                tEvent->type!=SDL_EVENT_MOUSE_BUTTON_DOWN &&
+                tEvent->type!=SDL_EVENT_MOUSE_BUTTON_UP &&
                 ((tEvent->motion.x>=sr_screenWidth-10  || tEvent->motion.x<=10) ||
                  (tEvent->motion.y>=sr_screenHeight-10 || tEvent->motion.y<=10)))
             SDL_WarpMouseInWindow(sr_window, sr_screenWidth/2, sr_screenHeight/2);
 
-        // fetch alt-tab - SDL2: use SDL_WINDOWEVENT instead of SDL_ACTIVEEVENT
-
-        if (tEvent->type==SDL_WINDOWEVENT)
+        // SDL3: window events are promoted to top-level event types
+        if (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED ||
+            tEvent->type == SDL_EVENT_WINDOW_FOCUS_LOST)
         {
-            // Jonathans fullscreen bugfix - disabled for SDL2
-            // #ifdef MACOSX
-            //     if (currentScreensetting.fullscreen ^ lastSuccess.fullscreen) return false;
-            // #endif
-            if (tEvent->window.event == SDL_WINDOWEVENT_FOCUS_GAINED ||
-                tEvent->window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+            sg_active = (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED);
+            st_ToDo(sg_DelayedActivation);
+            if (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED)
             {
-                sg_active = (tEvent->window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
-                st_ToDo(sg_DelayedActivation);
-            }
-
-            if ( tEvent->window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
-                 tEvent->window.event == SDL_WINDOWEVENT_RESIZED )
-            {
-                int windowW = 0;
-                int windowH = 0;
-                int drawableW = 0;
-                int drawableH = 0;
-                SDL_GetWindowSize( sr_window, &windowW, &windowH );
-                SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
-                sr_screenWidth = drawableW > 0 ? drawableW : windowW;
-                sr_screenHeight = drawableH > 0 ? drawableH : windowH;
-                st_ToDo( rCallbackAfterScreenModeChange::Exec );
-            }
-
-            // reload GL stuff if application gets reactivated
-            if (tEvent->window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
-            {
-                // just treat it like a screen mode change, gets the job done
                 st_ToDo(rCallbackBeforeScreenModeChange::Exec);
                 st_ToDo(rCallbackAfterScreenModeChange::Exec);
             }
             return false;
         }
 
+        if (tEvent->type == SDL_EVENT_WINDOW_RESIZED ||
+            tEvent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
+        {
+            int windowW = 0, windowH = 0, drawableW = 0, drawableH = 0;
+            SDL_GetWindowSize( sr_window, &windowW, &windowH );
+            SDL_GetWindowSizeInPixels( sr_window, &drawableW, &drawableH );
+            sr_screenWidth  = drawableW > 0 ? drawableW : windowW;
+            sr_screenHeight = drawableH > 0 ? drawableH : windowH;
+            st_ToDo( rCallbackAfterScreenModeChange::Exec );
+            return false;
+        }
+
         if (su_prefetchInput){
+            // SDL3: SDL_TextInputEvent.text is a const char* into SDL-owned memory.
+            // Storing it in the ring buffer (shallow copy) leaves a dangling pointer.
+            // Let text events stay in SDL's queue so SDL_PollEvent returns them with valid text.
+            if (tEvent->type == SDL_EVENT_TEXT_INPUT ||
+                tEvent->type == SDL_EVENT_TEXT_EDITING)
+                return 1;
             return su_StoreSDLEvent(*tEvent);
         }
 
@@ -813,9 +807,6 @@ int SDL_main(int argc,char **argv){
             }
             SDLCleanup sdlCleanup; // call SDL_Quit later
 
-            // Initialize SDL2_image for texture loading
-            IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
-
             sr_glRendererInit();
 
             SDL_SetEventFilter((SDL_EventFilter)filter, NULL);
@@ -877,7 +868,6 @@ int SDL_main(int argc,char **argv){
 
                 st_SaveConfig();
 
-                IMG_Quit();
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
             }
 #else

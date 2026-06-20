@@ -329,8 +329,8 @@ void gServerMenu::HandleEvent( SDL_Event event )
 #ifndef DEDICATED
     switch (event.type)
     {
-    case SDL_KEYDOWN:
-        switch (event.key.keysym.sym)
+    case SDL_EVENT_KEY_DOWN:
+        switch (event.key.key)
         {
         case(SDLK_LEFT):
             sortKey_ = ( sortKey_ + nServerInfo::KEY_MAX-1 ) % nServerInfo::KEY_MAX;
@@ -342,7 +342,7 @@ void gServerMenu::HandleEvent( SDL_Event event )
             Update();
             return;
             break;
-		case(SDLK_m):
+		case(SDLK_M):
 			FriendsToggle();
             Update();
 			return;
@@ -759,10 +759,10 @@ bool gBrowserMenuItem::Event( SDL_Event& event )
 #ifndef DEDICATED
     switch (event.type)
     {
-    case SDL_KEYDOWN:
-        switch (event.key.keysym.sym)
+    case SDL_EVENT_KEY_DOWN:
+        switch (event.key.key)
         {
-        case SDLK_r:
+        case SDLK_R:
             {
                 static double lastRefresh = - 100; //!< the time of the last manual refresh
                 if ( tSysTimeFloat() - lastRefresh > 2.0 )
@@ -789,10 +789,10 @@ bool gServerMenuItem::Event( SDL_Event& event )
 #ifndef DEDICATED
     switch (event.type)
     {
-    case SDL_KEYDOWN:
-        switch (event.key.keysym.sym)
+    case SDL_EVENT_KEY_DOWN:
+        switch (event.key.key)
         {
-        case SDLK_p:
+        case SDLK_P:
             continuePoll = true;
             if ( server && tSysTimeFloat() - lastPing_ > .5f )
             {
@@ -807,7 +807,7 @@ bool gServerMenuItem::Event( SDL_Event& event )
         default:
             break;
         }
-        switch (event.key.keysym.sym)
+        switch (event.key.key)
         {
         case '+':
             if ( server )

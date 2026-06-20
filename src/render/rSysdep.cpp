@@ -45,14 +45,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tRecorder.h"
 
 #ifndef DEDICATED
-#include <SDL_thread.h>
+#include <SDL3/SDL_thread.h>
 
 #include <png.h>
 #define SCREENSHOT_PNG_BITDEPTH 8
 #define SCREENSHOT_BYTES_PER_PIXEL 3
 #ifndef SDL_OPENGL
+#ifndef __APPLE__
 #ifndef DIRTY
 #define DIRTY
+#endif
 #endif
 #endif
 
@@ -90,7 +92,7 @@ Window  win;
 #endif
 
 #ifdef DIRTY
-#include <SDL_syswm.h>
+#include <SDL3/SDL_syswm.h>
 
 // graphics initialisation and cleanup:
 bool  rSysDep::InitGL(){
@@ -311,10 +313,8 @@ static void make_screenshot(){
     SDL_Surface *image;
     SDL_Surface *temp;
     int idx;
-    image = SDL_CreateRGBSurface(0, sr_screenWidth, sr_screenHeight,
-                                  24, 0x0000FF, 0x00FF00, 0xFF0000 ,0);
-    temp = SDL_CreateRGBSurface(0, sr_screenWidth, sr_screenHeight,
-                                24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    image = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
+    temp  = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
 
     // make upside down screenshot
     glReadPixels(0,0,sr_screenWidth, sr_screenHeight, GL_RGB,
@@ -359,8 +359,8 @@ static void make_screenshot(){
     }
 
     // cleanup
-    SDL_FreeSurface(image);
-    SDL_FreeSurface(temp);
+    SDL_DestroySurface(image);
+    SDL_DestroySurface(temp);
 #endif
 }
 
@@ -637,7 +637,7 @@ void rSysDep::SwapGL(){
 #endif // dedicated
 
 #ifndef DEDICATED
-static SDL_mutex *mut;
+static SDL_Mutex *mut;
 
 static void stuff_init(){
     mut=SDL_CreateMutex();

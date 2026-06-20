@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rGL.h"
 
 // Load SDL2_image
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 #endif
 
 
@@ -160,7 +160,7 @@ void rSurface::Clear( void )
 #ifndef DEDICATED
     // delete surface
     if ( surface_ )
-        SDL_FreeSurface( surface_ );
+        SDL_DestroySurface( surface_ );
 
 #endif
     surface_ = 0;
@@ -210,7 +210,7 @@ void rSurface::Create( SDL_Surface * surface )
     // determine texture format
     if ( surface_ )
     {
-        switch (surface_->format->BytesPerPixel){
+        switch (SDL_GetPixelFormatDetails(surface_->format)->bytes_per_pixel){
         case 1:
             format_ = GL_LUMINANCE;
             break;
@@ -231,18 +231,11 @@ void rSurface::Create( SDL_Surface * surface )
             {
                 // fallback: convert the texture into a known format.
 
-                SDL_Surface *dummy =
-                    SDL_CreateRGBSurface(0, 1, 1,
-                                         32,
-                                         0x0000FF, 0x00FF00,
-                                         0xFF0000 ,0xFF000000);
-
                 SDL_Surface *convtex =
-                    SDL_ConvertSurface(surface_, dummy->format, 0);
+                    SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGBA8888);
 
-                SDL_FreeSurface(surface_);
+                SDL_DestroySurface(surface_);
                 surface_ = convtex;
-                SDL_FreeSurface(dummy);
 
                 format_ = GL_RGBA;
             }
@@ -269,7 +262,7 @@ void rSurface::CopyFrom( rSurface const & other )
     tASSERT( other.surface_ );
 
     // copy surface
-    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format, 0);
+    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format);
 
     // copy flags
     format_ = other.format_;
@@ -447,7 +440,7 @@ void rISurfaceTexture::Upload( rSurface & surface )
     SDL_Surface * tex = surface.GetSurface();
     tASSERT( tex );
 
-    bool texalpha=tex->format->Amask;
+    bool texalpha=SDL_GetPixelFormatDetails(tex->format)->Amask;
 
     ProcessImage(tex);
 

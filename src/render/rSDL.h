@@ -4,7 +4,7 @@
 #include "config.h"
 
 #ifndef DEDICATED
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #else
 #define SDLK_LAST SDLK_UNKNOWN
 typedef int SDL_Event;

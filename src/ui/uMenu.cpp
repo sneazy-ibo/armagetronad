@@ -229,8 +229,8 @@ void uMenu::OnEnter(){
 
                 switch (tEvent.type)
                 {
-                case SDL_KEYDOWN:
-                    if ( tEvent.key.keysym.sym == SDLK_UNKNOWN )
+                case SDL_EVENT_KEY_DOWN:
+                    if ( tEvent.key.key == SDLK_UNKNOWN )
                     {
                         // don't repeat unknown syms. They come from multi-key compositions and
                         // don't send keyup events when released.
@@ -240,7 +240,7 @@ void uMenu::OnEnter(){
                     memcpy( &tEventRepeat, &tEvent, sizeof( SDL_Event ) );
                     nextrepeat = tSysTimeFloat() + repeatdelay;
                     break;
-                case SDL_KEYUP:
+                case SDL_EVENT_KEY_UP:
                     localRepeat = s_globalRepeat = false;
                     repeatrate = repeatrateStart;
                     break;
@@ -404,11 +404,11 @@ void uMenu::HandleEvent( SDL_Event event )
     if (!items[selected]->Event(event))
     {
         switch (event.type){
-        case SDL_KEYDOWN:
+        case SDL_EVENT_KEY_DOWN:
         {
             if (!disphelp)
                 lastkey=tSysTimeFloat();
-            switch (event.key.keysym.sym){
+            switch (event.key.key){
 
             case(SDLK_ESCAPE):
                 s_globalRepeat = false;
@@ -832,7 +832,7 @@ void uMenuItemString::Render(REAL x,REAL y,
 
 bool uMenuItemString::Event(SDL_Event &e){
 #ifndef DEDICATED
-    if (e.type == SDL_TEXTINPUT)
+    if (e.type == SDL_EVENT_TEXT_INPUT)
     {
         bool inserted = false;
         for (int i = 0; e.text.text[i] && content->Len() < maxLength_; ++i)
@@ -855,73 +855,73 @@ bool uMenuItemString::Event(SDL_Event &e){
         return inserted;
     }
 
-    if (e.type!=SDL_KEYDOWN)
+    if (e.type!=SDL_EVENT_KEY_DOWN)
         return false;
 
     bool ret=true;
-    SDL_Keysym &c=e.key.keysym;
-    Uint16 mod = c.mod;
+    auto & c = e.key;
+    SDL_Keymod mod = c.mod;
     bool moveWordLeft, moveWordRight, deleteWordLeft, deleteWordRight, moveBeginning, moveEnd, killForwards;
     moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards = false;
 
 #if defined (MACOSX)
     // For moving over/deleting words
-    if (mod & KMOD_ALT) {
-        if (c.sym == SDLK_LEFT) {
+    if (mod & SDL_KMOD_ALT) {
+        if (c.key == SDLK_LEFT) {
             moveWordLeft = true;
         }
-        else if (c.sym == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT) {
             moveWordRight = true;
         }
-        else if (c.sym == SDLK_DELETE) {
+        else if (c.key == SDLK_DELETE) {
             deleteWordRight = true;
         }
-        else if (c.sym == SDLK_BACKSPACE) {
+        else if (c.key == SDLK_BACKSPACE) {
             deleteWordLeft = true;
         }
     }
     // For moving to extremes of the line
-    else if (mod & KMOD_GUI) {
-        if (c.sym == SDLK_LEFT) {
+    else if (mod & SDL_KMOD_GUI) {
+        if (c.key == SDLK_LEFT) {
             moveBeginning = true;
         }
-        else if (c.sym == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT) {
             moveEnd = true;
         }
     }
     // Linux and Windows
 #else
     // Word operations
-    if (mod & KMOD_CTRL) {
-        if (c.sym == SDLK_LEFT) {
+    if (mod & SDL_KMOD_CTRL) {
+        if (c.key == SDLK_LEFT) {
             moveWordLeft = true;
         }
-        else if (c.sym == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT) {
             moveWordRight = true;
         }
-        else if (c.sym == SDLK_DELETE) {
+        else if (c.key == SDLK_DELETE) {
             deleteWordRight = true;
         }
-        else if (c.sym == SDLK_BACKSPACE) {
+        else if (c.key == SDLK_BACKSPACE) {
             deleteWordLeft = true;
         }
     }
-    else if (c.sym == SDLK_HOME) {
+    else if (c.key == SDLK_HOME) {
         moveBeginning = true;
     }
-    else if (c.sym == SDLK_END) {
+    else if (c.key == SDLK_END) {
         moveEnd = true;
     }
 #endif
     // "bash" keys
-    if (mod & KMOD_CTRL) {
-        if (c.sym == SDLK_a) {
+    if (mod & SDL_KMOD_CTRL) {
+        if (c.key == SDLK_A) {
             moveBeginning = true;
         }
-        else if (c.sym == SDLK_e) {
+        else if (c.key == SDLK_E) {
             moveEnd = true;
         }
-        else if (c.sym == SDLK_k) {
+        else if (c.key == SDLK_K) {
             killForwards = true;
         }
     }
@@ -948,35 +948,35 @@ bool uMenuItemString::Event(SDL_Event &e){
     else if (killForwards) {
         content->RemoveSubStr(cursorPos,content->Len()-1-cursorPos);
     }
-    else if (c.sym == SDLK_LEFT) {
+    else if (c.key == SDLK_LEFT) {
         if (cursorPos > 0) {
             cursorPos--;
         }
     }
-    else if (c.sym == SDLK_RIGHT) {
+    else if (c.key == SDLK_RIGHT) {
         if (cursorPos < content->Len()-1) {
             cursorPos++;
         }
     }
-    else if (c.sym == SDLK_DELETE) {
+    else if (c.key == SDLK_DELETE) {
         if (cursorPos < content->Len()-1) {
             content->RemoveSubStr(cursorPos,1);
         }
     }
-    else if (c.sym == SDLK_BACKSPACE) {
+    else if (c.key == SDLK_BACKSPACE) {
         if (cursorPos > 0) {
             content->RemoveSubStr(cursorPos,-1);
             cursorPos--;
         }
     }
-    else if (c.sym == SDLK_KP_ENTER || c.sym == SDLK_RETURN) {
+    else if (c.key == SDLK_KP_ENTER || c.key == SDLK_RETURN) {
         ret = false;
-        //        c.sym = SDLK_DOWN;
+        //        c.key = SDLK_DOWN;
     }
     else {
-        // ponytail: text comes through SDL_TEXTINPUT in SDL2, consume text-like keydowns so they don't trigger binds
-        ret = !(mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI))
-              && (c.sym == SDLK_UNKNOWN || (c.sym >= SDLK_SPACE && c.sym < SDLK_DELETE));
+        // ponytail: text comes through SDL_EVENT_TEXT_INPUT in SDL2, consume text-like keydowns so they don't trigger binds
+        ret = !(mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI))
+              && (c.key == SDLK_UNKNOWN || (c.key >= SDLK_SPACE && c.key < SDLK_DELETE));
     }
 
     if (cursorPos<0)    cursorPos=0;
@@ -1024,9 +1024,9 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
     // flag indicating that the event was handled
     bool ret = false;
 #ifndef DEDICATED
-    if (e.type == SDL_KEYDOWN
-            && ((e.key.keysym.sym == SDLK_UP)
-                || (e.key.keysym.sym == SDLK_p && (e.key.keysym.mod & KMOD_CTRL))))
+    if (e.type == SDL_EVENT_KEY_DOWN
+            && ((e.key.key == SDLK_UP)
+                || (e.key.key == SDLK_P && (e.key.mod & SDL_KMOD_CTRL))))
     {
         if (m_History.size() - 1 > m_HistoryPos)
         {
@@ -1040,9 +1040,9 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
 
         ret = true;
     }
-    else if (e.type == SDL_KEYDOWN
-             && ((e.key.keysym.sym == SDLK_DOWN)
-                 || (e.key.keysym.sym == SDLK_n && (e.key.keysym.mod & KMOD_CTRL))))
+    else if (e.type == SDL_EVENT_KEY_DOWN
+             && ((e.key.key == SDLK_DOWN)
+                 || (e.key.key == SDLK_N && (e.key.mod & SDL_KMOD_CTRL))))
     {
         if (m_HistoryPos > 0)
         {
@@ -1211,8 +1211,8 @@ bool uMenu::IdleInput( bool processInput )
     {   
         switch (event.type)
         {
-        case SDL_KEYDOWN:
-            switch (event.key.keysym.sym)
+        case SDL_EVENT_KEY_DOWN:
+            switch (event.key.key)
             {
             case(SDLK_ESCAPE):
                 s_globalRepeat = false;
@@ -1289,10 +1289,10 @@ bool uMenu::Message(const tOutput& message, const tOutput& interpretation, REAL 
         }
         while (  !quickexit &&
                  (to < 0 || tSysTimeFloat() < timeout)){
-            //while(  !quickexit && ( !su_GetSDLInput(tEvent) || tEvent.type!=SDL_KEYDOWN) &&
+            //while(  !quickexit && ( !su_GetSDLInput(tEvent) || tEvent.type!=SDL_EVENT_KEY_DOWN) &&
             //        (to < 0 || tSysTimeFloat() < timeout)){
-            if ( su_GetSDLInput(tEvent) && tEvent.type==SDL_KEYDOWN) {
-                switch (tEvent.key.keysym.sym) {
+            if ( su_GetSDLInput(tEvent) && tEvent.type==SDL_EVENT_KEY_DOWN) {
+                switch (tEvent.key.key) {
                 case SDLK_UP:
                     if (offset > 0)
                         offset -= 1;

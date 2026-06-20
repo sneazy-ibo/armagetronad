@@ -5,7 +5,8 @@
 */
 #import <AppKit/AppKit.h>
 #define SDL_MAIN_HANDLED
-#import <SDL.h>
+#import <SDL3/SDL.h>
+extern "C" int SDL_main(int argc, char *argv[]);
 #import "SDLMain.h"
 #import <sys/param.h> /* for MAXPATHLEN */
 #import <unistd.h>

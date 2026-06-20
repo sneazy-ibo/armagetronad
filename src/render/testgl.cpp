@@ -211,7 +211,7 @@ int RunGLTest( int argc, char* argv[] )
     }
 
     /* Destroy our GL context, etc. */
-    SDL_GL_DeleteContext(glcontext);
+    SDL_GL_DestroyContext(glcontext);
     SDL_DestroyWindow(window);
     SDL_Quit( );
 }

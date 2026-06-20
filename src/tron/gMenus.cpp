@@ -180,8 +180,10 @@ static tConfItem<bool> chl("HEADLIGHT",headlights);
 #endif
 
 #ifndef SDL_OPENGL
+#ifndef __APPLE__
 #ifndef DIRTY
 #define DIRTY
+#endif
 #endif
 #endif
 
@@ -220,21 +222,21 @@ public:
              res)
     {
 #ifndef DEDICATED
-        // fetch valid screen modes from all SDL displays
-        int numDisplays = SDL_GetNumVideoDisplays();
-        for ( int displayIndex = 0; displayIndex < numDisplays; ++displayIndex )
+        // SDL3: fetch valid screen modes from all displays
+        int numDisplays = 0;
+        SDL_DisplayID *displays = SDL_GetDisplays( &numDisplays );
+        for ( int di = 0; di < numDisplays; ++di )
         {
-            int modeCount = SDL_GetNumDisplayModes( displayIndex );
-            for ( int modeIndex = 0; modeIndex < modeCount; ++modeIndex )
+            int modeCount = 0;
+            SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes( displays[di], &modeCount );
+            for ( int mi = 0; mi < modeCount; ++mi )
             {
-                SDL_DisplayMode mode;
-                if ( SDL_GetDisplayMode( displayIndex, modeIndex, &mode ) == 0 &&
-                     mode.w > 0 && mode.h > 0 )
-                {
-                    NewChoice( rScreenSize( mode.w, mode.h ) );
-                }
+                if ( modes[mi]->w > 0 && modes[mi]->h > 0 )
+                    NewChoice( rScreenSize( modes[mi]->w, modes[mi]->h ) );
             }
+            SDL_free( modes );
         }
+        SDL_free( displays );
 
         // add custom resolution
         NewChoice( ArmageTron_Custom );
@@ -678,8 +680,8 @@ public:
     //virtual void Render(REAL x,REAL y,REAL alpha=1,bool selected=0);
 
     virtual bool Event(SDL_Event &e){
-        if (e.type==SDL_KEYDOWN &&
-                (e.key.keysym.sym==SDLK_KP_ENTER || e.key.keysym.sym==SDLK_RETURN)){
+        if (e.type==SDL_EVENT_KEY_DOWN &&
+                (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
 
             con << tColoredString::ColorString(.5,.5,1) << " > " << *content << '\n';
 
@@ -693,8 +695,8 @@ public:
             MyMenu()->Exit();
             return true;
         }
-        else if (e.type==SDL_KEYDOWN &&
-                 uActionGlobal::IsBreakingGlobalBind(e.key.keysym.sym))
+        else if (e.type==SDL_EVENT_KEY_DOWN &&
+                 uActionGlobal::IsBreakingGlobalBind(e.key.key))
             return su_HandleEvent(e, true);
         else
             return uMenuItemStringWithHistory::Event(e);
@@ -1207,8 +1209,7 @@ static bool toggle_fullscreen_func( REAL x )
         bool switchedInPlace = false;
         if ( sr_window )
         {
-            Uint32 const mode = targetFullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0;
-            if ( SDL_SetWindowFullscreen( sr_window, mode ) == 0 )
+            if ( SDL_SetWindowFullscreen( sr_window, targetFullscreen ) )
             {
                 currentScreensetting.fullscreen = targetFullscreen;
                 lastSuccess.fullscreen = targetFullscreen;
@@ -1218,13 +1219,13 @@ static bool toggle_fullscreen_func( REAL x )
                 int drawableW = 0;
                 int drawableH = 0;
                 SDL_GetWindowSize( sr_window, &windowW, &windowH );
-                SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
+                SDL_GetWindowSizeInPixels( sr_window, &drawableW, &drawableH );
 
                 // ponytail: viewport follows actual drawable size after mode switch
                 sr_screenWidth = drawableW > 0 ? drawableW : windowW;
                 sr_screenHeight = drawableH > 0 ? drawableH : windowH;
 
-                SDL_ShowCursor( targetFullscreen ? SDL_DISABLE : SDL_ENABLE );
+                if ( targetFullscreen ) SDL_HideCursor(); else SDL_ShowCursor();
                 if ( sr_glcontext )
                 {
                     SDL_GL_MakeCurrent( sr_window, sr_glcontext );
