@@ -220,9 +220,21 @@ public:
              res)
     {
 #ifndef DEDICATED
-        // fetch valid screen modes from SDL
-        // SDL2: SDL_ListModes removed, assume all modes supported on modern displays
-        int i;
+        // fetch valid screen modes from all SDL displays
+        int numDisplays = SDL_GetNumVideoDisplays();
+        for ( int displayIndex = 0; displayIndex < numDisplays; ++displayIndex )
+        {
+            int modeCount = SDL_GetNumDisplayModes( displayIndex );
+            for ( int modeIndex = 0; modeIndex < modeCount; ++modeIndex )
+            {
+                SDL_DisplayMode mode;
+                if ( SDL_GetDisplayMode( displayIndex, modeIndex, &mode ) == 0 &&
+                     mode.w > 0 && mode.h > 0 )
+                {
+                    NewChoice( rScreenSize( mode.w, mode.h ) );
+                }
+            }
+        }
 
         // add custom resolution
         NewChoice( ArmageTron_Custom );
@@ -231,10 +243,13 @@ public:
         if ( sr_DesktopScreensizeSupported() )
             NewChoice( ArmageTron_Desktop );
 
-        // add all fixed resolutions
-        for ( i = ArmageTron_Custom; i>=0; --i )
+        // optionally add old fixed presets
+        if ( addFixed )
         {
-            NewChoice( rResolution(i) );
+            for ( int i = ArmageTron_Custom; i>=0; --i )
+            {
+                NewChoice( rResolution(i) );
+            }
         }
 
         // insert sorted resolutions into menu
@@ -1197,8 +1212,44 @@ static bool toggle_fullscreen_func( REAL x )
     // SDL2: SDL_GetAppState is deprecated, always assume active
     if ( x > 0 )
     {
-        currentScreensetting.fullscreen = !currentScreensetting.fullscreen;
-        sr_ReinitDisplay();
+        bool const targetFullscreen = !currentScreensetting.fullscreen;
+
+        // ponytail: avoid full display reinit on toggle; SDL2 can switch mode in place
+        bool switchedInPlace = false;
+        if ( sr_window )
+        {
+            Uint32 const mode = targetFullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0;
+            if ( SDL_SetWindowFullscreen( sr_window, mode ) == 0 )
+            {
+                currentScreensetting.fullscreen = targetFullscreen;
+                lastSuccess.fullscreen = targetFullscreen;
+
+                int windowW = 0;
+                int windowH = 0;
+                int drawableW = 0;
+                int drawableH = 0;
+                SDL_GetWindowSize( sr_window, &windowW, &windowH );
+                SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
+
+                // ponytail: viewport follows actual drawable size after mode switch
+                sr_screenWidth = drawableW > 0 ? drawableW : windowW;
+                sr_screenHeight = drawableH > 0 ? drawableH : windowH;
+
+                SDL_ShowCursor( targetFullscreen ? SDL_DISABLE : SDL_ENABLE );
+                if ( sr_glcontext )
+                {
+                    SDL_GL_MakeCurrent( sr_window, sr_glcontext );
+                }
+                sr_ResetRenderState( true );
+                switchedInPlace = true;
+            }
+        }
+
+        if ( !switchedInPlace )
+        {
+            currentScreensetting.fullscreen = targetFullscreen;
+            sr_ReinitDisplay();
+        }
     }
 #endif
 

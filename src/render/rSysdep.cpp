@@ -662,18 +662,12 @@ void rSysDep::SwapGL(){
         break;
     }
 
-#if defined(SDL_OPENGL)
     if (lastSuccess.useSDL)
     {
-        static int debugCount = 0;
-        if (++debugCount < 5) {
-            fprintf(stderr, "DEBUG: SDL_GL_SwapWindow frame %d\n", debugCount); fflush(stderr);
-        }
         SDL_GL_SwapWindow(sr_window);
     }
     //#elif defined(HAVE_FXMESA)
     //fxMesaSwapBuffers();
-#endif
 
 #ifdef DIRTY
     if (!lastSuccess.useSDL){
@@ -776,5 +770,3 @@ void  rSysDep::ClearGL(){
     }
 }
 #endif
-
-

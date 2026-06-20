@@ -430,9 +430,8 @@ static bool lowlevel_sr_InitDisplay(){
     if ( res.res != ArmageTron_Invalid && size_t(res.res) < sizeof(aspect)/sizeof(aspect[0]) )
         currentScreensetting.aspect = aspect[res.res];
 
-#ifndef DIRTY
+    // ponytail: SDL2 build always uses SDL window/context path
     currentScreensetting.useSDL = true;
-#endif
     res.UpdateSize();
     sr_screenWidth = res.width;
     sr_screenHeight= res.height;
@@ -452,10 +451,27 @@ static bool lowlevel_sr_InitDisplay(){
         sr_desktopWidth = 800;
         sr_desktopHeight = 600;
 
-        // SDL2: use SDL_GetDisplayMode for desktop resolution
+        // SDL2: use desktop mode of the display under the mouse cursor
         {
+            int displayIndex = 0;
+            int mouseX = 0;
+            int mouseY = 0;
+            SDL_GetGlobalMouseState( &mouseX, &mouseY );
+            int numDisplays = SDL_GetNumVideoDisplays();
+            for ( int i = 0; i < numDisplays; ++i )
+            {
+                SDL_Rect bounds;
+                if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
+                     mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
+                     mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
+                {
+                    displayIndex = i;
+                    break;
+                }
+            }
+
             SDL_DisplayMode dm;
-            if (SDL_GetDisplayMode(0, 0, &dm) == 0)
+            if (SDL_GetCurrentDisplayMode(displayIndex, &dm) == 0)
             {
                 sr_desktopWidth  = dm.w;
                 sr_desktopHeight = dm.h;
@@ -511,14 +527,10 @@ static bool lowlevel_sr_InitDisplay(){
         default: break;
         }
 
-#ifdef SDL_OPENGL
         if (currentScreensetting.useSDL)
         {
             sr_SetGLAttributes( singleCD_R, singleCD_G, singleCD_B, zDepth );
         }
-#else
-        currentScreensetting.useSDL = false;
-#endif
 
         // if desktop resolution was selected, pick it
         if ( sr_screenWidth + sr_screenHeight == 0 )
@@ -529,14 +541,31 @@ static bool lowlevel_sr_InitDisplay(){
 
         // SDL2: create window and GL context
         {
-             Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
- #ifndef FORCE_WINDOW
+             Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+             int displayIndex = 0;
+             int mouseX = 0;
+             int mouseY = 0;
+             SDL_GetGlobalMouseState( &mouseX, &mouseY );
+             int numDisplays = SDL_GetNumVideoDisplays();
+             for ( int i = 0; i < numDisplays; ++i )
+             {
+                 SDL_Rect bounds;
+                 if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
+                      mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
+                      mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
+                 {
+                     displayIndex = i;
+                     break;
+                 }
+             }
+
+  #ifndef FORCE_WINDOW
              if (currentScreensetting.fullscreen)
-                 flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;  // ponytail: SDL2 flag for single-display fullscreen, SDL_WINDOW_FULLSCREEN spans all displays
- #endif
+                 flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  #endif
 
              sr_window = SDL_CreateWindow("Armagetron Advanced",
-                SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex),
                 sr_screenWidth, sr_screenHeight, flags);
              if (!sr_window)
             {
@@ -544,7 +573,7 @@ static bool lowlevel_sr_InitDisplay(){
                 flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
                 currentScreensetting.fullscreen = false;
                 sr_window = SDL_CreateWindow("Armagetron Advanced",
-                    SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                    SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex),
                     sr_screenWidth, sr_screenHeight, flags);
             }
             if (!sr_window)
@@ -568,6 +597,17 @@ static bool lowlevel_sr_InitDisplay(){
                  return false;
              }
              SDL_GL_MakeCurrent(sr_window, sr_glcontext);  // ponytail: critical - makes GL context active for rendering
+
+             int windowW = 0;
+             int windowH = 0;
+             int drawableW = 0;
+             int drawableH = 0;
+             SDL_GetWindowSize( sr_window, &windowW, &windowH );
+             SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
+
+             // ponytail: render and viewport sizes should follow actual drawable size
+             sr_screenWidth = drawableW > 0 ? drawableW : windowW;
+             sr_screenHeight = drawableH > 0 ? drawableH : windowH;
          }
     }
 
@@ -942,7 +982,6 @@ void sr_ResetRenderState(bool menu){
     if(!sr_glOut)
         return;
 #ifndef DEDICATED
-
     // Z-Buffering and perspective correction
 
     if (menu){
@@ -1094,4 +1133,3 @@ void rCallbackAfterScreenModeChange::Exec()
 {
     tCallback::Exec(sr_AfterAnchor);
 }
-

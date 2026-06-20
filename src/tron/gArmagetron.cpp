@@ -532,6 +532,20 @@ int filter(void *userdata, SDL_Event *tEvent){
                 st_ToDo(sg_DelayedActivation);
             }
 
+            if ( tEvent->window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                 tEvent->window.event == SDL_WINDOWEVENT_RESIZED )
+            {
+                int windowW = 0;
+                int windowH = 0;
+                int drawableW = 0;
+                int drawableH = 0;
+                SDL_GetWindowSize( sr_window, &windowW, &windowH );
+                SDL_GL_GetDrawableSize( sr_window, &drawableW, &drawableH );
+                sr_screenWidth = drawableW > 0 ? drawableW : windowW;
+                sr_screenHeight = drawableH > 0 ? drawableH : windowH;
+                st_ToDo( rCallbackAfterScreenModeChange::Exec );
+            }
+
             // reload GL stuff if application gets reactivated
             if (tEvent->window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
             {
@@ -969,6 +983,5 @@ static tConfItemFunc st_Dummy11("MASTER_SAVE_INTERVAL", &st_Dummy);
 static tConfItemFunc st_Dummy12("MASTER_IDLE", &st_Dummy);
 static tConfItemFunc st_Dummy13("MASTER_PORT", &st_Dummy);
 #endif
-
 
 

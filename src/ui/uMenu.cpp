@@ -832,8 +832,32 @@ void uMenuItemString::Render(REAL x,REAL y,
 
 bool uMenuItemString::Event(SDL_Event &e){
 #ifndef DEDICATED
+    if (e.type == SDL_TEXTINPUT)
+    {
+        bool inserted = false;
+        for (int i = 0; e.text.text[i] && content->Len() < maxLength_; ++i)
+        {
+            unsigned char c = static_cast<unsigned char>( e.text.text[i] );
+            if ( c < 32 )
+                continue;
+
+            for (int j=content->Len()-1;j>=cursorPos;j--)
+                (*content)[j+1]=(*content)[j];
+
+            (*content)[content->Len()-1]='\0';
+            (*content)[cursorPos]=c;
+            cursorPos++;
+            inserted = true;
+        }
+
+        if (cursorPos<0)    cursorPos=0;
+        if (cursorPos > content->Len()-1) cursorPos=content->Len()-1;
+        return inserted;
+    }
+
     if (e.type!=SDL_KEYDOWN)
         return false;
+
     bool ret=true;
     SDL_Keysym &c=e.key.keysym;
     Uint16 mod = c.mod;
@@ -950,26 +974,9 @@ bool uMenuItemString::Event(SDL_Event &e){
         //        c.sym = SDLK_DOWN;
     }
     else {
-        // SDL2: use keysym.sym for printable characters instead of unicode
-        if (32 <= c.sym  && c.sym < 256)
-        {
-            ret=true;
-
-            // insert character if there is room
-            if (content->Len() < maxLength_)
-            {
-                for (int i=content->Len()-1;i>=cursorPos;i--)
-                    (*content)[i+1]=(*content)[i];
-
-                // guarantee proper null termination
-                (*content)[content->Len()-1]='\0';
-                (*content)[cursorPos]=c.sym;
-                cursorPos++;
-            }
-        }
-        else {
-            ret=false;
-        }
+        // ponytail: text comes through SDL_TEXTINPUT in SDL2, consume text-like keydowns so they don't trigger binds
+        ret = !(mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI))
+              && (c.sym == SDLK_UNKNOWN || (c.sym >= SDLK_SPACE && c.sym < SDLK_DELETE));
     }
 
     if (cursorPos<0)    cursorPos=0;
@@ -1017,11 +1024,9 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
     // flag indicating that the event was handled
     bool ret = false;
 #ifndef DEDICATED
-    Uint16 mod = e.key.keysym.mod;
-
     if (e.type == SDL_KEYDOWN
             && ((e.key.keysym.sym == SDLK_UP)
-                || (e.key.keysym.sym == SDLK_p && mod & KMOD_CTRL)))
+                || (e.key.keysym.sym == SDLK_p && (e.key.keysym.mod & KMOD_CTRL))))
     {
         if (m_History.size() - 1 > m_HistoryPos)
         {
@@ -1037,7 +1042,7 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
     }
     else if (e.type == SDL_KEYDOWN
              && ((e.key.keysym.sym == SDLK_DOWN)
-                 || (e.key.keysym.sym == SDLK_n && mod & KMOD_CTRL)))
+                 || (e.key.keysym.sym == SDLK_n && (e.key.keysym.mod & KMOD_CTRL))))
     {
         if (m_HistoryPos > 0)
         {
@@ -1363,4 +1368,3 @@ bool uMenu::Message(const tOutput& message, const tOutput& interpretation, REAL 
 
     return ret;
 }
-

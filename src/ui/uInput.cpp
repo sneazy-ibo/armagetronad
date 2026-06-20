@@ -201,6 +201,9 @@ bool uActionGlobal::operator==(const uActionGlobal &x){
     return x.globalID == globalID;}
 
 bool uActionGlobal::IsBreakingGlobalBind(int sym){
+    if ( sym < 0 || sym >= SDLK_NEWLAST )
+        return false;
+
     if (!keymap[sym])
         return false;
     uAction *act=keymap[sym]->act;
@@ -341,11 +344,45 @@ int uPlayerPrototype::Num(){return nextid;}
 //  Menuitem for input selection
 // *****************************************************
 
+namespace
+{
+static int const su_scancodeBase = 2048;
+
+static bool su_IsScancodeIndex( int sym )
+{
+    return sym >= su_scancodeBase && sym < su_scancodeBase + SDL_NUM_SCANCODES;
+}
+
+static int su_KeyIndex( SDL_Keysym const & key )
+{
+    if ( key.sym >= 0 && key.sym < SDLK_NEWLAST )
+    {
+        return key.sym;
+    }
+
+    if ( key.scancode > SDL_SCANCODE_UNKNOWN )
+    {
+        int const mapped = su_scancodeBase + static_cast< int >( key.scancode );
+        if ( mapped >= 0 && mapped < SDLK_NEWLAST )
+        {
+            return mapped;
+        }
+    }
+
+    return -1;
+}
+}
+
 static char const * keyname(int sym){
 #ifndef DEDICATED
-    if (sym<=SDLK_UNKNOWN)
-        return SDL_GetKeyName(static_cast<SDL_Keycode>(sym));
-    else switch (sym){
+    if ( su_IsScancodeIndex( sym ) )
+    {
+        char const * name = SDL_GetScancodeName( static_cast< SDL_Scancode >( sym - su_scancodeBase ) );
+        if ( name && name[0] )
+            return name;
+    }
+
+    switch (sym){
         case SDLK_MOUSE_X_PLUS: return "Mouse right";
         case SDLK_MOUSE_X_MINUS: return "Mouse left";
         case SDLK_MOUSE_Y_PLUS: return "Mouse up";
@@ -359,6 +396,7 @@ static char const * keyname(int sym){
         case SDLK_MOUSE_BUTTON_5: return "Mousebutton 5";
         case SDLK_MOUSE_BUTTON_6: return "Mousebutton 6";
         case SDLK_MOUSE_BUTTON_7: return "Mousebutton 7";
+        default: return SDL_GetKeyName(static_cast<SDL_Keycode>(sym));
         }
 #endif
     return "";
@@ -453,6 +491,23 @@ public:
             }
             break;
 
+        case SDL_MOUSEWHEEL:
+            if ( active )
+            {
+                int y = e.wheel.y;
+                if ( e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED )
+                    y = -y;
+
+                if ( y > 0 )
+                    sym = SDLK_MOUSE_Z_PLUS;
+                else if ( y < 0 )
+                    sym = SDLK_MOUSE_Z_MINUS;
+
+                if ( sym > 0 )
+                    active = 0;
+            }
+            break;
+
         case SDL_KEYDOWN:{
                 SDL_Keysym &c=e.key.keysym;
                 if(!active){
@@ -472,7 +527,7 @@ public:
                 active=0;
 
                 if (c.sym!=SDLK_ESCAPE)
-                    sym=c.sym;
+                    sym=su_KeyIndex(c);
                 else
                     return true;
             }
@@ -651,13 +706,35 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
             pm=-1;
         break;
 
+    case SDL_MOUSEWHEEL:
+    {
+        int y = e.wheel.y;
+        if ( e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED )
+            y = -y;
+
+        if ( y > 0 )
+            sym = SDLK_MOUSE_Z_PLUS;
+        else if ( y < 0 )
+            sym = SDLK_MOUSE_Z_MINUS;
+
+        if ( sym >= 0 && sym < SDLK_NEWLAST && keymap[sym] && keymap[sym]->act )
+        {
+            keymap[sym]->Activate(1, delayed);
+            keymap[sym]->Activate(-1, delayed);
+            pressed[sym] = false;
+            return true;
+        }
+
+        return false;
+    }
+
     case SDL_KEYDOWN:
-        sym=e.key.keysym.sym;
+        sym=su_KeyIndex(e.key.keysym);
         pm=1;
         break;
 
     case SDL_KEYUP:
-        sym=e.key.keysym.sym;
+        sym=su_KeyIndex(e.key.keysym);
         pm=-1;
         break;
 
