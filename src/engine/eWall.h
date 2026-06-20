@@ -47,8 +47,11 @@ class eHalfEdge;
 //#define CAUTION_WALL
 //#endif
 
-// uncomment to disable evil hack for all architectures
-//#define CAUTION_WALL
+// Use a stored back-pointer instead of the null-reference pointer-arithmetic
+// hack in eWallView::Belongs(). The hack is undefined behaviour (binds a
+// reference to *nullptr) and breaks under optimization; the ~16 bytes/wall
+// this costs is negligible. ponytail: well-defined and slightly faster.
+#define CAUTION_WALL
 
 
 
