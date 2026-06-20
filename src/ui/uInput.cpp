@@ -729,6 +729,10 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
     }
 
     case SDL_KEYDOWN:
+        // Ignore auto-repeat key-downs during gameplay: an action should fire
+        // once per physical press. (SDL2 replacement for SDL_EnableKeyRepeat(0,0).)
+        if ( e.key.repeat )
+            return true;
         sym=su_KeyIndex(e.key.keysym);
         pm=1;
         break;
