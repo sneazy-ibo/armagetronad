@@ -2377,23 +2377,6 @@ void sg_HostGameMenu(){
     sg_HostMenu = NULL;
 }
 
-#ifndef DEDICATED
-class gNetIdler: public rSysDep::rNetIdler
-{
-public:
-    virtual bool Wait() //!< wait for something to do, return true if there is work
-    {
-        return sn_BasicNetworkSystem.Select( 0.1 );
-    }
-    virtual void Do()  //!< do the work.
-    {
-        tAdvanceFrame();
-        sg_Receive();
-        sn_SendPlanned();
-    }
-};
-#endif
-
 void net_game(){
 #ifndef DEDICATED
     uMenu net_menu("$network_menu_text");
@@ -2432,10 +2415,7 @@ void net_game(){
     (&net_menu,"$network_menu_internet_text",
      "$network_menu_internet_help",&gServerBrowser::BrowseMaster);
 
-    gNetIdler idler;
-    // rSysDep::StartNetSyncThread( &idler );
     net_menu.Enter();
-    rSysDep::StopNetSyncThread();
 #endif
 }
 

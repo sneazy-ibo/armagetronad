@@ -179,20 +179,12 @@ void rSurface::Clear( void )
 void rSurface::Create( char const * fileName )
 {
 #ifndef DEDICATED
-    sr_LockSDL();
-
     // find path of image
-    // tString s = tResourceManager::locateResource("", fileName);
     tString s = tDirectories::Data().GetReadPath( fileName );
 
     // Load image
     // IMG_InvertAlpha(true); // SDL3-only, not needed for SDL2
     Create( IMG_Load(s) );
-
-    //if ( surface_ )
-    //    std::cerr << "loaded surface " << fileName << "\n";
-
-    sr_UnlockSDL();
 #endif
 }
 
@@ -451,7 +443,6 @@ void rISurfaceTexture::Upload( rSurface & surface )
 #define GL_CLAMP_TO_EDGE GL_CLAMP
 #endif
 
-    sr_LockSDL();
     GLenum texformat = surface.GetFormat();
     SDL_Surface * tex = surface.GetSurface();
     tASSERT( tex );
@@ -483,8 +474,6 @@ void rISurfaceTexture::Upload( rSurface & surface )
 
     gluBuild2DMipmaps(GL_TEXTURE_2D,format,tex->w,tex->h,
                       texformat,GL_UNSIGNED_BYTE,tex->pixels);
-
-    sr_UnlockSDL();
  #endif
 }
 

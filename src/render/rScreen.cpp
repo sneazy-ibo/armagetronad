@@ -867,21 +867,17 @@ bool sr_InitDisplay(){
             first = false;
             currentScreensetting.fullscreen = false;
 
-            sr_LockSDL();
             if (lowlevel_sr_InitDisplay())
             {
                 sr_ExitDisplay();
             }
-            sr_UnlockSDL();
 
             currentScreensetting.fullscreen = true;
         }
 #endif
 
-        sr_LockSDL();
         if (lowlevel_sr_InitDisplay())
         {
-            sr_UnlockSDL();
             return true;
         }
 
@@ -889,10 +885,8 @@ bool sr_InitDisplay(){
 
         if (lowlevel_sr_InitDisplay())
         {
-            sr_UnlockSDL();
             return true;
         }
-        sr_UnlockSDL();
 
 
     }
@@ -921,7 +915,6 @@ void sr_ExitDisplay(){
 #endif
 
     if (sr_window){
-        sr_LockSDL();
         // remember the monitor so the recreated window stays put
         int displayIndex = SDL_GetWindowDisplayIndex(sr_window);
         if (displayIndex >= 0)
@@ -930,7 +923,6 @@ void sr_ExitDisplay(){
         sr_glcontext = NULL;
         SDL_DestroyWindow(sr_window);
         sr_window = NULL;
-        sr_UnlockSDL();
     }
 #endif
 }

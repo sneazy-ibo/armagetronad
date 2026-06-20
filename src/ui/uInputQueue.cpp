@@ -269,7 +269,6 @@ bool su_GetSDLInput(SDL_Event &tEvent,REAL &time){
     if ( !EventArchiver< tPlaybackBlock >::Archive( tEvent, time, ret ) )
     {
         // get real event
-        sr_LockSDL();
         input_get=true;
         if (current_out!=currentIn){
             time=times[current_out];
@@ -286,7 +285,6 @@ bool su_GetSDLInput(SDL_Event &tEvent,REAL &time){
                 false;
 #endif
         }
-        sr_UnlockSDL();
         input_get=false;
     }
 

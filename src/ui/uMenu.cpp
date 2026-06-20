@@ -1201,9 +1201,7 @@ bool uMenu::IdleInput( bool processInput )
 #ifndef DEDICATED
     if( !processInput )
     {
-        sr_LockSDL();
         SDL_PumpEvents();
-        sr_UnlockSDL();
         return uMenu::quickexit != uMenu::QuickExit_Off;
     }
 

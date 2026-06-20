@@ -199,7 +199,4 @@ void sr_LoadDefaultConfig();
 void sr_ResetRenderState(bool menu=0);
 void sr_DepthOffset(bool offset);
 void sr_Activate(bool active); // set activation staus
-
-void sr_LockSDL();
-void sr_UnlockSDL();
 #endif
