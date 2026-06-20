@@ -632,7 +632,11 @@ static bool lowlevel_sr_InitDisplay(){
              switch (currentScreensetting.vSync)
              {
              case ArmageTron_VSync_On:
-                 SDL_GL_SetSwapInterval( 1 );
+                 // prefer adaptive/late-swap-tearing: best for variable-refresh
+                 // (G-Sync/FreeSync) displays. Falls back to plain vsync where
+                 // the driver doesn't support it.
+                 if ( SDL_GL_SetSwapInterval( -1 ) != 0 )
+                     SDL_GL_SetSwapInterval( 1 );
                  break;
              case ArmageTron_VSync_Off:
              case ArmageTron_VSync_MotionBlur:
