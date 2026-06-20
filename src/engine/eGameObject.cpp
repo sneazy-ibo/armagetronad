@@ -133,8 +133,16 @@ eGameObject::eGameObject(eGrid *g,const eCoord &p,const eCoord &d,eFace *current
 }
 
 eGameObject::~eGameObject(){
+    eSoundLocker locker;
     currentFace = 0;
-    RemoveFromListsAll();
+    // Unlink from the grid's lists directly rather than via RemoveFromListsAll(),
+    // which calls the virtual Release(). Release() is pure in eGameObject, so during
+    // base-class destruction it resolves to a pure-virtual call (undefined behaviour).
+    // The reference balance is moot while we are being destroyed; we only need to make
+    // sure the grid keeps no dangling pointer to this object.
+    grid->gameObjects.Remove(this,id);
+    grid->gameObjectsInactive.Remove(this,inactiveID);
+    grid->gameObjectsInteresting.Remove(this,interestingID);
     tCHECK_DEST;
 }
 
