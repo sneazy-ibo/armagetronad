@@ -627,12 +627,7 @@ int filter(void *userdata, SDL_Event *tEvent);
 #endif
 
 int SDL_main(int argc,char **argv){
-    //std::cout << "enter\n";
-    //  net_test();
-
     bool dedicatedServer = false;
-
-    //  std::cout << "Running " << argv[0] << "...\n";
 
     // tERR_MESSAGE( "Start!" );
 
@@ -766,8 +761,6 @@ int SDL_main(int argc,char **argv){
             sr_glOut=1;
 #endif
 
-            //std::cout << "checked mp\n";
-
             // while DGA mouse is buggy in XFree 4.0:
 #ifdef linux
             // Sam 5/23 - Don't ever use DGA, we don't need it for this game.
@@ -848,19 +841,11 @@ int SDL_main(int argc,char **argv){
 
                 try
                 {
-                    //std::cout << "init disp\n";
-
-                    //std::cout << "init sound\n";
-
                     welcome();
-
-                    //std::cout << "atexit\n";
 
                     sr_con.autoDisplayAtSwap=false;
 
                     se_SoundPause(false);
-
-                    //std::cout << "sound started\n";
 
                     gLogo::SetBig(false);
                     gLogo::SetSpinning(true);
@@ -890,13 +875,8 @@ int SDL_main(int argc,char **argv){
                 sr_ExitDisplay();
                 sr_RendererCleanup();
 
-                //std::cout << "exit\n";
-
                 st_SaveConfig();
 
-                //std::cout << "saved\n";
-
-                //    cleanup(grid);
                 IMG_Quit();
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
             }
