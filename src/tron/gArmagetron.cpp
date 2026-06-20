@@ -569,16 +569,6 @@ int filter(void *userdata, SDL_Event *tEvent){
 //from game.C
 void Update_netPlayer();
 
-void sg_SetIcon()
-{
-#ifndef DEDICATED
-    // Skip icon loading for now - path resolution issue
-    // rSurface tex( "textures/icon.png" );
-    // if (tex.GetSurface())
-    //     SDL_SetWindowIcon(sr_window, tex.GetSurface());
-#endif
-}
-
 class gAutoStringArray
 {
 public:
@@ -836,10 +826,6 @@ int SDL_main(int argc,char **argv){
             sr_glRendererInit();
 
             SDL_SetEventFilter((SDL_EventFilter)filter, NULL);
-
-            //std::cout << "set filter\n";
-
-            sg_SetIcon();
 
             tConsole::RegisterMessageCallback(&uMenu::Message);
             tConsole::RegisterIdleCallback(&uMenu::IdleInput);

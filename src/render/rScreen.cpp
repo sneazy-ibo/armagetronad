@@ -67,6 +67,11 @@ tCONFIG_ENUM( rVSync );
 SDL_Window *sr_window=NULL; // our window
 SDL_GLContext sr_glcontext=NULL; // our GL context
 
+// display the window was last on, so settings changes (which destroy and
+// recreate the window) keep it on the same monitor instead of following the
+// mouse. -1 means "not known yet", i.e. first window creation.
+static int sr_lastDisplayIndex = -1;
+
 #ifndef DEDICATED
 static int default_texturemode = GL_LINEAR_MIPMAP_LINEAR;
 #endif
@@ -396,30 +401,13 @@ bool sr_useDirectX = false;
 static bool use_directx_back = false;
 static void sr_SetGLAttributes( int rDepth, int gDepth, int bDepth, int zDepth )
 {
-    // SDL 1.1 required
-#ifdef SDL_OPENGL
+    // must be called before window/context creation. In SDL2 vsync is applied
+    // separately via SDL_GL_SetSwapInterval() once the context exists.
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, rDepth );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, gDepth );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, bDepth );
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, zDepth );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-
-#if SDL_VERSION_ATLEAST(1, 2, 10)
-    // requires SDL 1.2.10
-    switch (currentScreensetting.vSync)
-    {
-    case ArmageTron_VSync_On:
-        SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
-        break;
-    case ArmageTron_VSync_Off:
-    case ArmageTron_VSync_MotionBlur:
-        SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
-        break;
-    case ArmageTron_VSync_Default:
-        break;
-    }
-#endif
-#endif
 }
 
 static bool lowlevel_sr_InitDisplay(){
@@ -542,40 +530,65 @@ static bool lowlevel_sr_InitDisplay(){
         // SDL2: create window and GL context
         {
              Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-             int displayIndex = 0;
-             int mouseX = 0;
-             int mouseY = 0;
-             SDL_GetGlobalMouseState( &mouseX, &mouseY );
              int numDisplays = SDL_GetNumVideoDisplays();
-             for ( int i = 0; i < numDisplays; ++i )
+             int displayIndex = 0;
+             if ( sr_lastDisplayIndex >= 0 && sr_lastDisplayIndex < numDisplays )
              {
-                 SDL_Rect bounds;
-                 if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
-                      mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
-                      mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
+                 // recreating the window (e.g. after applying settings): stay on
+                 // the same monitor instead of jumping to where the mouse is
+                 displayIndex = sr_lastDisplayIndex;
+             }
+             else
+             {
+                 // first launch: open on the monitor under the mouse cursor
+                 int mouseX = 0;
+                 int mouseY = 0;
+                 SDL_GetGlobalMouseState( &mouseX, &mouseY );
+                 for ( int i = 0; i < numDisplays; ++i )
                  {
-                     displayIndex = i;
-                     break;
+                     SDL_Rect bounds;
+                     if ( SDL_GetDisplayBounds( i, &bounds ) == 0 &&
+                          mouseX >= bounds.x && mouseX < bounds.x + bounds.w &&
+                          mouseY >= bounds.y && mouseY < bounds.y + bounds.h )
+                     {
+                         displayIndex = i;
+                         break;
+                     }
                  }
              }
 
   #ifndef FORCE_WINDOW
-             if (currentScreensetting.fullscreen)
-                 flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+             // Create the window in windowed mode first so it is placed on the
+             // intended display, then promote it to fullscreen-desktop. Creating
+             // directly with the fullscreen flag makes SDL2 ignore the position
+             // hint and put the window on a default monitor.
+             bool const wantFullscreen = currentScreensetting.fullscreen;
+  #else
+             bool const wantFullscreen = false;
   #endif
 
+             // Position/size the window for creation. For fullscreen-desktop we
+             // create at the target display's own bounds: a window sized to the
+             // configured resolution can be larger than the target monitor, which
+             // makes the OS relocate it to whichever display fits (jumping screens).
+             int createX = SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex);
+             int createY = SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex);
+             int createW = sr_screenWidth;
+             int createH = sr_screenHeight;
+             if (wantFullscreen)
+             {
+                 SDL_Rect bounds;
+                 if (SDL_GetDisplayBounds(displayIndex, &bounds) == 0)
+                 {
+                     createX = bounds.x;
+                     createY = bounds.y;
+                     createW = bounds.w;
+                     createH = bounds.h;
+                 }
+             }
+
              sr_window = SDL_CreateWindow("Armagetron Advanced",
-                SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex),
-                sr_screenWidth, sr_screenHeight, flags);
-             if (!sr_window)
-            {
-                // Try windowed mode as fallback
-                flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
-                currentScreensetting.fullscreen = false;
-                sr_window = SDL_CreateWindow("Armagetron Advanced",
-                    SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayIndex),
-                    sr_screenWidth, sr_screenHeight, flags);
-            }
+                createX, createY, createW, createH, flags);
             if (!sr_window)
             {
                 lastError.Clear();
@@ -584,6 +597,23 @@ static bool lowlevel_sr_InitDisplay(){
                 std::cerr << lastError << '\n';
                 return false;
             }
+
+             if (wantFullscreen)
+             {
+                 if (SDL_SetWindowFullscreen(sr_window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+                 {
+                     // fall back to windowed mode if fullscreen fails
+                     currentScreensetting.fullscreen = false;
+                 }
+             }
+
+             // set the window icon (SDL2 needs an existing window, and the window
+             // is recreated on every mode change, so set it here each time)
+             {
+                 rSurface icon( "textures/icon.png" );
+                 if ( icon.GetSurface() )
+                     SDL_SetWindowIcon( sr_window, icon.GetSurface() );
+             }
 
              sr_glcontext = SDL_GL_CreateContext(sr_window);
              if (!sr_glcontext)
@@ -597,6 +627,20 @@ static bool lowlevel_sr_InitDisplay(){
                  return false;
              }
              SDL_GL_MakeCurrent(sr_window, sr_glcontext);  // ponytail: critical - makes GL context active for rendering
+
+             // apply vsync (SDL2: set after context creation, not via GL attribute)
+             switch (currentScreensetting.vSync)
+             {
+             case ArmageTron_VSync_On:
+                 SDL_GL_SetSwapInterval( 1 );
+                 break;
+             case ArmageTron_VSync_Off:
+             case ArmageTron_VSync_MotionBlur:
+                 SDL_GL_SetSwapInterval( 0 );
+                 break;
+             case ArmageTron_VSync_Default:
+                 break;
+             }
 
              int windowW = 0;
              int windowH = 0;
@@ -874,6 +918,10 @@ void sr_ExitDisplay(){
 
     if (sr_window){
         sr_LockSDL();
+        // remember the monitor so the recreated window stays put
+        int displayIndex = SDL_GetWindowDisplayIndex(sr_window);
+        if (displayIndex >= 0)
+            sr_lastDisplayIndex = displayIndex;
         SDL_GL_DeleteContext(sr_glcontext);
         sr_glcontext = NULL;
         SDL_DestroyWindow(sr_window);

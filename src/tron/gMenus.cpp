@@ -330,16 +330,7 @@ static void sg_ScreenModeMenu()
         }
     }
 
-#ifdef SDL_OPENGL
-#ifdef DIRTY
-    uMenuItemToggle sdl_t
-    (&screen_menu_mode,
-     "$screen_use_sdl_text",
-     "$screen_use_sdl_help",
-     currentScreensetting.useSDL);
-#endif // dirty
-
-#if SDL_VERSION_ATLEAST(1, 2, 10)
+    // SDL2 always uses the SDL window/GL path, so the old "use SDL" toggle is gone.
     uMenuItemSelection<rVSync> zvs_t
     (&screen_menu_mode,
      "$screen_vsync_text",
@@ -352,8 +343,6 @@ static void sg_ScreenModeMenu()
 #ifdef HAVE_GLEW
     uSelectEntry<rVSync> zvs_blur(zvs_t,"$screen_vsync_motionblur_text","$screen_vsync_motionblur_help",ArmageTron_VSync_MotionBlur);
 #endif // HAVE_GLEW
-#endif // SDL_GL_SWAP_CONTROL
-#endif // SDL_OPENGL
 
     uMenuItemToggle gm(
         &screen_menu_mode,
