@@ -1559,16 +1559,26 @@
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(SRCROOT)/Libs",
+					"$(SRCROOT)/Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/Libs",
 					/usr/lib,
 					/opt/homebrew/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_QUOTED_1)",
-					"$(OTHER_LDFLAGS_QUOTED_2)",
-					"-lSDL3",
+					"-framework",
+					"SDL3",
+					"-framework",
+					"SDL3_image",
+					"-framework",
+					"SDL3_mixer",
 					"-lpng",
 					"-lxml2",
 					"-lz",
@@ -1576,8 +1586,6 @@
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL3_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL3_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
@@ -1606,16 +1614,26 @@
 				INFOPLIST_FILE = ../src/macosx/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.arcade-games";
 				INSTALL_PATH = "$(HOME)/Applications";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(SRCROOT)/Libs",
+					"$(SRCROOT)/Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/Libs",
 					/usr/lib,
 					/opt/homebrew/lib,
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_QUOTED_1)",
-					"$(OTHER_LDFLAGS_QUOTED_2)",
-					"-lSDL3",
+					"-framework",
+					"SDL3",
+					"-framework",
+					"SDL3_image",
+					"-framework",
+					"SDL3_mixer",
 					"-lpng",
 					"-lxml2",
 					"-lz",
@@ -1623,8 +1641,6 @@
 					"-liconv",
 					"-lm",
 				);
-				OTHER_LDFLAGS_QUOTED_1 = "-lSDL3_image";
-				OTHER_LDFLAGS_QUOTED_2 = "-lSDL3_mixer";
 				PRODUCT_BUNDLE_IDENTIFIER = org.armagetronad;
 				PRODUCT_NAME = "Armagetron Advanced";
 				WRAPPER_EXTENSION = app;
