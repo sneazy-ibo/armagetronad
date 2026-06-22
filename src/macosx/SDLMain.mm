@@ -212,7 +212,7 @@ int main (int argc, const char *argv[])
 	gFinderLaunch = YES;
     } else {
         gArgc = argc;
-	gFinderLaunch = NO;
+    gFinderLaunch = NO;
     }
     gArgv = (char**) malloc (sizeof(*gArgv) * (gArgc+1));
     tASSERT (gArgv != NULL);
@@ -232,3 +232,4 @@ int main (int argc, const char *argv[])
 #endif
     return 0;
 }
+
