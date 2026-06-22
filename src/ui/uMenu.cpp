@@ -861,8 +861,8 @@ bool uMenuItemString::Event(SDL_Event &e){
     bool ret=true;
     auto & c = e.key;
     SDL_Keymod mod = c.mod;
-    bool moveWordLeft, moveWordRight, deleteWordLeft, deleteWordRight, moveBeginning, moveEnd, killForwards;
-    moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards = false;
+    bool moveWordLeft, moveWordRight, deleteWordLeft, deleteWordRight, moveBeginning, moveEnd, killForwards, doPaste;
+    moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards = doPaste = false;
 
 #if defined (MACOSX)
     // For moving over/deleting words
@@ -887,6 +887,9 @@ bool uMenuItemString::Event(SDL_Event &e){
         }
         else if (c.key == SDLK_RIGHT) {
             moveEnd = true;
+        }
+        else if (c.key == SDLK_V) {
+            doPaste = true;
         }
     }
     // Linux and Windows
@@ -923,6 +926,9 @@ bool uMenuItemString::Event(SDL_Event &e){
         }
         else if (c.key == SDLK_K) {
             killForwards = true;
+        }
+        else if (c.key == SDLK_V) {
+            doPaste = true;
         }
     }
     // moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards
@@ -972,6 +978,21 @@ bool uMenuItemString::Event(SDL_Event &e){
     else if (c.key == SDLK_KP_ENTER || c.key == SDLK_RETURN) {
         ret = false;
         //        c.key = SDLK_DOWN;
+    }
+    else if (doPaste) {
+        char *clip = SDL_GetClipboardText();
+        if (clip) {
+            for (int i = 0; clip[i] && content->Len() < maxLength_; ++i) {
+                unsigned char ch = static_cast<unsigned char>(clip[i]);
+                if (ch < 32) continue;
+                for (int j = content->Len()-1; j >= cursorPos; j--)
+                    (*content)[j+1] = (*content)[j];
+                (*content)[content->Len()-1] = '\0';
+                (*content)[cursorPos] = ch;
+                cursorPos++;
+            }
+            SDL_free(clip);
+        }
     }
     else {
         // ponytail: text comes through SDL_EVENT_TEXT_INPUT in SDL2, consume text-like keydowns so they don't trigger binds
