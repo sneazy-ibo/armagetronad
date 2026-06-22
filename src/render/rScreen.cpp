@@ -67,8 +67,10 @@ tCONFIG_ENUM( rResolution );
 tCONFIG_ENUM( rColorDepth );
 tCONFIG_ENUM( rVSync );
 
+#ifndef DEDICATED
 SDL_Window *sr_window=NULL; // our window
 SDL_GLContext sr_glcontext=NULL; // our GL context
+#endif
 
 // display the window was last on, so settings changes (which destroy and
 // recreate the window) keep it on the same monitor instead of following the
@@ -402,6 +404,7 @@ static int countBits(unsigned int count)
 // flag indicating whether directX is supposed to be used for input (defaults to false, crashes on my Win7)
 bool sr_useDirectX = false;
 static bool use_directx_back = false;
+#ifndef DEDICATED
 static void sr_SetGLAttributes( int rDepth, int gDepth, int bDepth, int zDepth )
 {
     // must be called before window/context creation. In SDL2 vsync is applied
@@ -412,6 +415,7 @@ static void sr_SetGLAttributes( int rDepth, int gDepth, int bDepth, int zDepth )
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, zDepth );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 }
+#endif
 
 static bool lowlevel_sr_InitDisplay(){
 #ifndef DEDICATED

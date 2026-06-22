@@ -102,8 +102,12 @@ extern SDL_Window *sr_window;
 extern SDL_GLContext sr_glcontext;
 #endif
 
-// ponytail: SDL2 compatibility - sr_screen maps to sr_window for boolean checks
+// SDL2 compatibility - sr_screen maps to sr_window for boolean checks; NULL in dedicated builds (no display)
+#ifndef DEDICATED
 #define sr_screen ((SDL_Surface*)sr_window)
+#else
+#define sr_screen ((SDL_Surface*)nullptr)
+#endif
 
 extern int sr_screenWidth,sr_screenHeight;
 

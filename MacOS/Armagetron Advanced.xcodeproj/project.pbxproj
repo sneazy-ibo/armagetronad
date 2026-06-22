@@ -546,7 +546,6 @@
 		8C11CA40095A268E007AE0EA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				9B78706A0D5E4FD20088A96F /* libZThread.a in Frameworks */,
 				9B5E11C10D5EC32500175ABB /* CoreServices.framework in Frameworks */,
 			);
 		};
@@ -1106,15 +1105,7 @@
 			name = "Sort Resources";
 			shellPath = "/bin/bash -l";
 			shellScript = (
-				"# Sort map resources",
-				"",
-				"top_level=..",
-				"",
-				"# Only run this script when it is a CVS build",
-				"if [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]",
-				"then",
-				"\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"",
-				"fi",
+				"# resource/included is managed by git; sortresources is not needed",
 				"",
 			);
 		};
@@ -1136,15 +1127,7 @@
 			name = "Sort Resources";
 			shellPath = "/bin/bash -l";
 			shellScript = (
-				"# Sort map resources",
-				"",
-				"top_level=..",
-				"",
-				"# Only run this script when it is a CVS build",
-				"if [ \"`ruby -ryaml -e 'print YAML.load_file(\\\"../macosx_build_information.yml\\\")[:kind]'`\" = \"CVS\" ]",
-				"then",
-				"\tsh \"${top_level}/batch/make/sortresources\" \"${top_level}/resource/proto\" \"${top_level}/resource/included\" \"${top_level}/batch/make/sortresources.py\"",
-				"fi",
+				"# resource/included is managed by git; sortresources is not needed",
 				"",
 			);
 		};
@@ -1176,8 +1159,8 @@
 			shellScript = (
 				"TMPDIR=\"${TEMP_FILES_DIR}\"",
 				"to_package_dir=$(mktemp -dt armagetronad)",
-				"version=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")",
-				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-dedicated-${version}.macosx-universal\"",
+				"version=$(grep -m1 '#define VERSION' \"../src/macosx/config_common.h\" | sed 's/.*\"\\(.*\\)\".*/\\1/')",
+				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-dedicated-${version}-macos\"",
 				"",
 				"test -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"",
 				"",
@@ -1190,14 +1173,11 @@
 				"\tcp -R \"${copy_me}\" \"${prog_dir}\"",
 				"done",
 				"",
-				"",
 				"rm -rf \"${prog_dir}/resource/proto\"",
-				"find \"${prog_dir}\" -depth -type d -name .svn -exec rm -rf \\{\\} \\;",
 				"for a in \"*.am\" \"*.in\" \"*.h\" \"astylerc\"",
 				"do",
 				"\tfind \"${prog_dir}\" -name \"${a}\" -exec rm -f \\{\\} \\;",
 				"done",
-				"",
 				"",
 				"uncompressed_dmg=$(./build_tools/dmg-create \"${to_package_dir}\" \"Armagetron Advanced Dedicated\")",
 				"",
@@ -1213,8 +1193,8 @@
 			shellScript = (
 				"TMPDIR=\"${TEMP_FILES_DIR}\"",
 				"to_package_dir=$(mktemp -dt armagetronad)",
-				"version=$(ruby -ryaml -e \"print YAML.load_file('../macosx_build_information.yml')[:version]\")",
-				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-${version}.macosx-universal\"",
+				"version=$(grep -m1 '#define VERSION' \"../src/macosx/config_common.h\" | sed 's/.*\"\\(.*\\)\".*/\\1/')",
+				"final_dmg=\"${BUILT_PRODUCTS_DIR}/armagetronad-${version}-macos\"",
 				"",
 				"test -f \"${final_dmg}.dmg\" && rm \"${final_dmg}.dmg\"",
 				"",
@@ -1499,9 +1479,13 @@
 				DEAD_CODE_STRIPPING = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEDICATED=1",
+					"DATA_DIR=\\\"$(SOURCE_ROOT)/..\\\"",
+				);
 				HEADER_SEARCH_PATHS = (
 					/usr/include/libxml2,
-					/Library/Frameworks/ArmagetronAdvanced/current/include,
+					/opt/homebrew/include,
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = /usr/lib;
@@ -1530,9 +1514,10 @@
 				DEAD_CODE_STRIPPING = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEDICATED=1";
 				HEADER_SEARCH_PATHS = (
 					/usr/include/libxml2,
-					/Library/Frameworks/ArmagetronAdvanced/current/include,
+					/opt/homebrew/include,
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = /usr/lib;

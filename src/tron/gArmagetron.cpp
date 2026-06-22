@@ -66,6 +66,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rRender.h"
 #include "rSDL.h"
 #include <SDL3/SDL_main.h>
+#else
+#define SDL_main main
 #endif
 
 // data structure for command line parsing
