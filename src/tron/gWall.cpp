@@ -984,15 +984,25 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
                 }
                 else if( ta+gBEG_LEN_GIVEUP <= time )
                 {
-                    REAL denom = te - ta;
-                    if( denom <= 0 )
+                    // For completed walls the endpoint is fixed — render fully so the
+                    // corner joins cleanly with the next wall.  Only cut back the tip
+                    // on the live growing wall.
+                    if ( this != cycle_->currentWall )
                     {
-                        continue;
+                        RenderNormal(p1,p2,ta,te,r,g,b,a,renderMode);
                     }
+                    else
+                    {
+                        REAL denom = te - ta;
+                        if( denom <= 0 )
+                        {
+                            continue;
+                        }
 
-                    REAL s=((time-gBEG_LEN_GIVEUP)-ta)/denom;
-                    eCoord pm=p1+(p2-p1)*s;
-                    RenderNormal(p1,pm,ta,ta+(te-ta)*s,r,g,b,a,renderMode);
+                        REAL s=((time-gBEG_LEN_GIVEUP)-ta)/denom;
+                        eCoord pm=p1+(p2-p1)*s;
+                        RenderNormal(p1,pm,ta,ta+(te-ta)*s,r,g,b,a,renderMode);
+                    }
                 }
             }
             else if (te+gBEG_LEN<=time){
