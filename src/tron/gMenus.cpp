@@ -680,6 +680,29 @@ public:
     //virtual void Render(REAL x,REAL y,REAL alpha=1,bool selected=0);
 
     virtual bool Event(SDL_Event &e){
+        // Multi-line paste (Ctrl/Cmd+V): run each pasted line as its own console
+        // command, in order. Single-line paste falls through to the base editor.
+        if (e.type==SDL_EVENT_KEY_DOWN && e.key.key==SDLK_V &&
+                (e.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_GUI))){
+            char *clip = SDL_GetClipboardText();
+            if (clip){
+                std::string text(clip);
+                SDL_free(clip);
+                if (text.find('\n') != std::string::npos){
+                    tCurrentAccessLevel level( tAccessLevel_Owner, true );
+                    std::stringstream lines(text);
+                    std::string line;
+                    while (std::getline(lines, line)){
+                        if (!line.empty() && line.back()=='\r') line.pop_back();
+                        if (line.empty()) continue;
+                        con << tColoredString::ColorString(.5,.5,1) << " > " << line.c_str() << '\n';
+                        std::stringstream s(line);
+                        tConfItemBase::LoadLine(s);
+                    }
+                    return true;
+                }
+            }
+        }
         if (e.type==SDL_EVENT_KEY_DOWN &&
                 (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
 
