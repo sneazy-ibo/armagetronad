@@ -1533,25 +1533,12 @@ tString MasterFile( char const * suffix )
 
 static void sn_RememberMasterConnectTime( nServerInfoBase * master, REAL seconds );
 
-void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSuffix )
+// state shared across one cooperative master fetch (Begin -> Step* -> End)
+static REAL    sn_fetchTimeout = 0;
+static tString sn_fetchSuffix;
+
+bool nServerInfo::GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster )
 {
-    sn_AcceptingFromMaster = true;
-
-    if ( !fileSuffix )
-    {
-        fileSuffix = "";
-    }
-
-    bool multiMaster = false;
-    if (!masterInfo)
-    {
-        multiMaster = true;
-        masterInfo = GetBestMaster();
-    }
-
-    if (!masterInfo)
-        return;
-
     DeleteAll();
 
     // load all the servers we know
@@ -1582,9 +1569,7 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
         sn_RememberMasterConnectTime( masterInfo, tSysTimeFloat() - connectStart );
         break;
     case nABORT:
-    {
-        return;
-    }
+        return false;
     case nTIMEOUT:
         // penalise the unresponsive master so it sinks behind working ones
         sn_RememberMasterConnectTime( masterInfo, 99 );
@@ -1608,16 +1593,12 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
         {
             tConsole::Message("$network_master_timeout_title", "$network_master_timeout_inter", 3600);
         }
-        return;
-        break;
+        return false;
 
     case nDENIED:
         tConsole::Message("$network_master_denied_title", "$network_master_denied_inter", 20);
-        return;
-        break;
-
+        return false;
     }
-
 
     // send the server list request message
     con << tOutput("$network_master_reqlist");
@@ -1627,32 +1608,40 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
         *m << latest;
     m->BroadCast();
 
-    sn_ServerCount = 0;
+    sn_ServerCount  = 0;
+    sn_fetchTimeout = tSysTimeFloat() + 60;
+    sn_fetchSuffix  = fileSuffix;
+    return true;
+}
 
-    // just wait for the data to pour in
-    REAL timeout = tSysTimeFloat() + 60;
-    while(sn_GetNetState() == nCLIENT && timeout > tSysTimeFloat())
-    {
-        sn_Receive();
-        sn_SendPlanned();
-        // Block on the socket instead of sleeping a fixed 100ms: select() wakes
-        // the moment the master sends more, so the list drains at network speed
-        // rather than ~10 reads/sec.  Idle wait is still capped (timeout cadence).
-        sn_BasicNetworkSystem.Select( 0.1f );
-        tAdvanceFrame();
-        st_DoToDo();
-        // pump OS events so the window stays responsive (no macOS beach ball)
-        // during the fetch; no-op on the dedicated server (no idle callback)
-        tConsole::Idle( false );
-    }
+bool nServerInfo::GetFromMasterStep()
+{
+    if ( !( sn_GetNetState() == nCLIENT && sn_fetchTimeout > tSysTimeFloat() ) )
+        return false;
 
+    sn_Receive();
+    sn_SendPlanned();
+    // Block on the socket instead of sleeping a fixed 100ms: select() wakes the
+    // moment the master sends more, so the list drains at network speed rather
+    // than ~10 reads/sec.  Idle wait is still capped (timeout cadence).
+    sn_BasicNetworkSystem.Select( 0.1f );
+    tAdvanceFrame();
+    st_DoToDo();
+    // pump OS events so the window stays responsive (no macOS beach ball) during
+    // the fetch; no-op on the dedicated server (no idle callback)
+    tConsole::Idle( false );
+    return true;
+}
+
+void nServerInfo::GetFromMasterEnd()
+{
     tOutput o;
     o.SetTemplateParameter(1, sn_ServerCount);
     o << "$network_master_finish";
     con << o;
 
     // remove servers that are no longer listed on the master
-    run = GetFirstServer();
+    nServerInfo * run = GetFirstServer();
     while (run)
     {
         nServerInfo * next = run->Next();
@@ -1675,13 +1664,43 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
         run = next;
     }
 
-    Save(tDirectories::Var(), MasterFile( fileSuffix ));
+    Save(tDirectories::Var(), MasterFile( sn_fetchSuffix ));
 
     sn_SetNetState(nSTANDALONE);
 
     sn_AcceptingFromMaster = false;
 
     tAdvanceFrame();
+}
+
+void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSuffix )
+{
+    sn_AcceptingFromMaster = true;
+
+    if ( !fileSuffix )
+    {
+        fileSuffix = "";
+    }
+
+    bool multiMaster = false;
+    if (!masterInfo)
+    {
+        multiMaster = true;
+        masterInfo = GetBestMaster();
+    }
+
+    if (!masterInfo)
+        return;
+
+    // B-1: cooperative split, still driven by a tight local loop here so behaviour
+    // is unchanged. Later increments move this loop into the menu's per-frame pump.
+    if ( !GetFromMasterBegin( masterInfo, fileSuffix, multiMaster ) )
+        return;
+
+    while ( GetFromMasterStep() )
+    {}
+
+    GetFromMasterEnd();
 }
 
 void nServerInfo::GetFromLAN(unsigned int pollBeginPort, unsigned int pollEndPort)

@@ -276,6 +276,10 @@ public:
     static nServerInfo* GetBestMaster();           //!< gets the master with the lowest remembered connect time
 
     static void GetFromMaster(nServerInfoBase *masterInfo=NULL, char const * fileSuffix = NULL );  // get all the basic infos from the master server, stored in the server info file of the given suffix
+    // cooperative split of GetFromMaster: Begin (connect+request) -> Step* (pump) -> End (prune+save)
+    static bool GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster ); //!< returns false if the fetch aborted/finished during begin
+    static bool GetFromMasterStep();  //!< pumps one iteration; false when the fetch is done
+    static void GetFromMasterEnd();   //!< finishes the fetch (prune outdated servers, save)
 
     static void TellMasterAboutMe(nServerInfoBase *masterInfo=NULL);  // dedicated server: tell master server about my existence
 
