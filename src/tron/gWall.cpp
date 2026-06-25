@@ -984,25 +984,21 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
                 }
                 else if( ta+gBEG_LEN_GIVEUP <= time )
                 {
-                    // For completed walls the endpoint is fixed — render fully so the
-                    // corner joins cleanly with the next wall.  Only cut back the tip
-                    // on the live growing wall.
-                    if ( this != cycle_->currentWall )
-                    {
-                        RenderNormal(p1,p2,ta,te,r,g,b,a,renderMode);
-                    }
-                    else
-                    {
-                        REAL denom = te - ta;
-                        if( denom <= 0 )
-                        {
-                            continue;
-                        }
+                    // Tip is still inside the giveup zone, so this segment grows every
+                    // frame.  Don't let it freeze into a display list (same as the
+                    // non-simple path below) — otherwise the held-back partial wall
+                    // sticks, leaving the corner gap until the next turn.
+                    ClearDisplayList();
 
-                        REAL s=((time-gBEG_LEN_GIVEUP)-ta)/denom;
-                        eCoord pm=p1+(p2-p1)*s;
-                        RenderNormal(p1,pm,ta,ta+(te-ta)*s,r,g,b,a,renderMode);
+                    REAL denom = te - ta;
+                    if( denom <= 0 )
+                    {
+                        continue;
                     }
+
+                    REAL s=((time-gBEG_LEN_GIVEUP)-ta)/denom;
+                    eCoord pm=p1+(p2-p1)*s;
+                    RenderNormal(p1,pm,ta,ta+(te-ta)*s,r,g,b,a,renderMode);
                 }
             }
             else if (te+gBEG_LEN<=time){
