@@ -273,6 +273,7 @@ public:
 
     static nServerInfo* GetMasters();              //!< get the list of master servers
     static nServerInfo* GetRandomMaster();         //!< gets a random master server
+    static nServerInfo* GetBestMaster();           //!< gets the master with the lowest remembered connect time
 
     static void GetFromMaster(nServerInfoBase *masterInfo=NULL, char const * fileSuffix = NULL );  // get all the basic infos from the master server, stored in the server info file of the given suffix
 

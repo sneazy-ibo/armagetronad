@@ -42,6 +42,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "nNetObject.h"
 
 #include <fstream>
+#include <cstdio>
+#include <map>
+#include <string>
 
 static nServerInfo*          sn_masterList  = NULL;
 static nServerInfo*          sn_FirstServer = NULL;
@@ -70,6 +73,11 @@ static int sn_TNALostContact = 4;  // minimum TNA value to be considered contact
 
 static tSettingItem< REAL > sn_queryDelayConf( "BROWSER_QUERY_DELAY_SINGLE", sn_queryDelay );
 static tSettingItem< REAL > sn_queryDelayGlobalConf( "BROWSER_QUERY_DELAY_GLOBAL", sn_queryDelayGlobal );
+
+// verbose master-browser logging: one timestamped line with the address per
+// server, instead of just the running count
+static bool sn_browserVerbose = false;
+static tSettingItem< bool > sn_browserVerboseConf( "BROWSER_VERBOSE", sn_browserVerbose );
 static tSettingItem< int > sn_numQueriesConf( "BROWSER_NUM_QUERIES", sn_numQueries );
 static tSettingItem< int > sn_TNALostContactConf( "BROWSER_CONTACTLOSS", sn_TNALostContact );
 
@@ -1062,6 +1070,31 @@ void nServerInfo::GetSmallServerInfo(nMessage &m){
     // S_GlobalizeName( connectionName );
     sn_ServerCount++;
 
+    // report each server as it arrives from the master
+    if ( sn_AcceptingFromMaster && !sn_IsMaster )
+    {
+        if ( sn_browserVerbose )
+        {
+            // one line per server: elapsed time (since fetch start) + address.
+            // tRealSysTimeFloat samples the real clock per call (tSysTimeFloat is
+            // frame-stamped, so a whole batch would share one timestamp);
+            // microsecond precision distinguishes items within a batch.
+            static double fetchStart = 0;
+            double now = tRealSysTimeFloat();
+            if ( sn_ServerCount == 1 )
+                fetchStart = now;
+            char buf[48];
+            snprintf( buf, sizeof buf, "%3d [%11.6f s] ", sn_ServerCount, now - fetchStart );
+            con << buf << ToString( baseInfo ) << "\n";
+        }
+        else
+        {
+            // one per line: the console only displays a line once it sees a
+            // newline, so this lets each count appear as its server arrives
+            con << sn_ServerCount << "\n";
+        }
+    }
+
     nServerInfo *n = NULL;
 
     // check if we already have that server lised
@@ -1498,6 +1531,8 @@ tString MasterFile( char const * suffix )
     return tString( filename.str().c_str() );
 }
 
+static void sn_RememberMasterConnectTime( nServerInfoBase * master, REAL seconds );
+
 void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSuffix )
 {
     sn_AcceptingFromMaster = true;
@@ -1511,7 +1546,7 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
     if (!masterInfo)
     {
         multiMaster = true;
-        masterInfo = GetRandomMaster();
+        masterInfo = GetBestMaster();
     }
 
     if (!masterInfo)
@@ -1539,15 +1574,20 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
 
     // connect to the master server
     con << tOutput("$network_master_connecting", masterInfo->GetName() );
+    REAL connectStart = tSysTimeFloat();
     switch(masterInfo->Connect( Login_Post0252 ))
     {
     case nOK:
+        // remember how quickly it answered so the fastest master is tried first
+        sn_RememberMasterConnectTime( masterInfo, tSysTimeFloat() - connectStart );
         break;
     case nABORT:
     {
         return;
     }
     case nTIMEOUT:
+        // penalise the unresponsive master so it sinks behind working ones
+        sn_RememberMasterConnectTime( masterInfo, 99 );
         // delete the master and select a new one
         if ( multiMaster )
         {
@@ -1588,7 +1628,6 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
     m->BroadCast();
 
     sn_ServerCount = 0;
-    int lastReported = 10;
 
     // just wait for the data to pour in
     REAL timeout = tSysTimeFloat() + 60;
@@ -1596,16 +1635,15 @@ void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSu
     {
         sn_Receive();
         sn_SendPlanned();
-        tAdvanceFrame(100000);
+        // Block on the socket instead of sleeping a fixed 100ms: select() wakes
+        // the moment the master sends more, so the list drains at network speed
+        // rather than ~10 reads/sec.  Idle wait is still capped (timeout cadence).
+        sn_BasicNetworkSystem.Select( 0.1f );
+        tAdvanceFrame();
         st_DoToDo();
-        if (sn_ServerCount > lastReported + 9)
-        {
-            tOutput o;
-            o.SetTemplateParameter(1, lastReported);
-            o << "$network_master_status";
-            con << o;
-            lastReported = (sn_ServerCount/10) * 10;
-        }
+        // pump OS events so the window stays responsive (no macOS beach ball)
+        // during the fetch; no-op on the dedicated server (no idle callback)
+        tConsole::Idle( false );
     }
 
     tOutput o;
@@ -2408,6 +2446,72 @@ nServerInfo* nServerInfo::GetRandomMaster()
     }
 
     return masterInfo;
+}
+
+// remembered master connect time in seconds, keyed by connection name and
+// persisted, so the fastest-responding master is tried first across sessions
+static std::map< std::string, REAL > sn_masterConnectTime;
+static bool                          sn_masterConnectLoaded = false;
+
+static void sn_LoadMasterConnectTimes()
+{
+    if ( sn_masterConnectLoaded )
+        return;
+    sn_masterConnectLoaded = true;
+
+    std::ifstream in;
+    if ( tDirectories::Var().Open( in, "masterping.srv" ) )
+    {
+        tString name;
+        REAL    t;
+        while ( ( in >> name ) && ( in >> t ) )
+            sn_masterConnectTime[ static_cast< char const * >( name ) ] = t;
+    }
+}
+
+static void sn_RememberMasterConnectTime( nServerInfoBase * master, REAL seconds )
+{
+    if ( !master )
+        return;
+    sn_masterConnectTime[ static_cast< char const * >( master->GetConnectionName() ) ] = seconds;
+
+    std::ofstream out;
+    if ( tDirectories::Var().Open( out, "masterping.srv" ) )
+        for ( std::map< std::string, REAL >::const_iterator i = sn_masterConnectTime.begin();
+              i != sn_masterConnectTime.end(); ++i )
+            out << i->first << " " << i->second << "\n";
+}
+
+nServerInfo* nServerInfo::GetBestMaster()
+{
+    sn_LoadMasterConnectTimes();
+
+    nServerInfo * best     = NULL;
+    REAL          bestTime = 0;
+
+    for ( nServerInfo * run = GetMasters(); run; run = run->Next() )
+    {
+        // an untried master gets an optimistic default, so it is tried before
+        // known-slow masters but after known-fast ones
+        std::map< std::string, REAL >::const_iterator i =
+            sn_masterConnectTime.find( static_cast< char const * >( run->GetConnectionName() ) );
+        REAL t = ( i == sn_masterConnectTime.end() ) ? REAL(0.5) : i->second;
+
+        if ( !best || t < bestTime )
+        {
+            best     = run;
+            bestTime = t;
+        }
+    }
+
+    // move it to the front, matching GetRandomMaster's bookkeeping
+    if ( best )
+    {
+        best->Remove();
+        best->Insert( sn_masterList );
+    }
+
+    return best;
 }
 
 nServerInfo::Compat	nServerInfo::Compatibility() const
