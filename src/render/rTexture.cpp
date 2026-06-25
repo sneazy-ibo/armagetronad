@@ -220,10 +220,24 @@ void rSurface::Create( SDL_Surface * surface )
             break;
 
         case 3:
+            // SDL3's IMG_Load may return BGR24 (e.g. JPEGs); GL_RGB trusts byte
+            // order, so convert to canonical RGB24 to avoid red/blue swap.
+            if ( surface_->format != SDL_PIXELFORMAT_RGB24 )
+            {
+                SDL_Surface *conv = SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGB24);
+                SDL_DestroySurface(surface_);
+                surface_ = conv;
+            }
             format_ = GL_RGB;
             break;
 
         case 4:
+            if ( surface_->format != SDL_PIXELFORMAT_RGBA32 )
+            {
+                SDL_Surface *conv = SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGBA32);
+                SDL_DestroySurface(surface_);
+                surface_ = conv;
+            }
             format_ = GL_RGBA;
             break;
 
