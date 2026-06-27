@@ -104,9 +104,9 @@ bool su_StoreSDLEvent(const SDL_Event &tEvent){
 
 #ifndef DEDICATED
 // read and write operators for keysyms
-tRECORDING_ENUM( SDL_Keycode );
-tRECORDING_ENUM( SDL_Keymod );
-tRECORDING_ENUM( SDL_Scancode );
+tRECORDING_ENUM(SDL_Keycode);
+tRECORDING_ENUM(SDL_Keymod);
+tRECORDING_ENUM(SDL_Scancode);
 #endif
 
 static char const * recordingSection = "INPUT";
@@ -144,31 +144,27 @@ public:
             {
             case SDL_EVENT_WINDOW_FOCUS_GAINED:
             case SDL_EVENT_WINDOW_FOCUS_LOST:
-            case SDL_EVENT_WINDOW_RESIZED:
-            {
-                SDL_WindowEvent & wevt = event.window;
+            case SDL_EVENT_WINDOW_RESIZED: {
+                SDL_WindowEvent& wevt = event.window;
                 Uint32 wtype = static_cast<Uint32>(wevt.type);
                 archive.Archive(wtype).Archive(wevt.data1);
                 wevt.type = static_cast<SDL_EventType>(wtype);
             }
             break;
             case SDL_EVENT_KEY_DOWN:
-            case SDL_EVENT_KEY_UP:
-            {
+            case SDL_EVENT_KEY_UP: {
                 SDL_KeyboardEvent & key = event.key;
                 ArchiveKey( archive, key );
             }
             break;
-            case SDL_EVENT_MOUSE_MOTION:
-            {
+            case SDL_EVENT_MOUSE_MOTION: {
                 SDL_MouseMotionEvent & motion = event.motion;
 
                 archive.Archive(motion.state).Archive(motion.x).Archive(motion.y).Archive(motion.xrel).Archive(motion.yrel);
             }
             break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            {
+            case SDL_EVENT_MOUSE_BUTTON_DOWN: {
                 SDL_MouseButtonEvent & button = event.button;
 
                 archive.Archive(button.button).Archive(button.down).Archive(button.x).Archive(button.y);
@@ -196,7 +192,7 @@ void EventArchiver< tRecordingBlock >::ArchiveKey( tRecordingBlock & archive, SD
     SDL_KeyboardEvent key = orig;
     if ( uInputScrambler::Scrambled() )
     {
-        switch( key.key )
+        switch (key.key)
         {
         case SDLK_ESCAPE:
         case SDLK_SPACE:
@@ -308,20 +304,20 @@ bool su_GetSDLInput(SDL_Event &tEvent,REAL &time){
     static unsigned short blockedScancode = 0xffff;
     static SDL_Keycode blockedKeysym = SDLK_UNKNOWN;
 
-    if( tEvent.type == SDL_EVENT_KEY_DOWN )
+    if (tEvent.type == SDL_EVENT_KEY_DOWN)
     {
         // you can spot them by zero text; control keys are allowed to have that,
         // but not letter and number and sign keys - SDL2: simplified check
-        if ( tEvent.key.key >= SDLK_ESCAPE && 
-                  tEvent.key.key <= SDLK_Z )
+        if (tEvent.key.key >= SDLK_ESCAPE &&
+            tEvent.key.key <= SDLK_Z)
         {
             // SDL2: removed unicode-based bogus event filter
         }
     }
-    else if ( tEvent.type == SDL_EVENT_KEY_UP )
+    else if (tEvent.type == SDL_EVENT_KEY_UP)
     {
-        if( blockedScancode == tEvent.key.scancode && 
-            blockedKeysym == tEvent.key.key )
+        if (blockedScancode == tEvent.key.scancode &&
+            blockedKeysym == tEvent.key.key)
         {
             ret = false;
 

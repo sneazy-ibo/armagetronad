@@ -224,33 +224,33 @@ public:
 #ifndef DEDICATED
         // SDL3: fetch valid screen modes from all displays
         int numDisplays = 0;
-        SDL_DisplayID *displays = SDL_GetDisplays( &numDisplays );
-        for ( int di = 0; di < numDisplays; ++di )
+        SDL_DisplayID* displays = SDL_GetDisplays(&numDisplays);
+        for (int di = 0; di < numDisplays; ++di)
         {
             int modeCount = 0;
-            SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes( displays[di], &modeCount );
-            for ( int mi = 0; mi < modeCount; ++mi )
+            SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(displays[di], &modeCount);
+            for (int mi = 0; mi < modeCount; ++mi)
             {
-                if ( modes[mi]->w > 0 && modes[mi]->h > 0 )
-                    NewChoice( rScreenSize( modes[mi]->w, modes[mi]->h ) );
+                if (modes[mi]->w > 0 && modes[mi]->h > 0)
+                    NewChoice(rScreenSize(modes[mi]->w, modes[mi]->h));
             }
-            SDL_free( modes );
+            SDL_free(modes);
         }
-        SDL_free( displays );
+        SDL_free(displays);
 
         // add custom resolution
-        NewChoice( ArmageTron_Custom );
+        NewChoice(ArmageTron_Custom);
 
         // add desktop resolution
-        if ( sr_DesktopScreensizeSupported() )
-            NewChoice( ArmageTron_Desktop );
+        if (sr_DesktopScreensizeSupported())
+            NewChoice(ArmageTron_Desktop);
 
         // optionally add old fixed presets
-        if ( addFixed )
+        if (addFixed)
         {
-            for ( int i = ArmageTron_Custom; i>=0; --i )
+            for (int i = ArmageTron_Custom; i >= 0; --i)
             {
-                NewChoice( rResolution(i) );
+                NewChoice(rResolution(i));
             }
         }
 
@@ -682,20 +682,26 @@ public:
     virtual bool Event(SDL_Event &e){
         // Multi-line paste (Ctrl/Cmd+V): run each pasted line as its own console
         // command, in order. Single-line paste falls through to the base editor.
-        if (e.type==SDL_EVENT_KEY_DOWN && e.key.key==SDLK_V &&
-                (e.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_GUI))){
-            char *clip = SDL_GetClipboardText();
-            if (clip){
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_V &&
+            (e.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_GUI)))
+        {
+            char* clip = SDL_GetClipboardText();
+            if (clip)
+            {
                 std::string text(clip);
                 SDL_free(clip);
-                if (text.find('\n') != std::string::npos){
-                    tCurrentAccessLevel level( tAccessLevel_Owner, true );
+                if (text.find('\n') != std::string::npos)
+                {
+                    tCurrentAccessLevel level(tAccessLevel_Owner, true);
                     std::stringstream lines(text);
                     std::string line;
-                    while (std::getline(lines, line)){
-                        if (!line.empty() && line.back()=='\r') line.pop_back();
-                        if (line.empty()) continue;
-                        con << tColoredString::ColorString(.5,.5,1) << " > " << line.c_str() << '\n';
+                    while (std::getline(lines, line))
+                    {
+                        if (!line.empty() && line.back() == '\r')
+                            line.pop_back();
+                        if (line.empty())
+                            continue;
+                        con << tColoredString::ColorString(.5, .5, 1) << " > " << line.c_str() << '\n';
                         std::stringstream s(line);
                         tConfItemBase::LoadLine(s);
                     }
@@ -703,8 +709,9 @@ public:
                 }
             }
         }
-        if (e.type==SDL_EVENT_KEY_DOWN &&
-                (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
+        if (e.type == SDL_EVENT_KEY_DOWN &&
+            (e.key.key == SDLK_KP_ENTER || e.key.key == SDLK_RETURN))
+        {
 
             con << tColoredString::ColorString(.5,.5,1) << " > " << *content << '\n';
 
@@ -718,7 +725,7 @@ public:
             MyMenu()->Exit();
             return true;
         }
-        else if (e.type==SDL_EVENT_KEY_DOWN &&
+        else if (e.type == SDL_EVENT_KEY_DOWN &&
                  uActionGlobal::IsBreakingGlobalBind(e.key.key))
             return su_HandleEvent(e, true);
         else
@@ -1224,15 +1231,15 @@ static bool toggle_fullscreen_func( REAL x )
 
     // only do anything if the application is active (work around odd bug)
     // SDL2: SDL_GetAppState is deprecated, always assume active
-    if ( x > 0 )
+    if (x > 0)
     {
         bool const targetFullscreen = !currentScreensetting.fullscreen;
 
         // ponytail: avoid full display reinit on toggle; SDL2 can switch mode in place
         bool switchedInPlace = false;
-        if ( sr_window )
+        if (sr_window)
         {
-            if ( SDL_SetWindowFullscreen( sr_window, targetFullscreen ) )
+            if (SDL_SetWindowFullscreen(sr_window, targetFullscreen))
             {
                 currentScreensetting.fullscreen = targetFullscreen;
                 lastSuccess.fullscreen = targetFullscreen;
@@ -1241,24 +1248,27 @@ static bool toggle_fullscreen_func( REAL x )
                 int windowH = 0;
                 int drawableW = 0;
                 int drawableH = 0;
-                SDL_GetWindowSize( sr_window, &windowW, &windowH );
-                SDL_GetWindowSizeInPixels( sr_window, &drawableW, &drawableH );
+                SDL_GetWindowSize(sr_window, &windowW, &windowH);
+                SDL_GetWindowSizeInPixels(sr_window, &drawableW, &drawableH);
 
                 // ponytail: viewport follows actual drawable size after mode switch
                 sr_screenWidth = drawableW > 0 ? drawableW : windowW;
                 sr_screenHeight = drawableH > 0 ? drawableH : windowH;
 
-                if ( targetFullscreen ) SDL_HideCursor(); else SDL_ShowCursor();
-                if ( sr_glcontext )
+                if (targetFullscreen)
+                    SDL_HideCursor();
+                else
+                    SDL_ShowCursor();
+                if (sr_glcontext)
                 {
-                    SDL_GL_MakeCurrent( sr_window, sr_glcontext );
+                    SDL_GL_MakeCurrent(sr_window, sr_glcontext);
                 }
-                sr_ResetRenderState( true );
+                sr_ResetRenderState(true);
                 switchedInPlace = true;
             }
         }
 
-        if ( !switchedInPlace )
+        if (!switchedInPlace)
         {
             currentScreensetting.fullscreen = targetFullscreen;
             sr_ReinitDisplay();

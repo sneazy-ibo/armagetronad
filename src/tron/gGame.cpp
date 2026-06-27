@@ -4226,7 +4226,8 @@ bool gGame::GameLoop(bool input){
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     break;
                 case SDL_EVENT_KEY_DOWN:
-                    switch (tEvent.key.key){
+                    switch (tEvent.key.key)
+                    {
 
                     case(27):
                                     //                                case('q'):

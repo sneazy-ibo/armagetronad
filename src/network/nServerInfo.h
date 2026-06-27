@@ -66,7 +66,7 @@ public:
     inline void GetFrom( nSocket const * socket );  //!< fills data from this server and the given socket
 
     //    nConnectError Connect();                      //!< connect to this server
-    nConnectError Connect( nLoginType loginType = Login_All, const nSocket * socket = NULL, bool waitSync = true );  //!< connect to this server ( using the specified socket; waitSync=false skips post-login object syncs, for the master fetch )
+    nConnectError Connect(nLoginType loginType = Login_All, const nSocket* socket = NULL, bool waitSync = true); //!< connect to this server ( using the specified socket; waitSync=false skips post-login object syncs, for the master fetch )
 
     void CopyFrom( const nServerInfoBase & other );   //!< copies server info
 
@@ -276,12 +276,12 @@ public:
     static nServerInfo* GetBestMaster();           //!< gets the master with the lowest remembered connect time
 
     static void GetFromMaster(nServerInfoBase *masterInfo=NULL, char const * fileSuffix = NULL );  // get all the basic infos from the master server, stored in the server info file of the given suffix
-    static void LoadCache( char const * fileSuffix ); //!< DeleteAll + load the cached master list, for opening the browser on it before fetching
+    static void LoadCache(char const* fileSuffix);                                                 //!< DeleteAll + load the cached master list, for opening the browser on it before fetching
     // cooperative split of GetFromMaster: Begin (connect+request) -> Step* (pump) -> End (prune+save)
-    static bool GetFromMasterStart( nServerInfoBase * masterInfo, char const * fileSuffix, bool reload = true ); //!< master-selection preamble + Begin; true if a fetch is live and Step-able from a caller's pump. reload=false keeps the current (e.g. prefetched) list instead of reloading the cache
-    static bool GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster, bool reload = true ); //!< returns false if the fetch aborted/finished during begin. reload=false keeps the current list
-    static bool GetFromMasterStep( REAL selectTimeout = 0.1f );  //!< pumps one iteration; false when the fetch is done. selectTimeout=0 for callers (menu pump) that pace themselves by rendering
-    static void GetFromMasterEnd( bool pruneStale = true );   //!< finishes the fetch (optionally prune outdated servers, save). pruneStale=false on the live-menu path to avoid deleting servers the menu still points at
+    static bool GetFromMasterStart(nServerInfoBase* masterInfo, char const* fileSuffix, bool reload = true);                   //!< master-selection preamble + Begin; true if a fetch is live and Step-able from a caller's pump. reload=false keeps the current (e.g. prefetched) list instead of reloading the cache
+    static bool GetFromMasterBegin(nServerInfoBase* masterInfo, char const* fileSuffix, bool multiMaster, bool reload = true); //!< returns false if the fetch aborted/finished during begin. reload=false keeps the current list
+    static bool GetFromMasterStep(REAL selectTimeout = 0.1f);                                                                  //!< pumps one iteration; false when the fetch is done. selectTimeout=0 for callers (menu pump) that pace themselves by rendering
+    static void GetFromMasterEnd(bool pruneStale = true);                                                                      //!< finishes the fetch (optionally prune outdated servers, save). pruneStale=false on the live-menu path to avoid deleting servers the menu still points at
 
     static void TellMasterAboutMe(nServerInfoBase *masterInfo=NULL);  // dedicated server: tell master server about my existence
 

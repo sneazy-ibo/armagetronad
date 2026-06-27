@@ -361,7 +361,7 @@ enum nLoginType
 // waitSync=false skips the two post-login object syncs (only safe when there are
 // no game objects to sync, e.g. the master-server list fetch) to avoid ~2s of
 // dead round-trips. Game-server joins keep waitSync=true.
-nConnectError sn_Connect(nAddress const & server, nLoginType loginType = Login_All, nSocket const * socket = NULL, bool waitSync = true );
+nConnectError sn_Connect(nAddress const& server, nLoginType loginType = Login_All, nSocket const* socket = NULL, bool waitSync = true);
 
 // let the server connection socket point to a new server (EVIL!)
 void sn_Bend( nAddress const & server );

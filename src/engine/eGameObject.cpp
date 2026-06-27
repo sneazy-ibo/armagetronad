@@ -140,9 +140,9 @@ eGameObject::~eGameObject(){
     // base-class destruction it resolves to a pure-virtual call (undefined behaviour).
     // The reference balance is moot while we are being destroyed; we only need to make
     // sure the grid keeps no dangling pointer to this object.
-    grid->gameObjects.Remove(this,id);
-    grid->gameObjectsInactive.Remove(this,inactiveID);
-    grid->gameObjectsInteresting.Remove(this,interestingID);
+    grid->gameObjects.Remove(this, id);
+    grid->gameObjectsInactive.Remove(this, inactiveID);
+    grid->gameObjectsInteresting.Remove(this, interestingID);
     tCHECK_DEST;
 }
 

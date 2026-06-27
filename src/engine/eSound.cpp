@@ -128,14 +128,14 @@ static bool se_SoundInitPrepare()
         char * arg = "SDL_AUDIODRIVER=" STRING(DEFAULT_SDL_AUDIODRIVER);
         putenv(arg);
 
-        if ( SDL_Init(SDL_INIT_AUDIO) >= 0 )
+        if (SDL_Init(SDL_INIT_AUDIO) >= 0)
             return true;
 
         putenv("SDL_AUDIODRIVER=");
     }
 
     // if that fails, try what the user wanted
-    return ( SDL_Init(SDL_INIT_AUDIO) >= 0 );
+    return (SDL_Init(SDL_INIT_AUDIO) >= 0);
 }
 #endif
 #endif
@@ -186,7 +186,7 @@ void se_SoundInit()
             desired.freq=22050;
         }
 
-        desired.format=SDL_AUDIO_S16;
+        desired.format = SDL_AUDIO_S16;
         desired.channels = 2;
 
         // ponytail: SDL3 removed callback-based SDL_OpenAudio; audio pending rewrite
@@ -236,7 +236,7 @@ static unsigned int locks;
 
 void se_SoundLock(){
 #ifndef DEDICATED
-    locks++;  // ponytail: SDL_LockAudio removed in SDL3; no-op for now
+    locks++; // ponytail: SDL_LockAudio removed in SDL3; no-op for now
 #endif
 }
 
@@ -246,7 +246,8 @@ void se_SoundUnlock(){
 #endif
 }
 
-void se_SoundPause(bool){
+void se_SoundPause(bool)
+{
     // ponytail: SDL_PauseAudio removed in SDL3; no-op for now
 }
 
@@ -287,9 +288,10 @@ void eWavData::Load(){
 
     const tPath& path = tDirectories::Data();
 
-    if (!SDL_LoadWAV( path.GetReadPath( filename ) ,&spec,&data,&len) || !data){
+    if (!SDL_LoadWAV(path.GetReadPath(filename), &spec, &data, &len) || !data)
+    {
         if (filename_alt.Len()>1){
-            if (!SDL_LoadWAV( path.GetReadPath( filename_alt ),&spec,&data,&len) || !data)
+            if (!SDL_LoadWAV(path.GetReadPath(filename_alt), &spec, &data, &len) || !data)
             {
                 tOutput err;
                 err.SetTemplateParameter(1, filename);
@@ -300,7 +302,7 @@ void eWavData::Load(){
                 alt=true;
         }
         else{
-            if (!SDL_LoadWAV( path.GetReadPath( "sound/expl.wav" ) ,&spec,&data,&len) || !data)
+            if (!SDL_LoadWAV(path.GetReadPath("sound/expl.wav"), &spec, &data, &len) || !data)
             {
                 tOutput err;
                 err.SetTemplateParameter(1, "sound/expl.waw");
@@ -312,9 +314,9 @@ void eWavData::Load(){
         }
     }
 
-    if (spec.format==SDL_AUDIO_S16)
+    if (spec.format == SDL_AUDIO_S16)
         samples=len>>1;
-    else if(spec.format==SDL_AUDIO_U8)
+    else if (spec.format == SDL_AUDIO_U8)
         samples=len;
     else
     {
@@ -333,8 +335,12 @@ void eWavData::Load(){
 #ifdef LINUX
     con << "Sound file " << filename << " loaded: ";
     switch (spec.format){
-    case SDL_AUDIO_S16: con << "16 bit "; break;
-    case SDL_AUDIO_U8: con << "8 bit "; break;
+    case SDL_AUDIO_S16:
+        con << "16 bit ";
+        break;
+    case SDL_AUDIO_U8:
+        con << "8 bit ";
+        break;
     default: con << "unknown "; break;
     }
     if (spec.channels==2)
@@ -371,7 +377,6 @@ void eWavData::Unload(){
         {
 
             SDL_free(data);
-
         }
 
 
@@ -463,7 +468,7 @@ bool eWavData::Mix( Uint8* dest_u8, Uint32 playlen, eAudioPos& pos,
 
     while (goon){
         if (spec.channels==2){
-            if (spec.format==SDL_AUDIO_U8)
+            if (spec.format == SDL_AUDIO_U8)
                 while (playlen>0 && pos.pos<samples){
                     // fix endian problems for the Mac port, as well as support for other
                     // formats than  stereo...
@@ -520,7 +525,8 @@ bool eWavData::Mix( Uint8* dest_u8, Uint32 playlen, eAudioPos& pos,
             }
         }
         else{
-            if (spec.format==SDL_AUDIO_U8){
+            if (spec.format == SDL_AUDIO_U8)
+            {
                 while (playlen>0 && pos.pos<samples){
                     // fix endian problems for the Mac port, as well as support for other
                     // formats than  stereo...
@@ -598,7 +604,8 @@ void eWavData::Loop(){
         memcpy(buff2,data,len);
         Uint32 samples;
 
-        if (spec.format==SDL_AUDIO_U8){
+        if (spec.format == SDL_AUDIO_U8)
+        {
             samples=len;
             for(int i=samples-1;i>=0;i--){
                 Uint32 j=i+((len>>2)<<1);
@@ -611,7 +618,8 @@ void eWavData::Loop(){
                 data[i]=int(a*buff2[i]+b*buff2[j]);
             }
         }
-        else if (spec.format==SDL_AUDIO_S16){
+        else if (spec.format == SDL_AUDIO_S16)
+        {
             samples=len>>1;
             auto data_s = reinterpret_cast<short*>( data );
             auto buff2_s = reinterpret_cast<short*>( buff2 );

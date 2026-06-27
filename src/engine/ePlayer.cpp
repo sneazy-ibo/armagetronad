@@ -423,8 +423,9 @@ public:
 
     virtual bool Event(SDL_Event &e){
 #ifndef DEDICATED
-        if (e.type==SDL_EVENT_KEY_DOWN &&
-                (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
+        if (e.type == SDL_EVENT_KEY_DOWN &&
+            (e.key.key == SDLK_KP_ENTER || e.key.key == SDLK_RETURN))
+        {
 
             // move on to password menu item
             MyMenu()->SetSelected(0);
@@ -462,8 +463,9 @@ public:
 
     virtual bool Event(SDL_Event &e){
 #ifndef DEDICATED
-        if (e.type==SDL_EVENT_KEY_DOWN &&
-                (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
+        if (e.type == SDL_EVENT_KEY_DOWN &&
+            (e.key.key == SDLK_KP_ENTER || e.key.key == SDLK_RETURN))
+        {
 
             entered = true;
             MyMenu()->Exit();
@@ -3875,8 +3877,9 @@ public:
 
     virtual bool Event(SDL_Event &e){
 #ifndef DEDICATED
-        if (e.type==SDL_EVENT_KEY_DOWN &&
-                (e.key.key==SDLK_KP_ENTER || e.key.key==SDLK_RETURN)){
+        if (e.type == SDL_EVENT_KEY_DOWN &&
+            (e.key.key == SDLK_KP_ENTER || e.key.key == SDLK_RETURN))
+        {
 
             for(int i=se_PlayerNetIDs.Len()-1;i>=0;i--)
                 if (se_PlayerNetIDs(i)->pID==me->ID())
@@ -3885,12 +3888,12 @@ public:
             MyMenu()->Exit();
             return true;
         }
-        else if (e.type==SDL_EVENT_KEY_DOWN &&
+        else if (e.type == SDL_EVENT_KEY_DOWN &&
                  uActionGlobal::IsBreakingGlobalBind(e.key.key))
         {
             return su_HandleEvent(e, true);
         }
-        else if (e.type==SDL_EVENT_KEY_DOWN &&
+        else if (e.type == SDL_EVENT_KEY_DOWN &&
                  e.key.key == SDLK_ESCAPE)
         {
             // escape needs to be handled by the surrounding menu, otherwise it
@@ -3904,8 +3907,8 @@ public:
                 return true;
             }
             // exclude modifier keys from possible control triggers
-            else if ( e.type == SDL_EVENT_KEY_DOWN &&
-                      ( e.key.key < SDLK_RETURN || e.key.key > SDLK_RGUI ) )
+            else if (e.type == SDL_EVENT_KEY_DOWN &&
+                     (e.key.key < SDLK_RETURN || e.key.key > SDLK_RGUI))
             {
                 // maybe it's an instant chat button?
                 try

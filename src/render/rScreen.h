@@ -98,7 +98,7 @@ struct SDL_Surface;
 #endif
 
 #ifndef DEDICATED
-extern SDL_Window *sr_window;
+extern SDL_Window* sr_window;
 extern SDL_GLContext sr_glcontext;
 #endif
 

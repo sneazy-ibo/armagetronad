@@ -230,7 +230,7 @@ void uMenu::OnEnter(){
                 switch (tEvent.type)
                 {
                 case SDL_EVENT_KEY_DOWN:
-                    if ( tEvent.key.key == SDLK_UNKNOWN )
+                    if (tEvent.key.key == SDLK_UNKNOWN)
                     {
                         // don't repeat unknown syms. They come from multi-key compositions and
                         // don't send keyup events when released.
@@ -404,11 +404,11 @@ void uMenu::HandleEvent( SDL_Event event )
     if (!items[selected]->Event(event))
     {
         switch (event.type){
-        case SDL_EVENT_KEY_DOWN:
-        {
+        case SDL_EVENT_KEY_DOWN: {
             if (!disphelp)
                 lastkey=tSysTimeFloat();
-            switch (event.key.key){
+            switch (event.key.key)
+            {
 
             case(SDLK_ESCAPE):
                 s_globalRepeat = false;
@@ -837,97 +837,120 @@ bool uMenuItemString::Event(SDL_Event &e){
         bool inserted = false;
         for (int i = 0; e.text.text[i] && content->Len() < maxLength_; ++i)
         {
-            unsigned char c = static_cast<unsigned char>( e.text.text[i] );
-            if ( c < 32 )
+            unsigned char c = static_cast<unsigned char>(e.text.text[i]);
+            if (c < 32)
                 continue;
 
-            for (int j=content->Len()-1;j>=cursorPos;j--)
-                (*content)[j+1]=(*content)[j];
+            for (int j = content->Len() - 1; j >= cursorPos; j--)
+                (*content)[j + 1] = (*content)[j];
 
-            (*content)[content->Len()-1]='\0';
-            (*content)[cursorPos]=c;
+            (*content)[content->Len() - 1] = '\0';
+            (*content)[cursorPos] = c;
             cursorPos++;
             inserted = true;
         }
 
-        if (cursorPos<0)    cursorPos=0;
-        if (cursorPos > content->Len()-1) cursorPos=content->Len()-1;
+        if (cursorPos < 0)
+            cursorPos = 0;
+        if (cursorPos > content->Len() - 1)
+            cursorPos = content->Len() - 1;
         return inserted;
     }
 
-    if (e.type!=SDL_EVENT_KEY_DOWN)
+    if (e.type != SDL_EVENT_KEY_DOWN)
         return false;
 
     bool ret=true;
-    auto & c = e.key;
+    auto& c = e.key;
     SDL_Keymod mod = c.mod;
     bool moveWordLeft, moveWordRight, deleteWordLeft, deleteWordRight, moveBeginning, moveEnd, killForwards, doPaste;
     moveWordLeft = moveWordRight = deleteWordLeft = deleteWordRight = moveBeginning = moveEnd = killForwards = doPaste = false;
 
 #if defined (MACOSX)
     // For moving over/deleting words
-    if (mod & SDL_KMOD_ALT) {
-        if (c.key == SDLK_LEFT) {
+    if (mod & SDL_KMOD_ALT)
+    {
+        if (c.key == SDLK_LEFT)
+        {
             moveWordLeft = true;
         }
-        else if (c.key == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT)
+        {
             moveWordRight = true;
         }
-        else if (c.key == SDLK_DELETE) {
+        else if (c.key == SDLK_DELETE)
+        {
             deleteWordRight = true;
         }
-        else if (c.key == SDLK_BACKSPACE) {
+        else if (c.key == SDLK_BACKSPACE)
+        {
             deleteWordLeft = true;
         }
     }
     // For moving to extremes of the line
-    else if (mod & SDL_KMOD_GUI) {
-        if (c.key == SDLK_LEFT) {
+    else if (mod & SDL_KMOD_GUI)
+    {
+        if (c.key == SDLK_LEFT)
+        {
             moveBeginning = true;
         }
-        else if (c.key == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT)
+        {
             moveEnd = true;
         }
-        else if (c.key == SDLK_V) {
+        else if (c.key == SDLK_V)
+        {
             doPaste = true;
         }
     }
     // Linux and Windows
 #else
     // Word operations
-    if (mod & SDL_KMOD_CTRL) {
-        if (c.key == SDLK_LEFT) {
+    if (mod & SDL_KMOD_CTRL)
+    {
+        if (c.key == SDLK_LEFT)
+        {
             moveWordLeft = true;
         }
-        else if (c.key == SDLK_RIGHT) {
+        else if (c.key == SDLK_RIGHT)
+        {
             moveWordRight = true;
         }
-        else if (c.key == SDLK_DELETE) {
+        else if (c.key == SDLK_DELETE)
+        {
             deleteWordRight = true;
         }
-        else if (c.key == SDLK_BACKSPACE) {
+        else if (c.key == SDLK_BACKSPACE)
+        {
             deleteWordLeft = true;
         }
     }
-    else if (c.key == SDLK_HOME) {
+    else if (c.key == SDLK_HOME)
+    {
         moveBeginning = true;
     }
-    else if (c.key == SDLK_END) {
+    else if (c.key == SDLK_END)
+    {
         moveEnd = true;
     }
 #endif
     // "bash" keys
-    if (mod & SDL_KMOD_CTRL) {
-        if (c.key == SDLK_A) {
+    if (mod & SDL_KMOD_CTRL)
+    {
+        if (c.key == SDLK_A)
+        {
             moveBeginning = true;
         }
-        else if (c.key == SDLK_E) {
+        else if (c.key == SDLK_E)
+        {
             moveEnd = true;
         }
-        else if (c.key == SDLK_K) {
+        else if (c.key == SDLK_K)
+        {
             killForwards = true;
         }
-        else if (c.key == SDLK_V) {
+        else if (c.key == SDLK_V)
+        {
             doPaste = true;
         }
     }
@@ -954,50 +977,59 @@ bool uMenuItemString::Event(SDL_Event &e){
     else if (killForwards) {
         content->RemoveSubStr(cursorPos,content->Len()-1-cursorPos);
     }
-    else if (c.key == SDLK_LEFT) {
+    else if (c.key == SDLK_LEFT)
+    {
         if (cursorPos > 0) {
             cursorPos--;
         }
     }
-    else if (c.key == SDLK_RIGHT) {
+    else if (c.key == SDLK_RIGHT)
+    {
         if (cursorPos < content->Len()-1) {
             cursorPos++;
         }
     }
-    else if (c.key == SDLK_DELETE) {
+    else if (c.key == SDLK_DELETE)
+    {
         if (cursorPos < content->Len()-1) {
             content->RemoveSubStr(cursorPos,1);
         }
     }
-    else if (c.key == SDLK_BACKSPACE) {
+    else if (c.key == SDLK_BACKSPACE)
+    {
         if (cursorPos > 0) {
             content->RemoveSubStr(cursorPos,-1);
             cursorPos--;
         }
     }
-    else if (c.key == SDLK_KP_ENTER || c.key == SDLK_RETURN) {
+    else if (c.key == SDLK_KP_ENTER || c.key == SDLK_RETURN)
+    {
         ret = false;
         //        c.key = SDLK_DOWN;
     }
-    else if (doPaste) {
-        char *clip = SDL_GetClipboardText();
-        if (clip) {
-            for (int i = 0; clip[i] && content->Len() < maxLength_; ++i) {
+    else if (doPaste)
+    {
+        char* clip = SDL_GetClipboardText();
+        if (clip)
+        {
+            for (int i = 0; clip[i] && content->Len() < maxLength_; ++i)
+            {
                 unsigned char ch = static_cast<unsigned char>(clip[i]);
-                if (ch < 32) continue;
-                for (int j = content->Len()-1; j >= cursorPos; j--)
-                    (*content)[j+1] = (*content)[j];
-                (*content)[content->Len()-1] = '\0';
+                if (ch < 32)
+                    continue;
+                for (int j = content->Len() - 1; j >= cursorPos; j--)
+                    (*content)[j + 1] = (*content)[j];
+                (*content)[content->Len() - 1] = '\0';
                 (*content)[cursorPos] = ch;
                 cursorPos++;
             }
             SDL_free(clip);
         }
     }
-    else {
+    else
+    {
         // ponytail: text comes through SDL_EVENT_TEXT_INPUT in SDL2, consume text-like keydowns so they don't trigger binds
-        ret = !(mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI))
-              && (c.key == SDLK_UNKNOWN || (c.key >= SDLK_SPACE && c.key < SDLK_DELETE));
+        ret = !(mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI)) && (c.key == SDLK_UNKNOWN || (c.key >= SDLK_SPACE && c.key < SDLK_DELETE));
     }
 
     if (cursorPos<0)    cursorPos=0;
@@ -1045,9 +1077,7 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
     // flag indicating that the event was handled
     bool ret = false;
 #ifndef DEDICATED
-    if (e.type == SDL_EVENT_KEY_DOWN
-            && ((e.key.key == SDLK_UP)
-                || (e.key.key == SDLK_P && (e.key.mod & SDL_KMOD_CTRL))))
+    if (e.type == SDL_EVENT_KEY_DOWN && ((e.key.key == SDLK_UP) || (e.key.key == SDLK_P && (e.key.mod & SDL_KMOD_CTRL))))
     {
         if (m_History.size() - 1 > m_HistoryPos)
         {
@@ -1061,9 +1091,7 @@ bool uMenuItemStringWithHistory::Event(SDL_Event &e)
 
         ret = true;
     }
-    else if (e.type == SDL_EVENT_KEY_DOWN
-             && ((e.key.key == SDLK_DOWN)
-                 || (e.key.key == SDLK_N && (e.key.mod & SDL_KMOD_CTRL))))
+    else if (e.type == SDL_EVENT_KEY_DOWN && ((e.key.key == SDLK_DOWN) || (e.key.key == SDLK_N && (e.key.mod & SDL_KMOD_CTRL))))
     {
         if (m_HistoryPos > 0)
         {
@@ -1310,10 +1338,12 @@ bool uMenu::Message(const tOutput& message, const tOutput& interpretation, REAL 
         }
         while (  !quickexit &&
                  (to < 0 || tSysTimeFloat() < timeout)){
-            //while(  !quickexit && ( !su_GetSDLInput(tEvent) || tEvent.type!=SDL_EVENT_KEY_DOWN) &&
-            //        (to < 0 || tSysTimeFloat() < timeout)){
-            if ( su_GetSDLInput(tEvent) && tEvent.type==SDL_EVENT_KEY_DOWN) {
-                switch (tEvent.key.key) {
+            // while(  !quickexit && ( !su_GetSDLInput(tEvent) || tEvent.type!=SDL_EVENT_KEY_DOWN) &&
+            //         (to < 0 || tSysTimeFloat() < timeout)){
+            if (su_GetSDLInput(tEvent) && tEvent.type == SDL_EVENT_KEY_DOWN)
+            {
+                switch (tEvent.key.key)
+                {
                 case SDLK_UP:
                     if (offset > 0)
                         offset -= 1;

@@ -59,11 +59,16 @@ static bool continuePoll = false;
 //   MASTERFETCH - stream the full list from the master (peers[0] = master)
 //   QUERY       - normal querying of the whole list (LAN, or after the master fetch)
 // Prefetch and the master fetch must not overlap: both drive peers[0].
-enum gBrowsePhase { BR_QUERY, BR_PREFETCH, BR_MASTERFETCH };
+enum gBrowsePhase
+{
+    BR_QUERY,
+    BR_PREFETCH,
+    BR_MASTERFETCH
+};
 static gBrowsePhase sg_phase = BR_QUERY;
 static REAL sg_prefetchDeadline = 0;
-static nServerInfoBase * sg_master = 0;  // master for the deferred fetch (0 = auto-pick)
-static tString sg_suffix;                // master-file suffix for the deferred fetch
+static nServerInfoBase* sg_master = 0; // master for the deferred fetch (0 = auto-pick)
+static tString sg_suffix;              // master-file suffix for the deferred fetch
 static int sg_simultaneous = 20;
 static tSettingItem< int > sg_simultaneousConf( "BROWSER_QUERIES_SIMULTANEOUS", sg_simultaneous );
 
@@ -79,7 +84,7 @@ static tSettingItem< nServerInfo::QueryType > sg_query_type( "BROWSER_QUERY_FILT
 // stores no ping, so this is a time budget rather than a ping threshold; servers
 // queried in score order, so the on-screen page answers first. 0 disables prefetch.
 REAL sg_prefetchSeconds = 1.5f;
-static tSettingItem< REAL > sg_prefetchSecondsConf( "BROWSER_PREFETCH_SECONDS", sg_prefetchSeconds );
+static tSettingItem<REAL> sg_prefetchSecondsConf("BROWSER_PREFETCH_SECONDS", sg_prefetchSeconds);
 
 class gServerMenuItem;
 
@@ -248,13 +253,13 @@ void gServerBrowser::BrowseSpecialMaster( nServerInfoBase * master, char const *
     // B-4: don't block on the full master fetch. Load the cached list and open the
     // menu on it immediately, ping the first page (PREFETCH), then stream the full
     // list from the master in the pump (MASTERFETCH). See RenderBackground.
-    nServerInfo::LoadCache( prefix );
+    nServerInfo::LoadCache(prefix);
     sg_master = master;
     sg_suffix = prefix ? prefix : "";
 
-    if ( sg_prefetchSeconds > 0 && nServerInfo::GetFirstServer() )
+    if (sg_prefetchSeconds > 0 && nServerInfo::GetFirstServer())
     {
-        nServerInfo::StartQueryAll( sg_queryType );  // ping cached servers, score order
+        nServerInfo::StartQueryAll(sg_queryType); // ping cached servers, score order
         continuePoll = true;
         sg_phase = BR_PREFETCH;
         sg_prefetchDeadline = tSysTimeFloat() + sg_prefetchSeconds;
@@ -262,8 +267,9 @@ void gServerBrowser::BrowseSpecialMaster( nServerInfoBase * master, char const *
     else
     {
         // no cache (or prefetch disabled): go straight to the master fetch
-        sg_phase = nServerInfo::GetFromMasterStart( sg_master, sg_suffix, false )
-                   ? BR_MASTERFETCH : BR_QUERY;
+        sg_phase = nServerInfo::GetFromMasterStart(sg_master, sg_suffix, false)
+                       ? BR_MASTERFETCH
+                       : BR_QUERY;
     }
 
     //  gLogo::SetBig(true);
@@ -310,7 +316,7 @@ void gServerBrowser::BrowseLAN()
     nServerInfo::DeleteAll();
     nServerInfo::GetFromLAN(lowPort, highPort);
 
-    sg_phase = BR_QUERY;  // LAN fetch is synchronous; query the list normally
+    sg_phase = BR_QUERY; // LAN fetch is synchronous; query the list normally
 
     sr_textOut = to;
 
@@ -325,19 +331,19 @@ void gServerBrowser::BrowseLAN()
 
 void gServerBrowser::BrowseServers()
 {
-    //nServerInfo::CalcScoreAll();
-    //nServerInfo::Sort();
-    // B-4: query setup depends on the phase the caller left us in (see the pump in
-    // RenderBackground). BR_QUERY (LAN, or master with no cache/prefetch) queries
-    // the whole list now. BR_PREFETCH already started pinging the cached first page
-    // in BrowseSpecialMaster. BR_MASTERFETCH defers querying until the fetch ends,
-    // because peers[0] is the master connection during the fetch (Option-B doc, #2).
-    if ( sg_phase == BR_QUERY )
+    // nServerInfo::CalcScoreAll();
+    // nServerInfo::Sort();
+    //  B-4: query setup depends on the phase the caller left us in (see the pump in
+    //  RenderBackground). BR_QUERY (LAN, or master with no cache/prefetch) queries
+    //  the whole list now. BR_PREFETCH already started pinging the cached first page
+    //  in BrowseSpecialMaster. BR_MASTERFETCH defers querying until the fetch ends,
+    //  because peers[0] is the master connection during the fetch (Option-B doc, #2).
+    if (sg_phase == BR_QUERY)
     {
-        nServerInfo::StartQueryAll( sg_queryType );
+        nServerInfo::StartQueryAll(sg_queryType);
         continuePoll = true;
     }
-    else if ( sg_phase == BR_MASTERFETCH )
+    else if (sg_phase == BR_MASTERFETCH)
     {
         continuePoll = false;
     }
@@ -366,10 +372,10 @@ void gServerBrowser::BrowseServers()
     // B-4: if the user left the browser before the fetch finished, close it out now
     // (no prune — the menu items are about to be torn down anyway, next browse
     // re-fetches). Prefetch queries leave us in nCLIENT, so drop back to standalone.
-    if ( sg_phase == BR_MASTERFETCH )
-        nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
-    else if ( sg_phase == BR_PREFETCH )
-        sn_SetNetState( nSTANDALONE );
+    if (sg_phase == BR_MASTERFETCH)
+        nServerInfo::GetFromMasterEnd(false); // sets nSTANDALONE + saves
+    else if (sg_phase == BR_PREFETCH)
+        sn_SetNetState(nSTANDALONE);
     sg_phase = BR_QUERY;
 
     nServerInfo::GetFromLANContinuouslyStop();
@@ -401,8 +407,8 @@ void gServerMenu::HandleEvent( SDL_Event event )
             Update();
             return;
             break;
-		case(SDLK_M):
-			FriendsToggle();
+        case (SDLK_M):
+            FriendsToggle();
             Update();
 			return;
 			break;
@@ -731,7 +737,7 @@ void gServerMenuItem::Render(REAL x,REAL y,REAL alpha, bool selected)
 
         if ( sg_filterServernameColorStrings )
             name << tColoredString::RemoveColors( server->GetName(), false );
-        else if ( sg_filterServernameDarkColorStrings )
+        else if (sg_filterServernameDarkColorStrings)
             name << tColoredString::RemoveColors( server->GetName(), true );
         else
         {
@@ -821,17 +827,16 @@ bool gBrowserMenuItem::Event( SDL_Event& event )
     case SDL_EVENT_KEY_DOWN:
         switch (event.key.key)
         {
-        case SDLK_R:
+        case SDLK_R: {
+            static double lastRefresh = -100; //!< the time of the last manual refresh
+            if (tSysTimeFloat() - lastRefresh > 2.0)
             {
-                static double lastRefresh = - 100; //!< the time of the last manual refresh
-                if ( tSysTimeFloat() - lastRefresh > 2.0 )
-                {
-                    lastRefresh = tSysTimeFloat();
-                    // trigger refresh
-                    st_ToDo( Refresh );
-                    return true;
-                }
+                lastRefresh = tSysTimeFloat();
+                // trigger refresh
+                st_ToDo(Refresh);
+                return true;
             }
+        }
             break;
         default:
             break;
@@ -928,26 +933,26 @@ void gBrowserMenuItem::RenderBackground()
     sn_SendPlanned();
 
     menu->GenericBackground();
-    switch ( sg_phase )
+    switch (sg_phase)
     {
     case BR_PREFETCH:
         // ping the cached first page (score order) before the slow master fetch so
         // the visible servers show real pings within ~1 RTT. peers[0] = game servers.
-        continuePoll = nServerInfo::DoQueryAll( sg_simultaneous );
+        continuePoll = nServerInfo::DoQueryAll(sg_simultaneous);
         sn_Receive();
         sn_SendPlanned();
         static_cast<gServerMenu*>(menu)->Update();
-        if ( tSysTimeFloat() >= sg_prefetchDeadline || !continuePoll )
+        if (tSysTimeFloat() >= sg_prefetchDeadline || !continuePoll)
         {
             // first page pinged; now stream the full list, keeping what we pinged
             // (reload=false) so those servers keep their fresh pings.
-            if ( nServerInfo::GetFromMasterStart( sg_master, sg_suffix, false ) )
+            if (nServerInfo::GetFromMasterStart(sg_master, sg_suffix, false))
             {
                 sg_phase = BR_MASTERFETCH;
             }
             else
             {
-                nServerInfo::StartQueryAll( sg_queryType );
+                nServerInfo::StartQueryAll(sg_queryType);
                 continuePoll = true;
                 sg_phase = BR_QUERY;
             }
@@ -957,13 +962,13 @@ void gBrowserMenuItem::RenderBackground()
         // the master list is still streaming in. Pump one fetch step (non-blocking:
         // the menu paces itself by rendering) and refresh so new servers appear live.
         // Don't query yet — peers[0] is the master connection during the fetch.
-        if ( !nServerInfo::GetFromMasterStep( 0.0f ) )
+        if (!nServerInfo::GetFromMasterStep(0.0f))
         {
-            nServerInfo::GetFromMasterEnd( false );  // no prune: menu holds these items
+            nServerInfo::GetFromMasterEnd(false); // no prune: menu holds these items
             // master disconnected (nSTANDALONE). Query everything now — servers
             // already answered in prefetch keep their ping (advancedInfoSetEver),
             // so re-querying them doesn't flicker back to "polling".
-            nServerInfo::StartQueryAll( sg_queryType );
+            nServerInfo::StartQueryAll(sg_queryType);
             continuePoll = true;
             sg_phase = BR_QUERY;
         }
@@ -1001,10 +1006,10 @@ void gServerMenuItem::Enter()
     // B-4: if a prefetch or master fetch is still running, close it out before
     // joining so the game connect gets a clean peers[0] (otherwise the join blocks
     // behind the in-progress fetch).
-    if ( sg_phase == BR_MASTERFETCH )
-        nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
-    else if ( sg_phase == BR_PREFETCH )
-        sn_SetNetState( nSTANDALONE );
+    if (sg_phase == BR_MASTERFETCH)
+        nServerInfo::GetFromMasterEnd(false); // sets nSTANDALONE + saves
+    else if (sg_phase == BR_PREFETCH)
+        sn_SetNetState(nSTANDALONE);
     sg_phase = BR_QUERY;
 
     menu->Exit();

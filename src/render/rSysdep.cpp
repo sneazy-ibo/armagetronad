@@ -98,7 +98,8 @@ Window  win;
 bool  rSysDep::InitGL(){
     SDL_SysWMinfo system;
     SDL_VERSION(&system.version);
-    if (!SDL_GetWindowWMInfo(sr_window, &system)){
+    if (!SDL_GetWindowWMInfo(sr_window, &system))
+    {
         std::cerr << "Video information not available!\n";
         return(false);
     }
@@ -314,7 +315,7 @@ static void make_screenshot(){
     SDL_Surface *temp;
     int idx;
     image = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
-    temp  = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
+    temp = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
 
     // make upside down screenshot
     glReadPixels(0,0,sr_screenWidth, sr_screenHeight, GL_RGB,
@@ -583,8 +584,8 @@ void rSysDep::SwapGL(){
     {
         SDL_GL_SwapWindow(sr_window);
     }
-    //#elif defined(HAVE_FXMESA)
-    //fxMesaSwapBuffers();
+    // #elif defined(HAVE_FXMESA)
+    // fxMesaSwapBuffers();
 
 #ifdef DIRTY
     if (!lastSuccess.useSDL){
@@ -637,7 +638,7 @@ void rSysDep::SwapGL(){
 #endif // dedicated
 
 #ifndef DEDICATED
-static SDL_Mutex *mut;
+static SDL_Mutex* mut;
 
 static void stuff_init(){
     mut=SDL_CreateMutex();

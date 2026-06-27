@@ -156,7 +156,6 @@ void gSpark::Render(const eCamera *cam){
     }
     RenderEnd();
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
 }
 
 void gSpark::SoundMix(Uint8 *dest,unsigned int len,

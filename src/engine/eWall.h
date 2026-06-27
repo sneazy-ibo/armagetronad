@@ -53,8 +53,6 @@ class eHalfEdge;
 // this costs is negligible. ponytail: well-defined and slightly faster.
 #define CAUTION_WALL
 
-
-
 class eWall;
 class eWallHolder;
 class eGameObject;

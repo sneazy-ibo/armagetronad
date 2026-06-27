@@ -1524,8 +1524,8 @@ void eCamera::Timestep(REAL ts){
             {
                 center = bestCenter;
                 // if ( mode != CAMERA_FREE )
-                if ( localPlayer )
-                    mode=localPlayer->startCamera;
+                if (localPlayer)
+                    mode = localPlayer->startCamera;
             }
         }
     }

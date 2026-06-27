@@ -330,8 +330,8 @@ static void welcome(){
             timeout = tSysTimeFloat() + 6;
 
             uInputProcessGuard inputProcessGuard;
-            while ((!su_GetSDLInput(tEvent) || tEvent.type!=SDL_EVENT_KEY_DOWN) &&
-                    tSysTimeFloat() < timeout)
+            while ((!su_GetSDLInput(tEvent) || tEvent.type != SDL_EVENT_KEY_DOWN) &&
+                   tSysTimeFloat() < timeout)
             {
                 if ( sr_glOut )
                 {
@@ -468,7 +468,8 @@ static void sg_DelayedActivation()
     Activate( sg_active );
 }
 
-int filter(void *userdata, SDL_Event *tEvent){
+int filter(void* userdata, SDL_Event* tEvent)
+{
     // recursion avoidance
     static bool recursion = false;
     if ( !recursion )
@@ -494,11 +495,12 @@ int filter(void *userdata, SDL_Event *tEvent){
         RecursionGuard guard( recursion );
 
         // boss key or OS X quit command
-        if ((tEvent->type==SDL_EVENT_KEY_DOWN && tEvent->key.key==27 &&
-                tEvent->key.mod & SDL_KMOD_SHIFT) ||
-                (tEvent->type==SDL_EVENT_KEY_DOWN && tEvent->key.key==113 &&
-                 tEvent->key.mod & SDL_KMOD_GUI) ||
-                (tEvent->type==SDL_EVENT_QUIT)){
+        if ((tEvent->type == SDL_EVENT_KEY_DOWN && tEvent->key.key == 27 &&
+             tEvent->key.mod & SDL_KMOD_SHIFT) ||
+            (tEvent->type == SDL_EVENT_KEY_DOWN && tEvent->key.key == 113 &&
+             tEvent->key.mod & SDL_KMOD_GUI) ||
+            (tEvent->type == SDL_EVENT_QUIT))
+        {
             // sn_SetNetState(nSTANDALONE);
             // sn_Receive();
 
@@ -510,15 +512,15 @@ int filter(void *userdata, SDL_Event *tEvent){
             return false;
         }
 
-        if (tEvent->type==SDL_EVENT_MOUSE_MOTION)
+        if (tEvent->type == SDL_EVENT_MOUSE_MOTION)
             if (tEvent->motion.x==sr_screenWidth/2 && tEvent->motion.y==sr_screenHeight/2)
                 return 0;
         if (su_mouseGrab &&
-                tEvent->type!=SDL_EVENT_MOUSE_BUTTON_DOWN &&
-                tEvent->type!=SDL_EVENT_MOUSE_BUTTON_UP &&
-                ((tEvent->motion.x>=sr_screenWidth-10  || tEvent->motion.x<=10) ||
-                 (tEvent->motion.y>=sr_screenHeight-10 || tEvent->motion.y<=10)))
-            SDL_WarpMouseInWindow(sr_window, sr_screenWidth/2, sr_screenHeight/2);
+            tEvent->type != SDL_EVENT_MOUSE_BUTTON_DOWN &&
+            tEvent->type != SDL_EVENT_MOUSE_BUTTON_UP &&
+            ((tEvent->motion.x >= sr_screenWidth - 10 || tEvent->motion.x <= 10) ||
+             (tEvent->motion.y >= sr_screenHeight - 10 || tEvent->motion.y <= 10)))
+            SDL_WarpMouseInWindow(sr_window, sr_screenWidth / 2, sr_screenHeight / 2);
 
         // SDL3: window events are promoted to top-level event types
         if (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED ||
@@ -538,11 +540,11 @@ int filter(void *userdata, SDL_Event *tEvent){
             tEvent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
         {
             int windowW = 0, windowH = 0, drawableW = 0, drawableH = 0;
-            SDL_GetWindowSize( sr_window, &windowW, &windowH );
-            SDL_GetWindowSizeInPixels( sr_window, &drawableW, &drawableH );
-            sr_screenWidth  = drawableW > 0 ? drawableW : windowW;
+            SDL_GetWindowSize(sr_window, &windowW, &windowH);
+            SDL_GetWindowSizeInPixels(sr_window, &drawableW, &drawableH);
+            sr_screenWidth = drawableW > 0 ? drawableW : windowW;
             sr_screenHeight = drawableH > 0 ? drawableH : windowH;
-            st_ToDo( rCallbackAfterScreenModeChange::Exec );
+            st_ToDo(rCallbackAfterScreenModeChange::Exec);
             return false;
         }
 
@@ -619,10 +621,11 @@ struct SDLSoundCleanup
 }
 
 #ifndef DEDICATED
-int filter(void *userdata, SDL_Event *tEvent);
+int filter(void* userdata, SDL_Event* tEvent);
 #endif
 
-int SDL_main(int argc,char **argv){
+int SDL_main(int argc, char** argv)
+{
     bool dedicatedServer = false;
 
     // tERR_MESSAGE( "Start!" );
@@ -638,7 +641,6 @@ int SDL_main(int argc,char **argv){
         {
             return 0;
         }
-
 
         {
             // embed version in recording
@@ -941,5 +943,3 @@ static tConfItemFunc st_Dummy11("MASTER_SAVE_INTERVAL", &st_Dummy);
 static tConfItemFunc st_Dummy12("MASTER_IDLE", &st_Dummy);
 static tConfItemFunc st_Dummy13("MASTER_PORT", &st_Dummy);
 #endif
-
-

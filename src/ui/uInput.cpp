@@ -121,7 +121,8 @@ public:
         tString in;
         int keysym;
         s >> keysym;
-        if (keysym>=0 && keysym < SDLK_NEWLAST){
+        if (keysym >= 0 && keysym < SDLK_NEWLAST)
+        {
             tASSERT(keysym < SDLK_NEWLAST);
             s >> in;
             if (uBindPlayer::IsKeyWord(in))
@@ -201,7 +202,7 @@ bool uActionGlobal::operator==(const uActionGlobal &x){
     return x.globalID == globalID;}
 
 bool uActionGlobal::IsBreakingGlobalBind(int sym){
-    if ( sym < 0 || sym >= SDLK_NEWLAST )
+    if (sym < 0 || sym >= SDLK_NEWLAST)
         return false;
 
     if (!keymap[sym])
@@ -348,22 +349,22 @@ namespace
 {
 static int const su_scancodeBase = 2048;
 
-static bool su_IsScancodeIndex( int sym )
+static bool su_IsScancodeIndex(int sym)
 {
     return sym >= su_scancodeBase && sym < su_scancodeBase + SDL_SCANCODE_COUNT;
 }
 
-static int su_KeyIndex( SDL_KeyboardEvent const & key )
+static int su_KeyIndex(SDL_KeyboardEvent const& key)
 {
-    if ( key.key >= 0 && key.key < SDLK_NEWLAST )
+    if (key.key >= 0 && key.key < SDLK_NEWLAST)
     {
         return key.key;
     }
 
-    if ( key.scancode > SDL_SCANCODE_UNKNOWN )
+    if (key.scancode > SDL_SCANCODE_UNKNOWN)
     {
-        int const mapped = su_scancodeBase + static_cast< int >( key.scancode );
-        if ( mapped >= 0 && mapped < SDLK_NEWLAST )
+        int const mapped = su_scancodeBase + static_cast<int>(key.scancode);
+        if (mapped >= 0 && mapped < SDLK_NEWLAST)
         {
             return mapped;
         }
@@ -371,33 +372,48 @@ static int su_KeyIndex( SDL_KeyboardEvent const & key )
 
     return -1;
 }
-}
+} // namespace
 
 static char const * keyname(int sym){
 #ifndef DEDICATED
-    if ( su_IsScancodeIndex( sym ) )
+    if (su_IsScancodeIndex(sym))
     {
-        char const * name = SDL_GetScancodeName( static_cast< SDL_Scancode >( sym - su_scancodeBase ) );
-        if ( name && name[0] )
+        char const* name = SDL_GetScancodeName(static_cast<SDL_Scancode>(sym - su_scancodeBase));
+        if (name && name[0])
             return name;
     }
 
-    switch (sym){
-        case SDLK_MOUSE_X_PLUS: return "Mouse right";
-        case SDLK_MOUSE_X_MINUS: return "Mouse left";
-        case SDLK_MOUSE_Y_PLUS: return "Mouse up";
-        case SDLK_MOUSE_Y_MINUS: return "Mouse down";
-        case SDLK_MOUSE_Z_PLUS: return "Mouse z up";
-        case SDLK_MOUSE_Z_MINUS: return "Mouse z down";
-        case SDLK_MOUSE_BUTTON_1: return "Mousebutton 1";
-        case SDLK_MOUSE_BUTTON_2: return "Mousebutton 2";
-        case SDLK_MOUSE_BUTTON_3: return "Mousebutton 3";
-        case SDLK_MOUSE_BUTTON_4: return "Mousebutton 4";
-        case SDLK_MOUSE_BUTTON_5: return "Mousebutton 5";
-        case SDLK_MOUSE_BUTTON_6: return "Mousebutton 6";
-        case SDLK_MOUSE_BUTTON_7: return "Mousebutton 7";
-        default: return SDL_GetKeyName(static_cast<SDL_Keycode>(sym));
-        }
+    switch (sym)
+    {
+    case SDLK_MOUSE_X_PLUS:
+        return "Mouse right";
+    case SDLK_MOUSE_X_MINUS:
+        return "Mouse left";
+    case SDLK_MOUSE_Y_PLUS:
+        return "Mouse up";
+    case SDLK_MOUSE_Y_MINUS:
+        return "Mouse down";
+    case SDLK_MOUSE_Z_PLUS:
+        return "Mouse z up";
+    case SDLK_MOUSE_Z_MINUS:
+        return "Mouse z down";
+    case SDLK_MOUSE_BUTTON_1:
+        return "Mousebutton 1";
+    case SDLK_MOUSE_BUTTON_2:
+        return "Mousebutton 2";
+    case SDLK_MOUSE_BUTTON_3:
+        return "Mousebutton 3";
+    case SDLK_MOUSE_BUTTON_4:
+        return "Mousebutton 4";
+    case SDLK_MOUSE_BUTTON_5:
+        return "Mousebutton 5";
+    case SDLK_MOUSE_BUTTON_6:
+        return "Mousebutton 6";
+    case SDLK_MOUSE_BUTTON_7:
+        return "Mousebutton 7";
+    default:
+        return SDL_GetKeyName(static_cast<SDL_Keycode>(sym));
+    }
 #endif
     return "";
 }
@@ -492,44 +508,46 @@ public:
             break;
 
         case SDL_EVENT_MOUSE_WHEEL:
-            if ( active )
+            if (active)
             {
                 int y = e.wheel.y;
-                if ( e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED )
+                if (e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
                     y = -y;
 
-                if ( y > 0 )
+                if (y > 0)
                     sym = SDLK_MOUSE_Z_PLUS;
-                else if ( y < 0 )
+                else if (y < 0)
                     sym = SDLK_MOUSE_Z_MINUS;
 
-                if ( sym > 0 )
+                if (sym > 0)
                     active = 0;
             }
             break;
 
-        case SDL_EVENT_KEY_DOWN:{
-                if(!active){
-                    if (e.key.key==SDLK_DELETE || e.key.key==SDLK_BACKSPACE)
-                    {
-                        for(int keysym=SDLK_NEWLAST-1;keysym>=0;keysym--)
-                            if(keymap[keysym] &&
-                                    keymap[keysym]->act==act &&
-                                    keymap[keysym]->CheckPlayer(ePlayer)){
-                                keymap[keysym]=NULL;
-                            }
-                        return true;
-                    }
-                    return false;
-                }
-
-                active=0;
-
-                if (e.key.key!=SDLK_ESCAPE)
-                    sym=su_KeyIndex(e.key);
-                else
+        case SDL_EVENT_KEY_DOWN: {
+            if (!active)
+            {
+                if (e.key.key == SDLK_DELETE || e.key.key == SDLK_BACKSPACE)
+                {
+                    for (int keysym = SDLK_NEWLAST - 1; keysym >= 0; keysym--)
+                        if (keymap[keysym] &&
+                            keymap[keysym]->act == act &&
+                            keymap[keysym]->CheckPlayer(ePlayer))
+                        {
+                            keymap[keysym] = NULL;
+                        }
                     return true;
+                }
+                return false;
             }
+
+            active = 0;
+
+            if (e.key.key != SDLK_ESCAPE)
+                sym = su_KeyIndex(e.key);
+            else
+                return true;
+        }
             break;
         default:
             return(false);
@@ -693,30 +711,30 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
-    case SDL_EVENT_MOUSE_BUTTON_UP:{
-            int button=e.button.button;
-            if (button<=MOUSE_BUTTONS){
-                sym=SDLK_MOUSE_BUTTON_1+button-1;
-            }
+    case SDL_EVENT_MOUSE_BUTTON_UP: {
+        int button = e.button.button;
+        if (button <= MOUSE_BUTTONS)
+        {
+            sym = SDLK_MOUSE_BUTTON_1 + button - 1;
         }
-        if (e.type==SDL_EVENT_MOUSE_BUTTON_DOWN)
+    }
+        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
             pm=1;
         else
             pm=-1;
         break;
 
-    case SDL_EVENT_MOUSE_WHEEL:
-    {
+    case SDL_EVENT_MOUSE_WHEEL: {
         int y = e.wheel.y;
-        if ( e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED )
+        if (e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
             y = -y;
 
-        if ( y > 0 )
+        if (y > 0)
             sym = SDLK_MOUSE_Z_PLUS;
-        else if ( y < 0 )
+        else if (y < 0)
             sym = SDLK_MOUSE_Z_MINUS;
 
-        if ( sym >= 0 && sym < SDLK_NEWLAST && keymap[sym] && keymap[sym]->act )
+        if (sym >= 0 && sym < SDLK_NEWLAST && keymap[sym] && keymap[sym]->act)
         {
             keymap[sym]->Activate(1, delayed);
             keymap[sym]->Activate(-1, delayed);
@@ -730,21 +748,22 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
     case SDL_EVENT_KEY_DOWN:
         // Ignore auto-repeat key-downs during gameplay: an action should fire
         // once per physical press. (SDL2 replacement for SDL_EnableKeyRepeat(0,0).)
-        if ( e.key.repeat )
+        if (e.key.repeat)
             return true;
-        sym=su_KeyIndex(e.key);
+        sym = su_KeyIndex(e.key);
         pm=1;
         break;
 
     case SDL_EVENT_KEY_UP:
-        sym=su_KeyIndex(e.key);
+        sym = su_KeyIndex(e.key);
         pm=-1;
         break;
 
     default:
         break;
     }
-    if (sym>=0 && sym<SDLK_NEWLAST && keymap[sym] && keymap[sym]->act){
+    if (sym >= 0 && sym < SDLK_NEWLAST && keymap[sym] && keymap[sym]->act)
+    {
         REAL realpm=pm;
         if (keymap[sym]->act->type==uAction::uINPUT_ANALOG)
             pm*=ts*key_sensitivity;
@@ -752,7 +771,6 @@ bool su_HandleEvent(SDL_Event &e, bool delayed ){
         if ( pm > 0 && keymap[sym]->IsDoubleBind( sym ) )
             return true;
         return (keymap[sym]->Activate(pm, delayed ));
-
     }
     else
 #endif  

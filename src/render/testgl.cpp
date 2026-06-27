@@ -25,7 +25,7 @@ int HandleEvent(SDL_Event *tEvent)
     done = 0;
     switch( tEvent->type ) {
     case SDL_WINDOWEVENT:
-        printf( "window event %d\n", tEvent->window.event );
+        printf("window event %d\n", tEvent->window.event);
         break;
 
     case SDL_KEYDOWN:
@@ -65,7 +65,7 @@ int RunGLTest( int argc, char* argv[] )
                        {-0.5, -0.5,  0.5}};
     Uint32 video_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
     int value;
-    SDL_Window *window = NULL;
+    SDL_Window* window = NULL;
     SDL_GLContext glcontext = NULL;
 
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
@@ -87,14 +87,16 @@ int RunGLTest( int argc, char* argv[] )
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
     window = SDL_CreateWindow("SDL GL test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, video_flags);
-    if ( !window ) {
+    if (!window)
+    {
         fprintf(stderr, "Couldn't create window: %s\n", SDL_GetError());
         SDL_Quit();
         exit(1);
     }
 
     glcontext = SDL_GL_CreateContext(window);
-    if ( !glcontext ) {
+    if (!glcontext)
+    {
         fprintf(stderr, "Couldn't create GL context: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
