@@ -121,3 +121,10 @@ src/nTrueVersion.h
 .changetag
 fingerprint
 wget-log*
+
+# clang-tidy compile DB (machine-specific, regenerate with ./tidy.sh --refresh)
+.tidy/
+compile_commands.json
+
+# xcode-build-server config (machine-specific: absolute paths + DerivedData hash)
+buildServer.json
