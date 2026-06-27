@@ -1537,12 +1537,17 @@ static void sn_RememberMasterConnectTime( nServerInfoBase * master, REAL seconds
 static REAL    sn_fetchTimeout = 0;
 static tString sn_fetchSuffix;
 
-bool nServerInfo::GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster )
+bool nServerInfo::GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster, bool reload )
 {
-    DeleteAll();
+    if ( reload )
+    {
+        DeleteAll();
 
-    // load all the servers we know
-    Load( tDirectories::Var(), MasterFile( fileSuffix ) );
+        // load all the servers we know
+        Load( tDirectories::Var(), MasterFile( fileSuffix ) );
+    }
+    // else: keep the current list (e.g. the prefetched cache) and merge the
+    // master's updates into it.
 
     // find the latest server we know about
     unsigned int latest=0;
@@ -1680,7 +1685,16 @@ void nServerInfo::GetFromMasterEnd( bool pruneStale )
     tAdvanceFrame();
 }
 
-bool nServerInfo::GetFromMasterStart( nServerInfoBase * masterInfo, char const * fileSuffix )
+void nServerInfo::LoadCache( char const * fileSuffix )
+{
+    if ( !fileSuffix )
+        fileSuffix = "";
+
+    DeleteAll();
+    Load( tDirectories::Var(), MasterFile( fileSuffix ) );
+}
+
+bool nServerInfo::GetFromMasterStart( nServerInfoBase * masterInfo, char const * fileSuffix, bool reload )
 {
     sn_AcceptingFromMaster = true;
 
@@ -1699,7 +1713,7 @@ bool nServerInfo::GetFromMasterStart( nServerInfoBase * masterInfo, char const *
 
     // connect + send request now (fast: master syncs are skipped), then the
     // caller drives GetFromMasterStep from its per-frame menu pump.
-    return GetFromMasterBegin( masterInfo, fileSuffix, multiMaster );
+    return GetFromMasterBegin( masterInfo, fileSuffix, multiMaster, reload );
 }
 
 void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSuffix )

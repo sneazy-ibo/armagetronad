@@ -53,9 +53,17 @@ int gServerBrowser::lowPort  = 4534;
 
 int gServerBrowser::highPort = 4540;
 static bool continuePoll = false;
-// B-4: while true, the master list is still streaming in and the menu pump drives
-// GetFromMasterStep instead of querying (peers[0] is the master during the fetch).
-static bool sg_fetchActive = false;
+// B-4: the browse runs as a small phase machine driven by the menu pump
+// (gBrowserMenuItem::RenderBackground):
+//   PREFETCH    - ping the first page off the cached list (peers[0] = game servers)
+//   MASTERFETCH - stream the full list from the master (peers[0] = master)
+//   QUERY       - normal querying of the whole list (LAN, or after the master fetch)
+// Prefetch and the master fetch must not overlap: both drive peers[0].
+enum gBrowsePhase { BR_QUERY, BR_PREFETCH, BR_MASTERFETCH };
+static gBrowsePhase sg_phase = BR_QUERY;
+static REAL sg_prefetchDeadline = 0;
+static nServerInfoBase * sg_master = 0;  // master for the deferred fetch (0 = auto-pick)
+static tString sg_suffix;                // master-file suffix for the deferred fetch
 static int sg_simultaneous = 20;
 static tSettingItem< int > sg_simultaneousConf( "BROWSER_QUERIES_SIMULTANEOUS", sg_simultaneous );
 
@@ -65,11 +73,13 @@ nServerInfo::QueryType sg_queryType = nServerInfo::QUERY_OPTOUT;
 tCONFIG_ENUM( nServerInfo::QueryType );
 static tSettingItem< nServerInfo::QueryType > sg_query_type( "BROWSER_QUERY_FILTER", sg_queryType );
 
-// B-4: when opening the browser on the cached list, ping the first-page servers
-// whose cached ping is at or below this (seconds) right away, before the slow
-// master refresh, so the visible fast servers update almost immediately.
-REAL sg_prefetchPingMax = 0.1f;
-static tSettingItem< REAL > sg_prefetchPingMaxConf( "BROWSER_PREFETCH_PING", sg_prefetchPingMax );
+// B-4: when opening the browser on the cached list, spend this long pinging the
+// first-page (highest-score) cached servers before kicking off the slow master
+// refresh, so the visible servers show real pings within ~1 RTT. The .srv cache
+// stores no ping, so this is a time budget rather than a ping threshold; servers
+// queried in score order, so the on-screen page answers first. 0 disables prefetch.
+REAL sg_prefetchSeconds = 1.5f;
+static tSettingItem< REAL > sg_prefetchSecondsConf( "BROWSER_PREFETCH_SECONDS", sg_prefetchSeconds );
 
 class gServerMenuItem;
 
@@ -235,10 +245,26 @@ void gServerBrowser::BrowseSpecialMaster( nServerInfoBase * master, char const *
     bool to=sr_textOut;
     sr_textOut=true;
 
-    // B-4: don't block on the full master fetch. GetFromMasterStart loads the
-    // cached list and kicks off the master connection; the menu opens immediately
-    // on the cache and the browser pump streams in the rest (see RenderBackground).
-    sg_fetchActive = nServerInfo::GetFromMasterStart( master, prefix );
+    // B-4: don't block on the full master fetch. Load the cached list and open the
+    // menu on it immediately, ping the first page (PREFETCH), then stream the full
+    // list from the master in the pump (MASTERFETCH). See RenderBackground.
+    nServerInfo::LoadCache( prefix );
+    sg_master = master;
+    sg_suffix = prefix ? prefix : "";
+
+    if ( sg_prefetchSeconds > 0 && nServerInfo::GetFirstServer() )
+    {
+        nServerInfo::StartQueryAll( sg_queryType );  // ping cached servers, score order
+        continuePoll = true;
+        sg_phase = BR_PREFETCH;
+        sg_prefetchDeadline = tSysTimeFloat() + sg_prefetchSeconds;
+    }
+    else
+    {
+        // no cache (or prefetch disabled): go straight to the master fetch
+        sg_phase = nServerInfo::GetFromMasterStart( sg_master, sg_suffix, false )
+                   ? BR_MASTERFETCH : BR_QUERY;
+    }
 
     //  gLogo::SetBig(true);
     //  gLogo::SetSpinning(false);
@@ -284,7 +310,7 @@ void gServerBrowser::BrowseLAN()
     nServerInfo::DeleteAll();
     nServerInfo::GetFromLAN(lowPort, highPort);
 
-    sg_fetchActive = false;  // LAN fetch is synchronous; don't let the pump drive a master step
+    sg_phase = BR_QUERY;  // LAN fetch is synchronous; query the list normally
 
     sr_textOut = to;
 
@@ -301,16 +327,17 @@ void gServerBrowser::BrowseServers()
 {
     //nServerInfo::CalcScoreAll();
     //nServerInfo::Sort();
-    // B-4: while the master list is still arriving, defer querying — peers[0] is
-    // the master connection during the fetch, so querying a game server would
-    // hijack it (see Option-B doc, #2). The pump starts queries once the fetch
-    // ends. When there's no live fetch (LAN, or fetch failed) query right away.
-    if ( !sg_fetchActive )
+    // B-4: query setup depends on the phase the caller left us in (see the pump in
+    // RenderBackground). BR_QUERY (LAN, or master with no cache/prefetch) queries
+    // the whole list now. BR_PREFETCH already started pinging the cached first page
+    // in BrowseSpecialMaster. BR_MASTERFETCH defers querying until the fetch ends,
+    // because peers[0] is the master connection during the fetch (Option-B doc, #2).
+    if ( sg_phase == BR_QUERY )
     {
         nServerInfo::StartQueryAll( sg_queryType );
         continuePoll = true;
     }
-    else
+    else if ( sg_phase == BR_MASTERFETCH )
     {
         continuePoll = false;
     }
@@ -336,14 +363,14 @@ void gServerBrowser::BrowseServers()
 
     browser.Enter();
 
-    // B-4: if the user left the browser before the master list finished arriving,
-    // close out the fetch now (no prune — the menu items are about to be torn down
-    // anyway, and the next browse re-fetches).
-    if ( sg_fetchActive )
-    {
+    // B-4: if the user left the browser before the fetch finished, close it out now
+    // (no prune — the menu items are about to be torn down anyway, next browse
+    // re-fetches). Prefetch queries leave us in nCLIENT, so drop back to standalone.
+    if ( sg_phase == BR_MASTERFETCH )
         nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
-        sg_fetchActive = false;
-    }
+    else if ( sg_phase == BR_PREFETCH )
+        sn_SetNetState( nSTANDALONE );
+    sg_phase = BR_QUERY;
 
     nServerInfo::GetFromLANContinuouslyStop();
 
@@ -901,26 +928,55 @@ void gBrowserMenuItem::RenderBackground()
     sn_SendPlanned();
 
     menu->GenericBackground();
-    if (sg_fetchActive)
+    switch ( sg_phase )
     {
-        // B-4: the master list is still streaming in. Pump one fetch step and
-        // refresh the menu so new servers appear live. Don't query yet — peers[0]
-        // is the master connection during the fetch.
-        if ( !nServerInfo::GetFromMasterStep( 0.0f ) )  // non-blocking: menu paces itself by rendering
-        {
-            nServerInfo::GetFromMasterEnd( false );  // no prune: menu holds these items
-            sg_fetchActive = false;
-            // fetch done, master disconnected (nSTANDALONE) — now query everything
-            nServerInfo::StartQueryAll( sg_queryType );
-            continuePoll = true;
-        }
-        static_cast<gServerMenu*>(menu)->Update();
-    }
-    else if (continuePoll)
-    {
-        continuePoll = nServerInfo::DoQueryAll(sg_simultaneous);
+    case BR_PREFETCH:
+        // ping the cached first page (score order) before the slow master fetch so
+        // the visible servers show real pings within ~1 RTT. peers[0] = game servers.
+        continuePoll = nServerInfo::DoQueryAll( sg_simultaneous );
         sn_Receive();
         sn_SendPlanned();
+        static_cast<gServerMenu*>(menu)->Update();
+        if ( tSysTimeFloat() >= sg_prefetchDeadline || !continuePoll )
+        {
+            // first page pinged; now stream the full list, keeping what we pinged
+            // (reload=false) so those servers keep their fresh pings.
+            if ( nServerInfo::GetFromMasterStart( sg_master, sg_suffix, false ) )
+            {
+                sg_phase = BR_MASTERFETCH;
+            }
+            else
+            {
+                nServerInfo::StartQueryAll( sg_queryType );
+                continuePoll = true;
+                sg_phase = BR_QUERY;
+            }
+        }
+        break;
+    case BR_MASTERFETCH:
+        // the master list is still streaming in. Pump one fetch step (non-blocking:
+        // the menu paces itself by rendering) and refresh so new servers appear live.
+        // Don't query yet — peers[0] is the master connection during the fetch.
+        if ( !nServerInfo::GetFromMasterStep( 0.0f ) )
+        {
+            nServerInfo::GetFromMasterEnd( false );  // no prune: menu holds these items
+            // master disconnected (nSTANDALONE). Query everything now — servers
+            // already answered in prefetch keep their ping (advancedInfoSetEver),
+            // so re-querying them doesn't flicker back to "polling".
+            nServerInfo::StartQueryAll( sg_queryType );
+            continuePoll = true;
+            sg_phase = BR_QUERY;
+        }
+        static_cast<gServerMenu*>(menu)->Update();
+        break;
+    case BR_QUERY:
+        if (continuePoll)
+        {
+            continuePoll = nServerInfo::DoQueryAll(sg_simultaneous);
+            sn_Receive();
+            sn_SendPlanned();
+        }
+        break;
     }
 
 #ifndef DEDICATED
@@ -942,14 +998,14 @@ void gServerMenuItem::Enter()
 {
     nServerInfo::GetFromLANContinuouslyStop();
 
-    // B-4: if the master list is still streaming, close it out before joining so
-    // the game connect gets a clean peers[0] (otherwise the join blocks behind the
-    // in-progress master fetch).
-    if ( sg_fetchActive )
-    {
+    // B-4: if a prefetch or master fetch is still running, close it out before
+    // joining so the game connect gets a clean peers[0] (otherwise the join blocks
+    // behind the in-progress fetch).
+    if ( sg_phase == BR_MASTERFETCH )
         nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
-        sg_fetchActive = false;
-    }
+    else if ( sg_phase == BR_PREFETCH )
+        sn_SetNetState( nSTANDALONE );
+    sg_phase = BR_QUERY;
 
     menu->Exit();
 
