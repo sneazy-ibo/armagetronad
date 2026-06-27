@@ -42,6 +42,20 @@ something surprises you — it's cheaper than re-discovering it in a fresh sessi
 - Legacy **OpenGL display lists** are still used — frozen geometry snapshots. A trail
   that won't update visually is often a stale display list; invalidate it rather than
   mutating geometry to compensate (the corner-gap fix in `gWall.cpp`).
+- **`gluBuild2DMipmaps` is deprecated/removed on modern macOS.** Texture upload in
+  `rTexture.cpp` (`rISurfaceTexture::Upload`) still calls it. The modern replacement is
+  `glTexImage2D` + `glGenerateMipmap` (load `glGenerateMipmap` via
+  `SDL_GL_GetProcAddress` since it's not in the legacy GL header). Relevant to the
+  VBO/modern-GL task (#1). When you do migrate it, **keep the existing format
+  selection** (`sr_texturesTruecolor` → `GL_RGBA8`/`GL_RGB8`/`GL_RGBA4`/`GL_RGB5`) —
+  an early attempt flattened everything to `GL_RGBA` and lost that distinction.
+- **SDL3_image needs no `IMG_Init`.** `IMG_Load` works directly; `IMG_Init`/`IMG_Quit`
+  are no-ops/deprecated in SDL3_image. Don't reintroduce them.
+- `src/macosx/Info.plist`: bundle id is better as `$(PRODUCT_BUNDLE_IDENTIFIER)` (build
+  setting) than a hardcoded string; `NSHighResolutionCapable` should be set. Minor.
+- Background on the above: salvaged from an old SDL3 debug stash, archived at
+  `docs/archive/2026-06-16-sdl3-wip-stash.patch` (the implementation there was
+  throwaway cerr-laden scaffolding; only these facts are worth keeping).
 
 ## Timing
 

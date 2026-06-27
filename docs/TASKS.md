@@ -35,6 +35,8 @@ previously fired false positives on the custom types.
 
 ## Open items (not started)
 - [ ] #1 Decide: rip out OpenGL display lists for VBOs? (legacy frozen-geometry path)
+      Related modern-GL debt: `gluBuild2DMipmaps` (deprecated on modern macOS) in
+      `rTexture.cpp` → `glTexImage2D` + `glGenerateMipmap`. See docs/sharp-edges.md.
 - [ ] #2 Fix sound after the SDL2→SDL3 move.
 - [ ] #6 Lag-o-meter: 0.5-opacity "drive-through" zone at the trail end.
 - [ ] #7 Lag-o-meter: dynamic shape based on surrounding walls.
