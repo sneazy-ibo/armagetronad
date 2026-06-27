@@ -1562,7 +1562,9 @@ bool nServerInfo::GetFromMasterBegin( nServerInfoBase * masterInfo, char const *
     // connect to the master server
     con << tOutput("$network_master_connecting", masterInfo->GetName() );
     REAL connectStart = tSysTimeFloat();
-    switch(masterInfo->Connect( Login_Post0252 ))
+    // waitSync=false: the master has no game objects, so the post-login syncs are
+    // ~2s of dead round-trips. Skip them so the fetch starts almost immediately.
+    switch(masterInfo->Connect( Login_Post0252, NULL, false ))
     {
     case nOK:
         // remember how quickly it answered so the fastest master is tried first
@@ -2694,7 +2696,7 @@ bool nServerInfoBase::operator !=( const nServerInfoBase & other ) const
 //!
 // *******************************************************************************************
 
-nConnectError nServerInfoBase::Connect( nLoginType loginType, const nSocket * socket )
+nConnectError nServerInfoBase::Connect( nLoginType loginType, const nSocket * socket, bool waitSync )
 {
     // refuse to connect without address
     if ( !GetAddress().IsSet() )
@@ -2705,7 +2707,7 @@ nConnectError nServerInfoBase::Connect( nLoginType loginType, const nSocket * so
 
     //unsigned int portBack = sn_clientPort;
     //sn_clientPort = port_;
-    nConnectError error = sn_Connect( GetAddress(), loginType, socket );
+    nConnectError error = sn_Connect( GetAddress(), loginType, socket, waitSync );
     //sn_clientPort = portBack;
 
     return error;

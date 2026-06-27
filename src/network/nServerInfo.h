@@ -66,7 +66,7 @@ public:
     inline void GetFrom( nSocket const * socket );  //!< fills data from this server and the given socket
 
     //    nConnectError Connect();                      //!< connect to this server
-    nConnectError Connect( nLoginType loginType = Login_All, const nSocket * socket = NULL );  //!< connect to this server ( using the specified socket )
+    nConnectError Connect( nLoginType loginType = Login_All, const nSocket * socket = NULL, bool waitSync = true );  //!< connect to this server ( using the specified socket; waitSync=false skips post-login object syncs, for the master fetch )
 
     void CopyFrom( const nServerInfoBase & other );   //!< copies server info
 
