@@ -21,13 +21,25 @@ Plan + findings: `docs/server-browser-cooperative-fetch.md`. Paused 2026-06-27.
 - [ ] B-6: thread master-timeout retry through the step machine (today
       `GetFromMasterBegin` recurses into the blocking `GetFromMaster`).
 
-### std-library migration (planned, not started)
+### std-library migration (scoped 2026-06-28 — see docs/std-library-migration-scope.md)
 Goal: replace custom `tString` → `std::string` and `tJUST_CONTROLLED_PTR`/`tSafePTR`
 (src/tools/tSafePTR.h) → `std::shared_ptr`/`std::unique_ptr`, so we can turn on
 stricter safeguards (compiler warnings-as-errors, sanitizers, clang-tidy) that
 previously fired false positives on the custom types.
-- [ ] Scope it: inventory uses, decide migration order (leaf modules first), pick a
-      compatibility shim strategy so it can land incrementally and keep building.
+- [x] Scope it → `docs/std-library-migration-scope.md`. Two independent halves;
+      `tString` is the tractable one, smart-ptrs probably skippable. Headlines below.
+- [ ] **Step 0 (do first):** turn safeguards on, record which diagnostic fires on
+      which type. The "false positives" haven't been pinned to a type — measure
+      before refactoring. Likely it's `tString`'s `tArray<char>` storage, not the
+      pointers.
+- [ ] **Part A:** reparent `tString`/`tColoredString` onto `std::string` (one class,
+      not 99 files) — ~25 methods become wrappers, 1765 callsites unchanged. Trap:
+      `Len()` is `strlen+1` (NUL stored in array); preserve it, don't map to `size()`.
+- [ ] **Part B (probably skip):** intrusive refcount (`tReferencable`, 13 classes
+      incl. `nMessage` on the frozen-wire net path) → `std::shared_ptr` is NOT a
+      drop-in (intrusive vs control block, `tStackObject`, 89 AddRef/Release sites).
+      Default: keep intrusive, confirm it's sanitizer-clean. Migrate only leaf
+      classes if Step 0 proves they trip a check we want.
 - [ ] Turn on the extra safeguards once a unit is migrated; fix what they surface.
 - Note: during this project, modernising IS the task — but still one area at a time,
   building between steps. The CLAUDE.md "don't modernise in passing" rule is about
@@ -42,10 +54,16 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       `src/render/rMatrixState.{h,cpp}` + `rMatrixState_test.cpp` (passes). NOT in
       the build target yet — parked salvage for R-2/#1; no consumer.
 - [ ] R-1 (**keystone, unblocks the rest**): route raw immediate-mode GL through
-      `rRenderer`. ~170 sites in `gCycle`(35), `eDisplay`(34), `gWall`(16),
-      `gFloor`(8), `gZone`(7), `rModel`(5), `gExplosion`, `gHudMap`, `rViewport`,
-      `eCamera`. Template: `glVertex2f→Vertex`, `glTexCoord2f;glVertex2f→TexVertex`,
-      `glColor*→Color`, `glBegin/glEnd→Begin*/End`. Valuable even staying on GL.
+      `rRenderer`. SCOPED 2026-06-28 → `docs/r1-geometry-routing-scope.md`.
+      Correction to the count below: `Begin*/End` + matrix-mode are **already**
+      routed (rRender.h `#error`s `glBegin`); what leaks is the per-vertex calls
+      *inside* those blocks. Real target (game code): **137** raw
+      `glVertex/glTexCoord/glColor` → `Vertex/TexCoord/Color` (R-1a) + 3 stray debug
+      `glBegin` blocks; plus ~91 raw matrix calls → `PushMatrix/…` (R-1b, separable).
+      Mechanical 1:1; byte-identical on the current GL backend (verify per file, zero
+      visual diff). Heaviest: `gCycle` 49, `eDisplay` 39, `gWall` 26.
+      **Ponytail:** zero user-visible value alone — start only when R-2 or #1 is
+      committed; don't do it speculatively.
 - [ ] R-2 (**blocked by R-1**): Metal (or GL core profile) backend. Only worth it
       once R-1 lands. If we do it, take the lessons not their code: implement
       texture wrap, polygon offset, blendFunc/alphaFunc, a buffer ring; avoid the
@@ -71,10 +89,45 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       replaced it with a master **Volume** control (native `SDL_SetAudioStreamGain`).
       All Sound-menu items apply live. User confirmed audio + volume work.
       Music (fire.xm/SDL_mixer) is WIN32-only — out of scope. See dev-log + sharp-edges.
-- [ ] #6 Lag-o-meter: 0.5-opacity "drive-through" zone at the trail end.
-- [ ] #7 Lag-o-meter: dynamic shape based on surrounding walls.
+- [ ] #6 Lag-o-meter: 0.5-opacity "drive-through" zone at the trail end. SCOPED
+      2026-06-28 → `docs/lag-o-meter-scope.md`. SMALL/recommended: `gLaggometer::
+      LagOMeterRenderer` in gCycle.cpp already computes the triangle vertices — add a
+      `BeginTriangleFan` fill pass + alpha + blend + toggle. Design DECIDED: fill only
+      the **trail-end sub-region** (rear of the shape), not the whole triangle; rear
+      extent is a tuning knob. Render-only, no wire risk.
+- [ ] #7 Lag-o-meter: reachability-based shape. SCOPED + REFRAMED 2026-06-28 (user) →
+      same doc. Not "clip to walls" but "run the look-ahead, draw the reachable edge"
+      — handles holes from others' crashes for free (a hole = no eHalfEdge → sensor
+      reports through it). `drawTriangle`'s recursion already enumerates the
+      turn-branching reachable set; swap each branch's raw-`lag` extent for a
+      `MaxSpaceAhead`/`gSensor` wall-limited one. MEDIUM. HAZARD: read-only sensor
+      probes only — never the mutating Timestep/DoTurn (determinism). Do after #6.
 - [ ] #9 "Big slide" bug: new wall begin stamped ahead of the turn point. Experiments
       parked on branch `teleport-fix-attempt`.
+- [x] #10 Zone center marker: a vertical line at each zone's center, sticking up out of
+      the grid, same colour as the zone, toggled by a console command. SHIPPED
+      2026-06-28 (`gWinZone.cpp`): `ZONE_CENTER_LINE` (bool, default off) +
+      `ZONE_CENTER_LINE_HEIGHT` (world units, default 10). Drawn outside the cached
+      cylinder list via routed `BeginLines`/`Color`/`Vertex`. Builds clean. User
+      confirmed working in-game 2026-06-28. Original scope below.
+      SMALL, render-only (zero wire impact — `color_`/`pos` already synced).
+      Where: `gZone::Render` (`tron/gWinZone.cpp:445`, `#ifndef DEDICATED`, base class →
+      covers win/death/base/all zone types). Facts:
+      - The `glMultMatrixf(m)` frame maps local (0,0,z) → world (pos.x, pos.y,
+        `sg_zoneBottom` + z·`sg_zoneHeight`); local z=1 is the zone top
+        (`ZONE_HEIGHT` default 5). So a center line is local (0,0,0)→(0,0,k).
+      - Colour is already set by `glColor4f(color_.r,g,b,alpha)` at :474 — the line
+        inherits the zone colour for free (give it its own alpha if you don't want it
+        faded by the zone's `alpha`).
+      - **Draw it OUTSIDE the cached cylinder.** The cylinder is a `static rDisplayList
+        zoneList` keyed on `useAlpha`; emit the line as immediate geometry after that
+        block (after :530, before `glPopMatrix()` :532) so the toggle works instantly
+        with no list-invalidation. ~2 verts/zone/frame — trivial.
+      - Toggle: `static tSettingItem<bool>("ZONE_CENTER_LINE", sg_zoneCenterLine)`,
+        mirror `sg_laggometerUseOld`. Optional `ZONE_CENTER_LINE_HEIGHT` (world units →
+        local z = H/`sg_zoneHeight`) so "sticks up" isn't tied to `ZONE_HEIGHT`.
+      - Use `BeginLines()`/`Color`/`Vertex`/`RenderEnd` (routed) — also keeps it off
+        R-1's raw-GL list.
 
 ## Done (recent, for context)
 - [x] title.jpg wrong colours at launch — SDL3_image BGR/RGB swap (`rTexture.cpp`).

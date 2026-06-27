@@ -6,6 +6,33 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-06-28 — Scoped backlog tasks; shipped zone center marker (#10)
+
+**Scoped (new deep-dive docs):** `std-library-migration-scope.md` (two independent
+halves; `tString` reparent onto `std::string` is the tractable win, intrusive
+smart-ptrs probably skippable — measure which type trips the safeguards first),
+`r1-geometry-routing-scope.md` (corrected the review's count: Begin/End already
+routed, only ~137 per-vertex calls leak; zero user-visible value alone, do it only
+when a backend/VBO goal is committed), `lag-o-meter-scope.md` (#6 fill the trail-end
+sub-region — small; #7 reframed by user as "run the look-ahead, draw the reachable
+edge" — reuses `MaxSpaceAhead`/`gSensor`, holes fall out for free, read-only probes
+only).
+
+**Shipped (#10, `gWinZone.cpp`):** zone center marker — a vertical line at each
+zone's centre, same colour as the zone, sticking up out of the grid. New configs
+`ZONE_CENTER_LINE` (bool, default off) + `ZONE_CENTER_LINE_HEIGHT` (world units,
+default 10). Drawn **outside** the cached cylinder display list (after the fill
+block, before `glPopMatrix`) so the toggle applies instantly with no list
+invalidation; routed `BeginLines`/`Color`/`Vertex`. The active `glMultMatrixf` frame
+maps local (0,0,z)→world height `sg_zoneBottom + z*sg_zoneHeight`, so the line at
+x=y=0 rides the zone axis; top local z = `height / sg_zoneHeight`. Render-only, base
+`gZone::Render` so it covers all zone types, zero wire impact. **Builds clean; user
+confirmed working in-game** (set `ZONE_CENTER_LINE 1`).
+
+**Next:** confirm #10 visually; then #6 (lag-o-meter fill) or scope B-5/B-6.
+
+---
+
 ## 2026-06-27 — Reviewed RCL's Metal port; salvaged rMatrixState
 
 Reviewed a friend's AI-assisted Metal rendering port (`retrocyclesleague/
