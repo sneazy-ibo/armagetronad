@@ -1616,7 +1616,7 @@ bool nServerInfo::GetFromMasterBegin( nServerInfoBase * masterInfo, char const *
     return true;
 }
 
-bool nServerInfo::GetFromMasterStep()
+bool nServerInfo::GetFromMasterStep( REAL selectTimeout )
 {
     if ( !( sn_GetNetState() == nCLIENT && sn_fetchTimeout > tSysTimeFloat() ) )
         return false;
@@ -1625,8 +1625,10 @@ bool nServerInfo::GetFromMasterStep()
     sn_SendPlanned();
     // Block on the socket instead of sleeping a fixed 100ms: select() wakes the
     // moment the master sends more, so the list drains at network speed rather
-    // than ~10 reads/sec.  Idle wait is still capped (timeout cadence).
-    sn_BasicNetworkSystem.Select( 0.1f );
+    // than ~10 reads/sec.  Idle wait is still capped (timeout cadence). When the
+    // caller renders every frame (the browser pump), it passes 0 so the menu
+    // stays smooth and we just drain whatever has arrived.
+    sn_BasicNetworkSystem.Select( selectTimeout );
     tAdvanceFrame();
     st_DoToDo();
     // pump OS events so the window stays responsive (no macOS beach ball) during
@@ -1635,16 +1637,19 @@ bool nServerInfo::GetFromMasterStep()
     return true;
 }
 
-void nServerInfo::GetFromMasterEnd()
+void nServerInfo::GetFromMasterEnd( bool pruneStale )
 {
     tOutput o;
     o.SetTemplateParameter(1, sn_ServerCount);
     o << "$network_master_finish";
     con << o;
 
-    // remove servers that are no longer listed on the master
+    // remove servers that are no longer listed on the master. Skipped on the
+    // live-menu path: the open browser holds menu items pointing at these
+    // gServerInfos, so deleting them here would dangle. The next browse's
+    // DeleteAll clears any stale ones anyway.
     nServerInfo * run = GetFirstServer();
-    while (run)
+    while (pruneStale && run)
     {
         nServerInfo * next = run->Next();
         if ( !run->stillOnMasterServer )
@@ -1673,6 +1678,28 @@ void nServerInfo::GetFromMasterEnd()
     sn_AcceptingFromMaster = false;
 
     tAdvanceFrame();
+}
+
+bool nServerInfo::GetFromMasterStart( nServerInfoBase * masterInfo, char const * fileSuffix )
+{
+    sn_AcceptingFromMaster = true;
+
+    if ( !fileSuffix )
+        fileSuffix = "";
+
+    bool multiMaster = false;
+    if ( !masterInfo )
+    {
+        multiMaster = true;
+        masterInfo = GetBestMaster();
+    }
+
+    if ( !masterInfo )
+        return false;
+
+    // connect + send request now (fast: master syncs are skipped), then the
+    // caller drives GetFromMasterStep from its per-frame menu pump.
+    return GetFromMasterBegin( masterInfo, fileSuffix, multiMaster );
 }
 
 void nServerInfo::GetFromMaster(nServerInfoBase *masterInfo, char const * fileSuffix )

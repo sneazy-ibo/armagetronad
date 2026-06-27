@@ -277,9 +277,10 @@ public:
 
     static void GetFromMaster(nServerInfoBase *masterInfo=NULL, char const * fileSuffix = NULL );  // get all the basic infos from the master server, stored in the server info file of the given suffix
     // cooperative split of GetFromMaster: Begin (connect+request) -> Step* (pump) -> End (prune+save)
+    static bool GetFromMasterStart( nServerInfoBase * masterInfo, char const * fileSuffix ); //!< master-selection preamble + Begin; true if a fetch is live and Step-able from a caller's pump
     static bool GetFromMasterBegin( nServerInfoBase * masterInfo, char const * fileSuffix, bool multiMaster ); //!< returns false if the fetch aborted/finished during begin
-    static bool GetFromMasterStep();  //!< pumps one iteration; false when the fetch is done
-    static void GetFromMasterEnd();   //!< finishes the fetch (prune outdated servers, save)
+    static bool GetFromMasterStep( REAL selectTimeout = 0.1f );  //!< pumps one iteration; false when the fetch is done. selectTimeout=0 for callers (menu pump) that pace themselves by rendering
+    static void GetFromMasterEnd( bool pruneStale = true );   //!< finishes the fetch (optionally prune outdated servers, save). pruneStale=false on the live-menu path to avoid deleting servers the menu still points at
 
     static void TellMasterAboutMe(nServerInfoBase *masterInfo=NULL);  // dedicated server: tell master server about my existence
 

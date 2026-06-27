@@ -53,6 +53,9 @@ int gServerBrowser::lowPort  = 4534;
 
 int gServerBrowser::highPort = 4540;
 static bool continuePoll = false;
+// B-4: while true, the master list is still streaming in and the menu pump drives
+// GetFromMasterStep instead of querying (peers[0] is the master during the fetch).
+static bool sg_fetchActive = false;
 static int sg_simultaneous = 20;
 static tSettingItem< int > sg_simultaneousConf( "BROWSER_QUERIES_SIMULTANEOUS", sg_simultaneous );
 
@@ -61,6 +64,12 @@ static tOutput *sg_StartHelpText = NULL;
 nServerInfo::QueryType sg_queryType = nServerInfo::QUERY_OPTOUT;
 tCONFIG_ENUM( nServerInfo::QueryType );
 static tSettingItem< nServerInfo::QueryType > sg_query_type( "BROWSER_QUERY_FILTER", sg_queryType );
+
+// B-4: when opening the browser on the cached list, ping the first-page servers
+// whose cached ping is at or below this (seconds) right away, before the slow
+// master refresh, so the visible fast servers update almost immediately.
+REAL sg_prefetchPingMax = 0.1f;
+static tSettingItem< REAL > sg_prefetchPingMaxConf( "BROWSER_PREFETCH_PING", sg_prefetchPingMax );
 
 class gServerMenuItem;
 
@@ -226,9 +235,10 @@ void gServerBrowser::BrowseSpecialMaster( nServerInfoBase * master, char const *
     bool to=sr_textOut;
     sr_textOut=true;
 
-    nServerInfo::DeleteAll();
-    nServerInfo::GetFromMaster( master, prefix );
-    nServerInfo::Save();
+    // B-4: don't block on the full master fetch. GetFromMasterStart loads the
+    // cached list and kicks off the master connection; the menu opens immediately
+    // on the cache and the browser pump streams in the rest (see RenderBackground).
+    sg_fetchActive = nServerInfo::GetFromMasterStart( master, prefix );
 
     //  gLogo::SetBig(true);
     //  gLogo::SetSpinning(false);
@@ -274,6 +284,8 @@ void gServerBrowser::BrowseLAN()
     nServerInfo::DeleteAll();
     nServerInfo::GetFromLAN(lowPort, highPort);
 
+    sg_fetchActive = false;  // LAN fetch is synchronous; don't let the pump drive a master step
+
     sr_textOut = to;
 
     tOutput StartHelpTextLAN("$network_master_host_lan_help");
@@ -289,8 +301,19 @@ void gServerBrowser::BrowseServers()
 {
     //nServerInfo::CalcScoreAll();
     //nServerInfo::Sort();
-    nServerInfo::StartQueryAll( sg_queryType );
-    continuePoll = true;
+    // B-4: while the master list is still arriving, defer querying — peers[0] is
+    // the master connection during the fetch, so querying a game server would
+    // hijack it (see Option-B doc, #2). The pump starts queries once the fetch
+    // ends. When there's no live fetch (LAN, or fetch failed) query right away.
+    if ( !sg_fetchActive )
+    {
+        nServerInfo::StartQueryAll( sg_queryType );
+        continuePoll = true;
+    }
+    else
+    {
+        continuePoll = false;
+    }
 
     gServerMenu browser("Server Browser");
 
@@ -312,6 +335,15 @@ void gServerBrowser::BrowseServers()
     while(su_GetSDLInput(ignore, time)) ;
 
     browser.Enter();
+
+    // B-4: if the user left the browser before the master list finished arriving,
+    // close out the fetch now (no prune — the menu items are about to be torn down
+    // anyway, and the next browse re-fetches).
+    if ( sg_fetchActive )
+    {
+        nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
+        sg_fetchActive = false;
+    }
 
     nServerInfo::GetFromLANContinuouslyStop();
 
@@ -869,7 +901,22 @@ void gBrowserMenuItem::RenderBackground()
     sn_SendPlanned();
 
     menu->GenericBackground();
-    if (continuePoll)
+    if (sg_fetchActive)
+    {
+        // B-4: the master list is still streaming in. Pump one fetch step and
+        // refresh the menu so new servers appear live. Don't query yet — peers[0]
+        // is the master connection during the fetch.
+        if ( !nServerInfo::GetFromMasterStep( 0.0f ) )  // non-blocking: menu paces itself by rendering
+        {
+            nServerInfo::GetFromMasterEnd( false );  // no prune: menu holds these items
+            sg_fetchActive = false;
+            // fetch done, master disconnected (nSTANDALONE) — now query everything
+            nServerInfo::StartQueryAll( sg_queryType );
+            continuePoll = true;
+        }
+        static_cast<gServerMenu*>(menu)->Update();
+    }
+    else if (continuePoll)
     {
         continuePoll = nServerInfo::DoQueryAll(sg_simultaneous);
         sn_Receive();
@@ -894,6 +941,15 @@ void gBrowserMenuItem::RenderBackground()
 void gServerMenuItem::Enter()
 {
     nServerInfo::GetFromLANContinuouslyStop();
+
+    // B-4: if the master list is still streaming, close it out before joining so
+    // the game connect gets a clean peers[0] (otherwise the join blocks behind the
+    // in-progress master fetch).
+    if ( sg_fetchActive )
+    {
+        nServerInfo::GetFromMasterEnd( false );  // sets nSTANDALONE + saves
+        sg_fetchActive = false;
+    }
 
     menu->Exit();
 
