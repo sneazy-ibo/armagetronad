@@ -93,11 +93,21 @@ something add it:
 - `docs/TASKS.md` — backlog + project status (tick off / add items each session).
 - `docs/dev-log.md` — newest-first session log (add an entry when you finish work).
 - `docs/sharp-edges.md` — gotchas + lessons (add when something surprises you).
-- `docs/server-browser-cooperative-fetch.md` — the network/browser deep-dive.
-Read TASKS + the top dev-log entry first to know where things stand.
+- Deep-dives (e.g. `docs/server-browser-cooperative-fetch.md`,
+  `docs/metal-port-review.md`) — one per area, as the work warrants.
+**At session start, read through the docs before touching code** — at minimum
+`TASKS.md` and the top `dev-log.md` entry, but skim `sharp-edges.md` and the
+deep-dives too. The notes are the source of truth for where things stand; don't
+re-derive from the code what a doc already records.
 
 ## Git
 - Don't commit or push unless asked. Branch off `trunk` for PRs.
+- **A `git-clang-format` pre-commit hook reformats changed lines** and *aborts* the
+  commit when it does, leaving the reflow unstaged — so a naive commit needs two
+  tries. Avoid that: stage, then run the formatter yourself before committing:
+  `git add <files> && pre-commit run --files <files> ; git add <files>` then commit.
+  (`pre-commit run` exits non-zero if it changed anything — that's fine; just re-add.)
+  One clean pass, no failed first commit.
 - End commit messages with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
 - Commit signing is configured; if it ever fails with a key/agent error, ask the
   user rather than disabling signing.
