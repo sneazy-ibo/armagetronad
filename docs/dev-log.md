@@ -6,6 +6,39 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-06-27 — Reviewed RCL's Metal port; salvaged rMatrixState
+
+Reviewed a friend's AI-assisted Metal rendering port (`retrocyclesleague/
+armagetronad-rcl`, commit `2a9b7d43`). Full writeup: `docs/metal-port-review.md`.
+
+**Headline finding:** the port is a well-structured *scaffold* that renders ~5%
+of the game, not a working backend. Its GL→Metal shim only intercepts matrix/state
+calls; the ~170 raw `glBegin/glVertex` immediate-mode sites (gCycle, eDisplay,
+gWall, gZone, gFloor, rModel…) bypass the `rRenderer` abstraction entirely, so
+Metal (which has no GL context) draws only clear+fonts+floor+logo. The fragile
+`#define gl* sr_metal_gl*` macro hijack (which crashed them with infinite
+recursion) exists *only* because geometry bypasses `rRenderer`.
+
+**Lesson, now in TASKS as a dependency chain (R-0…R-3):** the real prerequisite
+for Metal *or* the VBO/core-profile task (#1) is **R-1 — route raw GL through
+`rRenderer` first.** That's a GL-only refactor worth doing regardless of backend.
+
+**Salvaged:** `rMatrixState` (their software matrix stack) → `src/render/
+rMatrixState.{h,cpp}` + a framework-free self-check `rMatrixState_test.cpp`
+(passes: `clang++ -std=c++17 src/render/rMatrixState_test.cpp -o /tmp/mtest`).
+Pure column-major matrix math, no GL dependency, reusable for any core-profile
+path. **Not wired into the Xcode target** — no consumer yet, parked salvage.
+
+**Also noted (didn't take):** their SDL3 audio port is the *same* approach we
+already shipped (#2) — independent confirmation ours is right. Menu/RCL-theme
+work is fork-specific. Two SDL3/macOS footguns from their devlog logged in
+metal-port-review.md (DATA_DIR startup crash; server-browser destructor segfault).
+
+**Next:** unchanged backlog — or start R-1 (the keystone refactor), which also
+unblocks #1.
+
+---
+
 ## 2026-06-27 — SDL3 sound port (#2)
 
 **Changed (`src/engine/eSound.cpp`, `language/english_base.txt`):** the software
@@ -33,11 +66,13 @@ already live (the mix callback reads `sound_sources` each call). `se_SoundMenu` 
 just `Sound_menu.Enter()`.
 
 **Builds clean.** clang-tidy on the file is all pre-existing noise except one int→float
-narrowing in my gain calc, now an explicit `static_cast`. **Not yet verified audible** —
-needs a launch + listen (engine/explosion sounds, then test the Volume slider).
+narrowing in my gain calc, now an explicit `static_cast`. **User confirmed** audio,
+volume, and live quality switching all work. Shipped as `4367655d`; #2 ticked off.
 
-**Next:** user confirms sound plays; if a WAV fails to load on a weird format, wire
-`SDL_ConvertAudioSamples` (currently still throws, as before). Otherwise #2 closes.
+**Next:** sound is closed. Pick from the backlog — server-browser B-5 (hover prefetch)
+or B-6 (master retry through the step machine), or scope the std-library migration.
+The one deferred sound item if it ever bites: a WAV in an unsupported format still
+throws (as before) — wire `SDL_ConvertAudioSamples` then.
 
 ---
 

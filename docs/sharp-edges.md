@@ -75,6 +75,28 @@ something surprises you — it's cheaper than re-discovering it in a fresh sessi
 - **Music (`fire.xm` via SDL_mixer) is WIN32-only** (`HAVE_LIBSDL_MIXER`). The mac
   build never had it; don't reintroduce SDL3_mixer for the mac path.
 
+## Renderer abstraction (learned from RCL's Metal port — docs/metal-port-review.md)
+
+- **Most gameplay rendering bypasses the `rRenderer` abstraction.** Only
+  `gFloor.cpp` and `gLogo.cpp` go through `renderer->`; ~170 sites across
+  `gCycle`, `eDisplay`, `gWall`, `gZone`, `gFloor`, `rModel`, `gExplosion`,
+  `gHudMap`, `rViewport`, `eCamera` call raw immediate-mode `glBegin/glVertex/
+  glTexCoord/glColor`. **Any** renderer swap (Metal, GL core profile, VBOs for
+  task #1) is blocked on routing those through `rRenderer` first (TASKS R-1).
+  A backend added before that refactor can only draw clear+fonts+floor+logo.
+- **Don't intercept GL with `#define gl* sr_metal_gl*` macros** (RCL's approach).
+  It's a textual hijack across every TU, it caused an infinite-recursion stack
+  overflow there, and it only exists to paper over the bypass above. Route
+  through the `rRenderer` vtable instead — it already exists.
+- **A backend switch can reuse `sr_ReinitDisplay`** (`sr_ExitDisplay` +
+  `sr_InitDisplay`, the resolution-menu path, `gMenus.cpp:283`): it rebuilds the
+  window + context and regenerates textures/display lists. So an in-game
+  "Renderer" menu item is low-effort — but only useful once an alternate backend
+  actually renders the game.
+- **`rMatrixState` is salvaged** (`src/render/rMatrixState.{h,cpp}`, self-check in
+  `rMatrixState_test.cpp`) for when we need a software matrix stack (core profile
+  drops the fixed-function one). Not in the build target yet — no consumer.
+
 ## Timing
 
 - `tSysTimeFloat()` is frame-stamped (same value within a frame); `tRealSysTimeFloat()`

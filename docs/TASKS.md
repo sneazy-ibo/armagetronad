@@ -33,10 +33,38 @@ previously fired false positives on the custom types.
   building between steps. The CLAUDE.md "don't modernise in passing" rule is about
   *incidental* changes, not this sanctioned effort.
 
+### Renderer abstraction / Metal (reviewed RCL's port — see docs/metal-port-review.md)
+Lesson from the friend's Metal branch: a backend swap that doesn't first route
+geometry through `rRenderer` produces a scaffold that can't draw the game (theirs
+renders ~5%: clear+fonts+floor+logo, because ~170 raw `glBegin/glVertex` sites
+bypass the abstraction). So the ordering below is a hard dependency chain.
+- [x] R-0: Salvage `rMatrixState` (software matrix stack) + self-check. Lifted to
+      `src/render/rMatrixState.{h,cpp}` + `rMatrixState_test.cpp` (passes). NOT in
+      the build target yet — parked salvage for R-2/#1; no consumer.
+- [ ] R-1 (**keystone, unblocks the rest**): route raw immediate-mode GL through
+      `rRenderer`. ~170 sites in `gCycle`(35), `eDisplay`(34), `gWall`(16),
+      `gFloor`(8), `gZone`(7), `rModel`(5), `gExplosion`, `gHudMap`, `rViewport`,
+      `eCamera`. Template: `glVertex2f→Vertex`, `glTexCoord2f;glVertex2f→TexVertex`,
+      `glColor*→Color`, `glBegin/glEnd→Begin*/End`. Valuable even staying on GL.
+- [ ] R-2 (**blocked by R-1**): Metal (or GL core profile) backend. Only worth it
+      once R-1 lands. If we do it, take the lessons not their code: implement
+      texture wrap, polygon offset, blendFunc/alphaFunc, a buffer ring; avoid the
+      `#define gl* sr_metal_gl*` macro shim (it caused a recursion crash on theirs
+      and only exists because geometry bypasses `rRenderer` — R-1 removes the need).
+- [ ] R-3 (**blocked by R-2**): in-game menu item to select the rendering backend.
+      FEASIBLE & low-effort: a `uMenuItemSelection<int>` bound to the
+      `ARMAGETRON_GRAPHICS_BACKEND`-style config, applied via the existing
+      `sr_ReinitDisplay` path (the same `sr_ExitDisplay`+`sr_InitDisplay` the
+      resolution menu uses, `gMenus.cpp:283`) — window flags + context get rebuilt,
+      textures/lists already regenerate on reinit. Pointless until R-2 makes the
+      alternate backend actually render. Hide the item on non-Metal platforms.
+
 ## Open items (not started)
 - [ ] #1 Decide: rip out OpenGL display lists for VBOs? (legacy frozen-geometry path)
       Related modern-GL debt: `gluBuild2DMipmaps` (deprecated on modern macOS) in
       `rTexture.cpp` → `glTexImage2D` + `glGenerateMipmap`. See docs/sharp-edges.md.
+      NOTE: shares the R-1 prerequisite (route geometry through `rRenderer`) and can
+      reuse the salvaged `rMatrixState` for a core-profile path. See metal-port-review.md.
 - [x] #2 Fix sound after the SDL2→SDL3 move. Ported the device glue in `eSound.cpp`
       to SDL3 (`SDL_OpenAudioDeviceStream` + get-callback, lock/pause/destroy);
       restored real audio locking; dropped the dead "Buffer Length" menu knob and
