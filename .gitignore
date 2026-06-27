@@ -128,3 +128,6 @@ compile_commands.json
 
 # xcode-build-server config (machine-specific: absolute paths + DerivedData hash)
 buildServer.json
+
+# Xcode per-user state (UI layout, scheme order, breakpoints) — never shared
+xcuserdata/
