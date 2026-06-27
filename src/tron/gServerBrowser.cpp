@@ -731,7 +731,7 @@ void gServerMenuItem::Render(REAL x,REAL y,REAL alpha, bool selected)
 
         if ( sg_filterServernameColorStrings )
             name << tColoredString::RemoveColors( server->GetName(), false );
-	else if ( sg_filterServernameDarkColorStrings )
+        else if ( sg_filterServernameDarkColorStrings )
             name << tColoredString::RemoveColors( server->GetName(), true );
         else
         {
