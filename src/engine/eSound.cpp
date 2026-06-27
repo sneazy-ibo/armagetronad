@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tRandom.h"
 #include "tError.h"
 #include <string>
+#include <vector>
 #include "tConfiguration.h"
 #include "uMenu.h"
 #include "eCamera.h"
@@ -56,6 +57,7 @@ static Mix_Music* music = NULL;
 static SDL_AudioSpec audio;
 static bool sound_is_there=false;
 static bool uses_sdl_mixer=false;
+static SDL_AudioStream* sg_audioStream = NULL;
 #endif
 
 // sound quality
@@ -65,13 +67,8 @@ static bool uses_sdl_mixer=false;
 #define SOUND_MED 2
 #define SOUND_HIGH 3
 
-#ifdef WIN32
-static int buffer_shift=1;
-#else
-static int buffer_shift=0;
-#endif
-
-static tConfItem<int> bs("SOUND_BUFFER_SHIFT",buffer_shift);
+static int sound_volume = 100; // master output gain, 0..100
+static tConfItem<int> sv("SOUND_VOLUME", sound_volume);
 
 static int sound_quality=SOUND_MED;
 static tConfItem<int> sq("SOUND_QUALITY",sound_quality);
@@ -83,10 +80,23 @@ static int real_sound_sources=0;
 
 static tList<eSoundPlayer> se_globalPlayers;
 
-
-void fill_audio(void *udata, Uint8 *stream, int len)
+void fill_audio(void* udata, SDL_AudioStream* out, int additional, int total)
 {
 #ifndef DEDICATED
+    (void)udata;
+    (void)total;
+    if (additional <= 0)
+        return;
+
+    // SDL3 hands us a stream to fill, not a pre-silenced device buffer. The mix
+    // below is additive (reads dest before writing), so start from silence.
+    static std::vector<Uint8> buffer;
+    if ((int)buffer.size() < additional)
+        buffer.resize(additional);
+    Uint8* stream = buffer.data();
+    int len = additional;
+    memset(stream, 0, additional);
+
     real_sound_sources=0;
     int i;
     if (eGrid::CurrentGrid())
@@ -110,6 +120,8 @@ void fill_audio(void *udata, Uint8 *stream, int len)
         loudness_thresh-=.0001;
     if (loudness_thresh<0)
         loudness_thresh=0;
+
+    SDL_PutAudioStreamData(out, stream, additional);
 #endif
 }
 
@@ -189,11 +201,19 @@ void se_SoundInit()
         desired.format = SDL_AUDIO_S16;
         desired.channels = 2;
 
-        // ponytail: SDL3 removed callback-based SDL_OpenAudio; audio pending rewrite
-        (void)desired;
-        sound_is_there = false;
+        // SDL3 audio streams auto-convert to the device format, so we always
+        // get our S16 stereo spec back — no 16-bit-emulation fallback needed.
+        sg_audioStream = SDL_OpenAudioDeviceStream(
+            SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &desired, fill_audio, NULL);
+        sound_is_there = (sg_audioStream != NULL);
 
-        if (!sound_is_there)
+        if (sound_is_there)
+        {
+            audio = desired;
+            SDL_SetAudioStreamGain(sg_audioStream, static_cast<float>(sound_volume) / 100.0f);
+            se_SoundPause(false); // streams start paused; resume
+        }
+        else
             con << tOutput("$sound_error_initfailed");
     }
 
@@ -220,7 +240,11 @@ void se_SoundExit(){
         //    for(int i=wavs.Len()-1;i>=0;i--)
         //wavs(i)->Exit();
 
-        // ponytail: SDL_CloseAudio removed in SDL3
+        if (sg_audioStream)
+        {
+            SDL_DestroyAudioStream(sg_audioStream); // also closes the bound device
+            sg_audioStream = NULL;
+        }
 
 #ifdef DEBUG
         con << tOutput("$sound_disabling_done");
@@ -236,19 +260,30 @@ static unsigned int locks;
 
 void se_SoundLock(){
 #ifndef DEDICATED
-    locks++; // ponytail: SDL_LockAudio removed in SDL3; no-op for now
+    if (sg_audioStream && !locks)
+        SDL_LockAudioStream(sg_audioStream);
+    locks++;
 #endif
 }
 
 void se_SoundUnlock(){
 #ifndef DEDICATED
     locks--;
+    if (sg_audioStream && !locks)
+        SDL_UnlockAudioStream(sg_audioStream);
 #endif
 }
 
-void se_SoundPause(bool)
+void se_SoundPause(bool pause)
 {
-    // ponytail: SDL_PauseAudio removed in SDL3; no-op for now
+#ifndef DEDICATED
+    if (!sg_audioStream)
+        return;
+    if (pause)
+        SDL_PauseAudioStreamDevice(sg_audioStream);
+    else
+        SDL_ResumeAudioStreamDevice(sg_audioStream);
+#endif
 }
 
 // ***********************************************************
@@ -734,11 +769,27 @@ static uMenuItemInt sources_men
  "$sound_menu_sources_help",
  sound_sources,2,20,2);
 
-static uMenuItemSelection<int> sq_men
-(&Sound_menu,"$sound_menu_quality_text",
- "$sound_menu_quality_help",
- sound_quality);
+// re-initialise the audio device the instant the quality changes
+class eSoundQualityMenuItem : public uMenuItemSelection<int>
+{
+public:
+    eSoundQualityMenuItem(uMenu* m, int& targ)
+        : uMenuItemSelection<int>(m, "$sound_menu_quality_text",
+                                  "$sound_menu_quality_help", targ) {}
 
+    virtual void LeftRight(int lr)
+    {
+        int old = sound_quality;
+        uMenuItemSelection<int>::LeftRight(lr);
+        if (sound_quality != old)
+        {
+            se_SoundExit();
+            se_SoundInit();
+        }
+    }
+};
+
+static eSoundQualityMenuItem sq_men(&Sound_menu, sound_quality);
 
 static uSelectEntry<int> a(sq_men,
                            "$sound_menu_quality_off_text",
@@ -757,50 +808,30 @@ static uSelectEntry<int> d(sq_men,
                            "$sound_menu_quality_high_help",
                            SOUND_HIGH);
 
-static uMenuItemSelection<int> bm_men
-(&Sound_menu,
- "$sound_menu_buffer_text",
- "$sound_menu_buffer_help",
- buffer_shift);
+// applies the new master volume the instant the slider moves
+class eSoundVolumeMenuItem : public uMenuItemInt
+{
+public:
+    eSoundVolumeMenuItem(uMenu* m, int& targ)
+        : uMenuItemInt(m, "$sound_menu_volume_text", "$sound_menu_volume_help",
+                       targ, 0, 100, 10) {}
 
-static uSelectEntry<int> ba(bm_men,
-                            "$sound_menu_buffer_vsmall_text",
-                            "$sound_menu_buffer_vsmall_help",
-                            -2);
+    virtual void LeftRight(int dir)
+    {
+        uMenuItemInt::LeftRight(dir);
+#ifndef DEDICATED
+        if (sg_audioStream)
+            SDL_SetAudioStreamGain(sg_audioStream, static_cast<float>(sound_volume) / 100.0f);
+#endif
+    }
+};
 
-static uSelectEntry<int> bb(bm_men,
-                            "$sound_menu_buffer_small_text",
-                            "$sound_menu_buffer_small_help",
-                            -1);
-
-static uSelectEntry<int> bc(bm_men,
-                            "$sound_menu_buffer_med_text",
-                            "$sound_menu_buffer_med_help",
-                            0);
-
-static uSelectEntry<int> bd(bm_men,
-                            "$sound_menu_buffer_high_text",
-                            "$sound_menu_buffer_high_help",
-                            1);
-
-static uSelectEntry<int> be(bm_men,
-                            "$sound_menu_buffer_vhigh_text",
-                            "$sound_menu_buffer_vhigh_help",
-                            2);
-
+static eSoundVolumeMenuItem volume_men(&Sound_menu, sound_volume);
 
 void se_SoundMenu(){
-    //	se_SoundPause(true);
-    //	se_SoundLock();
-    int oldsettings=sound_quality;
-    int oldshift=buffer_shift;
+    // every item applies live (quality re-inits, volume sets gain, sources is read
+    // by the mix callback each call), so nothing to reconcile on close.
     Sound_menu.Enter();
-    if (oldsettings!=sound_quality || oldshift!=buffer_shift){
-        se_SoundExit();
-        se_SoundInit();
-    }
-    //	se_SoundUnlock();
-    //  se_SoundPause(false);
 }
 
 eSoundLocker::eSoundLocker()

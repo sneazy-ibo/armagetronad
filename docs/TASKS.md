@@ -37,7 +37,12 @@ previously fired false positives on the custom types.
 - [ ] #1 Decide: rip out OpenGL display lists for VBOs? (legacy frozen-geometry path)
       Related modern-GL debt: `gluBuild2DMipmaps` (deprecated on modern macOS) in
       `rTexture.cpp` → `glTexImage2D` + `glGenerateMipmap`. See docs/sharp-edges.md.
-- [ ] #2 Fix sound after the SDL2→SDL3 move.
+- [x] #2 Fix sound after the SDL2→SDL3 move. Ported the device glue in `eSound.cpp`
+      to SDL3 (`SDL_OpenAudioDeviceStream` + get-callback, lock/pause/destroy);
+      restored real audio locking; dropped the dead "Buffer Length" menu knob and
+      replaced it with a master **Volume** control (native `SDL_SetAudioStreamGain`).
+      All Sound-menu items apply live. User confirmed audio + volume work.
+      Music (fire.xm/SDL_mixer) is WIN32-only — out of scope. See dev-log + sharp-edges.
 - [ ] #6 Lag-o-meter: 0.5-opacity "drive-through" zone at the trail end.
 - [ ] #7 Lag-o-meter: dynamic shape based on surrounding walls.
 - [ ] #9 "Big slide" bug: new wall begin stamped ahead of the turn point. Experiments

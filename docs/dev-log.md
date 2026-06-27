@@ -6,6 +6,41 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-06-27 — SDL3 sound port (#2)
+
+**Changed (`src/engine/eSound.cpp`, `language/english_base.txt`):** the software
+mixer was fully intact — only the SDL device glue was stubbed. Ported the five
+stubs to SDL3:
+- `se_SoundInit`: `SDL_OpenAudioDeviceStream(DEFAULT_PLAYBACK, &spec, fill_audio, NULL)`
+  + `SDL_ResumeAudioStreamDevice`. SDL3 streams auto-convert to device format, so the
+  old 16-bit-stereo emulation fallback isn't needed (never existed in the stub).
+- `fill_audio`: new SDL3 callback sig `(udata, SDL_AudioStream*, additional, total)`.
+  **Mixes into a zeroed static buffer then `SDL_PutAudioStreamData`** — the mix is
+  additive (reads dest first) and SDL3 doesn't hand you silence, so the memset is
+  load-bearing (SDL2 device buffer used to arrive silent).
+- pause→`SDL_Pause/ResumeAudioStreamDevice`; close→`SDL_DestroyAudioStream`;
+  lock→`SDL_Lock/UnlockAudioStream` (restored real locking — the stub `locks++` was a
+  latent race on the global player list).
+
+**Also:** dropped the "Buffer Length" menu knob (SDL3 `SDL_AudioSpec` has no `samples`
+field; the knob did nothing) and replaced it with a master **Volume** slider (0–100,
+step 10, `SOUND_VOLUME` config) applied via native `SDL_SetAudioStreamGain`.
+
+**All Sound-menu items now apply live** (no longer only on menu exit): tiny
+`uMenuItem` subclasses override `LeftRight` — `eSoundQualityMenuItem` re-inits the
+device on quality change, `eSoundVolumeMenuItem` sets the gain per step. Sources was
+already live (the mix callback reads `sound_sources` each call). `se_SoundMenu` is now
+just `Sound_menu.Enter()`.
+
+**Builds clean.** clang-tidy on the file is all pre-existing noise except one int→float
+narrowing in my gain calc, now an explicit `static_cast`. **Not yet verified audible** —
+needs a launch + listen (engine/explosion sounds, then test the Volume slider).
+
+**Next:** user confirms sound plays; if a WAV fails to load on a weird format, wire
+`SDL_ConvertAudioSamples` (currently still throws, as before). Otherwise #2 closes.
+
+---
+
 ## 2026-06-27 — server browser load time (Option B / B-4)
 
 **Shipped (committed on `macos0.2.9.3.0`):**

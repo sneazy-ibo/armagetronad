@@ -57,6 +57,24 @@ something surprises you — it's cheaper than re-discovering it in a fresh sessi
   `docs/archive/2026-06-16-sdl3-wip-stash.patch` (the implementation there was
   throwaway cerr-laden scaffolding; only these facts are worth keeping).
 
+## Audio (SDL3)
+
+- **The mixer is the asset, not the SDL glue.** `eSound.cpp`'s software mixer
+  (`fill_audio` → camera/global-player `Mix`) survived the SDL2→SDL3 move untouched;
+  only the device open/close/lock/pause was stubbed. Port the glue, leave the mixer.
+- **SDL3 get-callback hands you a stream, not a silenced buffer.** The mix is
+  *additive* (reads `dest` before writing), so the callback **must memset its working
+  buffer to silence** before mixing, then `SDL_PutAudioStreamData`. SDL2's device
+  buffer used to arrive silent, hiding this. Skipping the memset = garbage/noise.
+- **`SDL_AudioSpec` lost `samples` in SDL3** — that's why the old "Buffer Length" menu
+  knob became dead and was replaced by a Volume slider. Master volume = native
+  `SDL_SetAudioStreamGain(stream, 0..1)`; don't hand-scale the buffer.
+- **Audio locking is real again.** `eSoundLocker`/`se_SoundLock` wrap
+  `SDL_Lock/UnlockAudioStream` (only at depth 0). It guards the global player list
+  from the SDL audio thread; the interim no-op stub was a latent data race.
+- **Music (`fire.xm` via SDL_mixer) is WIN32-only** (`HAVE_LIBSDL_MIXER`). The mac
+  build never had it; don't reintroduce SDL3_mixer for the mac path.
+
 ## Timing
 
 - `tSysTimeFloat()` is frame-stamped (same value within a frame); `tRealSysTimeFloat()`
