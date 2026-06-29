@@ -89,12 +89,19 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       replaced it with a master **Volume** control (native `SDL_SetAudioStreamGain`).
       All Sound-menu items apply live. User confirmed audio + volume work.
       Music (fire.xm/SDL_mixer) is WIN32-only — out of scope. See dev-log + sharp-edges.
-- [ ] #6 Lag-o-meter: 0.5-opacity "drive-through" zone at the trail end. SCOPED
-      2026-06-28 → `docs/lag-o-meter-scope.md`. SMALL/recommended: `gLaggometer::
-      LagOMeterRenderer` in gCycle.cpp already computes the triangle vertices — add a
-      `BeginTriangleFan` fill pass + alpha + blend + toggle. Design DECIDED: fill only
-      the **trail-end sub-region** (rear of the shape), not the whole triangle; rear
-      extent is a tuning knob. Render-only, no wire risk.
+- [x] #6 Trail-end lag-uncertainty fade. SHIPPED 2026-06-29 (`gWall.cpp`,
+      `gCycle.cpp`, `language/english_base.txt`). NOTE: the original wording said
+      "Lag-o-meter" and was first mis-scoped as a fill on the lag-o-meter spiral
+      (`docs/lag-o-meter-scope.md` #6 — now superseded); the user clarified it is the
+      **cycle wall/trail's disappearing tail end**, not the lag-o-meter. Final feature:
+      a flat **0.5-alpha band of length `speed*lag`** at the trail's vanishing tail,
+      marking the region whose drawn length is uncertain under lag (most visible with
+      `PREDICT_OBJECTS` off, the default). Configs `TRAIL_END_FADE` (bool, off) +
+      `TRAIL_END_FADE_SCALE` (REAL, 1 = true speed*lag; raise to see at low ping).
+      Reverts to solid the instant the cycle dies (`Alive()` gate — uncertainty gone).
+      Uses `cycle_->Lag()` (= `laggometerSmooth`, the **same raw ping/sync-delay metric
+      as the lag-o-meter** — user-confirmed correct; does NOT subtract lag credit, see
+      sharp-edges). Render-only, no wire risk. User confirmed working in-game.
 - [ ] #7 Lag-o-meter: reachability-based shape. SCOPED + REFRAMED 2026-06-28 (user) →
       same doc. Not "clip to walls" but "run the look-ahead, draw the reachable edge"
       — handles holes from others' crashes for free (a hole = no eHalfEdge → sensor

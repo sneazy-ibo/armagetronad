@@ -899,6 +899,8 @@ use_displaylists_help		Use display lists for rendering the cycles?
 
 #walls
 simple_trail_help           If set to 1, trails are rendered simplified for better performance.
+trail_end_fade_help         If set to 1, fades the disappearing tail end of enemy trails to 0.5 alpha over the length that is uncertain due to network lag (speed times lag), showing how far the real wall end may differ from what is drawn.
+trail_end_fade_scale_help   Multiplier on the length of the faded trail-end band (see TRAIL_END_FADE). 1.0 is the true speed-times-lag distance; raise it to make the band more visible at low ping.
 
 #********************************************
 #********************************************

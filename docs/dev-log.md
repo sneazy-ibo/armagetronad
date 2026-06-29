@@ -6,6 +6,46 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-06-29 — Trail-end lag-uncertainty fade (#6)
+
+**Shipped (`gWall.cpp`, `gCycle.cpp`, `language/english_base.txt`):** a flat
+0.5-alpha band of length `speed*lag` at the **disappearing tail end** of cycle
+trails, marking the part whose drawn length is uncertain under network lag. Configs
+`TRAIL_END_FADE` (bool, off) + `TRAIL_END_FADE_SCALE` (REAL, 1). Reverts to solid on
+death (`Alive()` gate). Uses `cycle_->Lag()` (= `laggometerSmooth`, same metric as the
+lag-o-meter — user-confirmed correct).
+
+**The task wording lied:** "#6 Lag-o-meter drive-through zone" was actually about the
+**wall/trail tail**, not the lag-o-meter spiral. First mis-scoped in
+`lag-o-meter-scope.md` (now superseded). Lesson: confirm the subsystem before scoping
+a vaguely-worded task.
+
+**Hard-won implementation notes (all now in sharp-edges):**
+- The fade lives in `gNetPlayerWall::RenderList`, applied **before the trail-style
+  dispatch** (`if(sg_simpleTrail) … else …`). First attempt put it in one branch and
+  it silently did nothing for anyone with `SIMPLE_TRAIL` on. Wall rendering has 3
+  paths (normal / simple / growing-tip); a per-segment effect must precede the split.
+- The band is the oldest `speed*lag` of the drawn trail; segment **split at the band
+  edge** (`continue` after) gives an exact length (no segment-snapping) and a hard
+  0.5, not a gradient (user explicitly did not want a gradient).
+- The wall **quad body was hardcoded `glColor4f(r,g,b,1)`** — alpha only reached the
+  upper line. Threaded `a` into the quad (kept death-fade on a separate `lineAlpha` so
+  dying walls render as before).
+- **Display-list cache footgun:** cached walls (`wallsWithDisplayList_`) replay frozen
+  geometry via `displayList_.Call()` and their `RenderList` never runs, so a per-frame
+  effect freezes solid. Added a per-frame `displayList_.Clear` in
+  `RenderAllWithDisplayList` while the fade is active. Moot for the user (display lists
+  default **off**, `sr_useDisplayLists=rDisplayList_Off`) but correct when on.
+
+**Debugging that found it:** temporary yellow/green vertical markers at the band edges
++ a whole-wall red `fade` tint isolated the bug to the `SIMPLE_TRAIL` path. All debug
+scaffolding (and a `g_trailDrawnTailPos` helper from a since-reverted anchor idea)
+removed before finishing.
+
+**Next:** unchanged backlog. #7 (reachability lag-o-meter shape) still open; R-1 etc.
+
+---
+
 ## 2026-06-28 — Scoped backlog tasks; shipped zone center marker (#10)
 
 **Scoped (new deep-dive docs):** `std-library-migration-scope.md` (two independent

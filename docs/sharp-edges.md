@@ -75,6 +75,48 @@ something surprises you — it's cheaper than re-discovering it in a fresh sessi
 - **Music (`fire.xm` via SDL_mixer) is WIN32-only** (`HAVE_LIBSDL_MIXER`). The mac
   build never had it; don't reintroduce SDL3_mixer for the mac path.
 
+## Cycle walls / trails (learned shipping the trail-end fade, #6)
+
+- **Wall rendering has THREE paths; a per-segment effect must go before the split.**
+  `gNetPlayerWall::RenderList` dispatches each segment to `if(sg_simpleTrail){…}` /
+  `else if(te+gBEG_LEN<=time){…}` (normal steady) / `else{…}` (growing tip). Putting
+  an effect in just the steady branch silently does nothing for anyone with
+  `SIMPLE_TRAIL` on. Apply per-segment effects **after the "cut the end of the wall"
+  block but before the `if(sg_simpleTrail)` dispatch**, then `continue`.
+- **Wall display-list cache freezes per-frame effects.** Walls split into two lists:
+  `wallList_` (fresh, re-rendered every frame) and `wallsWithDisplayList_` (cached).
+  `displayList_.Call()` replays the cached GL geometry and **returns early — the
+  cached walls' `RenderList` never runs**, so a per-frame effect baked into them
+  freezes. Cache only rebuilds when walls expire at the tail or new walls pile up. To
+  animate cached walls, force `displayList_.Clear` each frame
+  (`RenderAllWithDisplayList`). NB: display lists default **off**
+  (`sr_useDisplayLists = rDisplayList_Off`, rScreen.cpp), so this only bites with them on.
+- **The wall quad body ignored vertex alpha** — `RenderNormal` hardcoded
+  `glColor4f(r,g,b,1)` on the 4 quad verts; only the upper-edge **line**
+  (`upperlinecolor`) used the passed `a`. To fade the wall *body* you must thread `a`
+  into the quad. (Death-fade keeps a separate `lineAlpha` so dying walls are unchanged.)
+- **The tail "cut" is `GetDistance() - ThisWallsLength()`** (line in `RenderList`);
+  older geometry is dropped. With `PREDICT_OBJECTS` **off** (the default) the drawn
+  tail still sits at that cut — predicted and drawn coincide; a debug marker confirmed
+  it. The lag-uncertain band is the oldest `speed*lag` of the drawn trail, from the cut
+  inward.
+
+## Lag metrics — two different things, don't conflate
+
+- **`eNetGameObject::Lag()` returns `laggometerSmooth`** = an EWMA of raw ping
+  (`se_GetPing`) / sync-delay (`se_GameTime()-lastSyncMessage_.time`). This is what the
+  **lag-o-meter AND the trail-end fade** both use — the honest "where might this be,
+  visually" metric.
+- **`LagThreshold()` → `eLag::Threshold()`** is the *separate* lag-compensation /
+  "ping charity" credit budget. It is **server-side and returns 0 on clients**
+  (`sn_GetNetState()!=nSERVER → 0`). It is NOT the laggometer and is NOT used by the
+  visual lag indicators. So `Lag()` does **not** subtract lag credit; a charity-aware
+  visual would need the server to send the credit down (wire change). User confirmed
+  raw-lag is the correct metric for these indicators (and keeps fade ⟂ lag-o-meter
+  consistent). Own cycle's `Lag()` is ~0 on a client — the laggometer is only
+  populated for non-owned cycles (`gCycle.cpp` `Owner()!=sn_myNetID` block), so these
+  effects show on **enemy** trails, not your own.
+
 ## Renderer abstraction (learned from RCL's Metal port — docs/metal-port-review.md)
 
 - **Most gameplay rendering bypasses the `rRenderer` abstraction.** Only

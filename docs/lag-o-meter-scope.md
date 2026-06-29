@@ -30,9 +30,16 @@ Note: `Colour::toGl()` is raw `glColor3f` and `drawTriangle` uses raw `glVertex2
 so this unit is also part of R-1's geometry leak. If you touch it, convert these to
 `Color()`/`Vertex()` in passing (advances R-1a for free in one small unit).
 
-## #6 — 0.5-opacity "drive-through" zone at the trail end (SMALL, recommended)
+## #6 — SUPERSEDED — was a mis-scope of the trail-end fade
 
-**Idea:** fill the lag-uncertainty region at the trail end as a translucent
+> **This section is obsolete.** #6 ("drive-through zone at the trail end") was *not*
+> about the lag-o-meter spiral below — the user meant the cycle **wall/trail's
+> disappearing tail end**. It SHIPPED 2026-06-29 as `TRAIL_END_FADE` in `gWall.cpp`
+> (a flat 0.5-alpha band of length `speed*lag` at the trail tail). See dev-log
+> 2026-06-29, TASKS #6, and the "Cycle walls / trails" notes in `sharp-edges.md`.
+> The lag-o-meter-fill design below was never built; kept only for history.
+
+**Idea (NOT BUILT):** fill the lag-uncertainty region at the trail end as a translucent
 (alpha 0.5) polygon instead of just an outline, marking the area lag still lets you
 drive through.
 

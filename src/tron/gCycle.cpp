@@ -4062,12 +4062,11 @@ gCycleWallsDisplayListManager::~gCycleWallsDisplayListManager()
 
 bool gCycleWallsDisplayListManager::CannotHaveList( REAL distance, gCycle const * cycle )
 {
-    return
-            ( !cycle->Alive() && gCycle::WallsStayUpDelay() >= 0 && se_GameTime()-cycle->DeathTime()-gCycle::WallsStayUpDelay() > 0 ) 
+    return (!cycle->Alive() && gCycle::WallsStayUpDelay() >= 0 && se_GameTime() - cycle->DeathTime() - gCycle::WallsStayUpDelay() > 0)
 
-            ||
+           ||
 
-            ( cycle->ThisWallsLength() > 0 && cycle->GetDistance() - cycle->ThisWallsLength() > distance );
+           (cycle->ThisWallsLength() > 0 && cycle->GetDistance() - cycle->ThisWallsLength() > distance);
 }
 
 void gCycleWallsDisplayListManager::RenderAllWithDisplayList( eCamera const * camera, gCycle * cycle )
@@ -4113,6 +4112,16 @@ void gCycleWallsDisplayListManager::RenderAllWithDisplayList( eCamera const * ca
     {
         // yes? Ok, rebuild the list in this case, too
         displayList_.Clear(0);
+    }
+
+    // the tail-end fade band moves every frame; rebuild the cached list each
+    // frame while it is active so the band keeps updating instead of freezing
+    // solid. ponytail: defeats wall caching for this cycle while the fade is on;
+    // acceptable since it is off by default and only when the cycle has lag.
+    {
+        extern bool sg_trailEndFade;
+        if (sg_trailEndFade && cycle->Alive() && cycle->ThisWallsLength() > 0 && cycle->Lag() > 0)
+            displayList_.Clear(0);
     }
 
     // call display list
