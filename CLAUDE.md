@@ -81,10 +81,14 @@ the task — but still one area at a time, building between steps. See `docs/TAS
   the anti-pattern to avoid. Noting-and-deferring is a genuine **last resort**, only
   when fixing is out of scope or unsafe, and then it goes in `docs/sharp-edges.md` or
   a `// ponytail: WIP` note *with the reason* — never a silent skip.
-- **Don't ignore LSP/clangd diagnostics.** Treat them as errors: if clangd flags code
-  you touched, fix it. The one genuinely-unsafe category — clangd "unused include" on
-  shared `.cpp`s (the include may be needed by Win32/Linux targets) — is already
-  suppressed in `.clangd`, so it shouldn't appear; don't blind-remove includes.
+- **Don't ignore LSP/clangd diagnostics — they are blocking.** Any diagnostic on code
+  you touched MUST be resolved in the **same turn it appears**, before the next edit or
+  before finishing. **NEVER dismiss one as "stale" or "false positive" by assumption** —
+  re-run the build or `./tidy.sh` to confirm before dismissing. A passing build is NOT a
+  substitute for clearing a flagged diagnostic (clangd catches things the build tolerates
+  and vice versa). The ONLY pre-approved false positive is clangd "unused include" on
+  shared `.cpp`s (the include may be needed by Win32/Linux targets), already suppressed
+  in `.clangd` so it shouldn't appear; don't blind-remove includes.
 
 ## Fresh-session continuity
 The user prefers starting **new sessions** over compacting context. So everything a
