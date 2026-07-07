@@ -6,6 +6,30 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-07-07 — Rust-rewrite exploration + full engine read-through (docs only)
+
+**Shipped:** `docs/rust-rewrite-notes.md` — complete architecture notes for a
+hypothetical Rust rewrite, based on an actual read of `src/` (~117k lines). Contains
+the agreed crate/thread/determinism architecture, the full subsystem inventory, the
+corrected ECS sketch, and 11 "architecture traps". No code changed.
+
+**Headline discoveries (details in the doc):** explosions blow attributed holes in
+walls (sim, not VFX); the wire protocol is destination-based (already quasi-
+event-sourced); walls are piecewise time-stamped growing/shrinking objects; 127
+physics settings in the cycle alone (per-wall-type accel = core gameplay);
+`CYCLE_PING_RUBBER` makes physics read network state; chatbot autopilot + uncanny-
+timing cheat detection exist in the sim; eTimer is a real clock-sync subsystem.
+
+**Also this session (memory files, not repo):** fork build states (RCL = live SDL3+
+Metal Xcode; others = autotools; wrapper-repo idea dropped), camera-feel investigation
+(0.2.9↔0.4 camera pipeline byte-identical), netcode model corrections (ping charity
+is symmetric-by-design; turns are frame-quantized). See memory index.
+
+**Next (if rewrite exploration continues):** milestone 1 = `tron-sim` + terminal
+client over fake-latency localhost; the notes doc has the scope list.
+
+---
+
 ## 2026-06-29 — Trail-end lag-uncertainty fade (#6)
 
 **Shipped (`gWall.cpp`, `gCycle.cpp`, `language/english_base.txt`):** a flat
