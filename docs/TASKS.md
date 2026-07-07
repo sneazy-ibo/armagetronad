@@ -4,6 +4,14 @@ Durable backlog so a fresh session can pick up without prior context. Keep this 
 sync at the end of a work session: tick off what shipped, add new items, note who/why.
 Status: `[ ]` open · `[~]` in progress · `[x]` done · `[-]` dropped/moot (keep with reason).
 
+## Process watch (meta — for the debrief stage)
+- [~] **Verify-before-assert** recurred 2026-07-07 (user said "check your assumptions"
+      ~5×) despite being a 2026-06-29 debrief lesson. New, stronger fix: it's now a
+      hard rule in `CLAUDE.md` ("How this developer likes to work" + the 6-stage
+      workflow), not just memory. **Tripwire:** if it recurs AGAIN next session despite
+      that, escalate to a dedicated "fix the pattern" session per the user's stage-6
+      rule — do not just re-promise.
+
 ## Active projects
 
 ### Server-browser responsiveness ("Option B")

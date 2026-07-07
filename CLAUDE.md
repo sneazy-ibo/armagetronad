@@ -65,6 +65,15 @@ the task — but still one area at a time, building between steps. See `docs/TAS
   (frozen geometry snapshots); VBO replacement is an open, not-yet-decided item.
 
 ## How this developer likes to work
+- **Verify before you assert — and recursively.** Never state a fact, mechanism, or
+  *severity* as established before checking it (grep / read / `./build.sh` / `curl` /
+  WebFetch — you **do** have working network and both build schemes; use them). If a
+  check proves you wrong, don't stop at that one point: **surface what else you
+  assumed, state each assumption, and re-check until your assertions line up with
+  reality.** Anything you couldn't verify, label "unverified." The user should never
+  have to say "check your assumptions" — this was the #1 friction source across
+  sessions. Lead security findings with the threat model + preconditions, *then* the
+  severity label, not the other way round.
 - **Measure before refactoring.** Add temporary instrumentation, get real numbers,
   then cut the minimum. (E.g. phase-timing showed the connect cost was the post-
   login syncs, not the login — so we skipped syncs instead of a big refactor.)
@@ -103,6 +112,31 @@ something add it:
 `TASKS.md` and the top `dev-log.md` entry, but skim `sharp-edges.md` and the
 deep-dives too. The notes are the source of truth for where things stand; don't
 re-derive from the code what a doc already records.
+
+## Session workflow (how these sessions run — 6 stages)
+Most sessions follow this arc. Name the stage when it helps; watch for stage-6 material
+throughout.
+1. **Load context.** Read `docs/` (at least `TASKS.md` + top `dev-log.md`). Current
+   method, works fine.
+2. **Agree the objective + scope BEFORE working.** If you're missing information,
+   **stop and ask — do not guess.** Explicitly flag the scope — **explore / decide /
+   implement** — and calibrate depth. The user is a software engineer: go technical,
+   but always go at least deep enough to get your assumptions right. They'll say if
+   they want terser or deeper.
+3. **Code loop:** small change → play-test / check the numbers look right → validate
+   against real-world data → iterate. Two mechanics that matter here:
+   - **Don't rely on the in-game console for debug output — it's hard to copy from.**
+     If you need text out, write it to a **file**.
+   - **Visual in-game indicators are gold** — a line/marker/colour the user can see
+     beats a number they have to read. Prefer them for anything spatial.
+4. **Clean up.** Remove test cruft, temporary instrumentation, and debug prints. Leave
+   the tree with *less* tech debt than you found — not optional.
+5. **Commit.** Good, finished work → `macos0.2.9.3.0` (the user's fork). A side-piece or
+   WIP → a **separate branch** to resume later (e.g. the `auth-https-migration` split).
+6. **Debrief.** Two-way — give the user honest feedback too; they're learning as well.
+   If a pattern keeps recurring *despite* earlier fixes, add a `TASKS.md` item to work
+   it out deliberately (a fix that didn't stick needs its own session, not another
+   promise). Leave notes as you notice things so stage 6 has material, not memory.
 
 ## Git
 - Don't commit or push unless asked. Branch off `trunk` for PRs.
