@@ -6,6 +6,41 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-07-10 — #9 teleport bug: diagnosed end-to-end (debug branch parked)
+
+**Diagnosed** the grid-teleport/"big slide" bug via an instrumented session. Root:
+`eGameObject::Move`'s face-walk can't converge across the **thin wall-bounded triangles**
+that accumulate in dense-turn regions (times out even at `GAMEOBJECT_MOVE_TIMEOUT 3000`),
+so it strands the cycle on a wandered edge — or `FindCurrentFace` relocates it — → teleport
+(measured up to 166u for a 32u move), backward → death. Thin triangles come from the
+single-bounding-triangle fan + `DrawLine` cutting un-flippable crossings + `Simplify`
+refusing wall-adjacent points. Full writeup + evidence at the **top of
+`docs/grid-mesh-geometry.md`**.
+
+**Corrected several earlier hypotheses (all with evidence):** NOT a leak (mesh is
+Euler-minimal `faces=2·points−5` every sample; bursts to 12k faces then reclaims), NOT
+precision, NOT `CorrectArea` (marker never fired), NOT `DrawLine` give-up (log empty), NOT
+the distance-space wall-stamping (that's the remote `SyncFromExtrapolator` path).
+**Delaunay legalization rejected** with the new context (can't flip constrained edges;
+removes no points). Verified the grid is **local/not-on-the-wire** and deaths are
+**server-authoritative** → every candidate fix is wire-safe.
+
+**Parked (branch `grid-teleport-debug`):** the `GRID_DEBUG_*` mesh overlay, teleport /
+DrawLine / grid-stats file probes, `GAMEOBJECT_MOVE_KEEP_DEST` + `GRID_SIMPLIFY_RATE`
+configs, and a real mitigation — **adaptive reclamation** (`SimplifyAll += edges/32`, stops
+the monotonic accumulation). **Kept on `macos0.2.9.3.0`:** this doc set + the `tidy.sh` DB
+fix (index-store / `-gmodules` / `@response` stripping so brew clang-tidy runs again).
+
+**Next (own focused session):** #1 collinear-wall-point merge in `Simplify` (collapse
+straight walls / corridors — the user's Q1/Q2 — preserving the wall danger interval),
+and/or #3 harden the walk to end benignly at the destination.
+
+**Process note:** file logs repeatedly caught wrong conclusions that on-screen markers had
+led me to (I twice read "no marker seen" as "event didn't happen"). Write debug to files.
+Also over-anchored on the doc's headline hypothesis instead of its symptom→area pointer.
+
+---
+
 ## 2026-07-07 — Rust-rewrite exploration + full engine read-through (docs only)
 
 **Shipped:** `docs/rust-rewrite-notes.md` — complete architecture notes for a

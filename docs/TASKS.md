@@ -117,13 +117,21 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       turn-branching reachable set; swap each branch's raw-`lag` extent for a
       `MaxSpaceAhead`/`gSensor` wall-limited one. MEDIUM. HAZARD: read-only sensor
       probes only — never the mutating Timestep/DoTurn (determinism). Do after #6.
-- [ ] #9 "Big slide" bug: new wall begin stamped ahead of the turn point. Experiments
-      parked on branch `teleport-fix-attempt`. NEW CONTEXT 2026-07-07: candidate cause
-      is float precision at large-arena scale — wall begin lives in *cumulative
-      distance* space (ulp ~8mm late in a big-arena round), plus the grid self-heals by
-      moving points (`CorrectArea`). Geometry/precision analysis + repro capture
-      checklist: `docs/grid-mesh-geometry.md`. Candidate first step: `GRID_DEBUG_DRAW`
-      mesh overlay (plan in that doc).
+- [~] #9 "Big slide" / teleport bug. **DIAGNOSED 2026-07-10** (full writeup +
+      corrections at the top of `docs/grid-mesh-geometry.md`). Root: `eGameObject::Move`'s
+      face-walk can't converge across the **thin, wall-bounded triangles** that pile up in
+      dense-turn regions (times out even at 3000 iters) → strands the cycle on a wandered
+      edge, or `FindCurrentFace` relocates it → teleport (up to 166u), backward → death.
+      The thin triangles come from the single-bounding-triangle fan structure + `DrawLine`
+      cutting (not flipping) un-flippable crossings + `Simplify` refusing to merge
+      wall-adjacent points. NOT a leak (mesh is Euler-minimal; bursts then reclaims), NOT
+      precision, NOT CorrectArea, NOT the distance-space stamping (that's remote-only).
+      **Delaunay legalization rejected** (can't flip constrained edges, removes no points).
+      Debug tooling + a shipped mitigation (adaptive reclamation, `SimplifyAll += edges/32`)
+      are parked on branch **`grid-teleport-debug`**. Next (own session): **#1 collinear-
+      wall-point merge in `Simplify`** (collapse straight walls; must preserve the wall
+      danger interval) and/or **#3 harden the walk** to end benignly at the destination.
+      The older `teleport-fix-attempt` branch is superseded.
 - [x] #10 Zone center marker: a vertical line at each zone's center, sticking up out of
       the grid, same colour as the zone, toggled by a console command. SHIPPED
       2026-06-28 (`gWinZone.cpp`): `ZONE_CENTER_LINE` (bool, default off) +

@@ -30,7 +30,12 @@ if [ "${1:-}" = "--refresh" ]; then
 import json, sys, shlex
 p = sys.argv[1]
 db = json.load(open(p))
-DROP_WITH_ARG = {"-ivfsstatcache"}   # apple-clang-only; brew clang errors on it
+# apple-clang-only / build-only flags brew clang-tidy rejects; each takes a following arg
+DROP_WITH_ARG = {"-ivfsstatcache", "-index-store-path", "-index-unit-output-path",
+                 "-o", "-serialize-diagnostics"}
+# flags to drop that take no following arg. -gmodules stores debug info in Apple
+# .pcm modules brew clang can't read ("unknown module format").
+DROP_NO_ARG = {"-gmodules"}
 best = {}
 for e in db:
     f = e["file"]
@@ -40,12 +45,25 @@ for e in db:
     base = f.rsplit("/", 1)[-1]
     segs = [s for s in cmd.split(";") if s.strip()]
     seg = next((s for s in segs if base in s), segs[-1] if segs else cmd)
-    toks, skip = [], False
+    # inline any @response-file so its include paths pass through the same filter
+    expanded = []
     for t in shlex.split(seg):
+        if t.startswith("@"):
+            try:
+                with open(t[1:]) as fh:
+                    expanded.extend(shlex.split(fh.read()))
+            except OSError:
+                expanded.append(t)
+        else:
+            expanded.append(t)
+    toks, skip = [], False
+    for t in expanded:
         if skip:
             skip = False; continue
         if t in DROP_WITH_ARG:
             skip = True; continue
+        if t in DROP_NO_ARG:
+            continue
         toks.append(t)
     arm = "arm64" in seg
     entry = {"directory": e["directory"], "arguments": toks, "file": f}

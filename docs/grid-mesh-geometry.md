@@ -6,6 +6,85 @@
 holds the exact geometry facts + precision analysis + how to see the mesh, so a debug
 session can start immediately.*
 
+## 2026-07-10 — RESOLVED: mechanism found (supersedes the hypotheses below)
+
+A full instrumented session (a `GRID_DEBUG_DRAW` mesh overlay + file logs, all on branch
+`grid-teleport-debug`) pinned it down. **Most hypotheses in the older sections below were
+wrong — corrected here.**
+
+### What the teleport IS
+`eGameObject::Move`'s face-walk (eGameObject.cpp:174) moves the cycle across grid faces,
+snapping `pos` onto each edge it crosses (`pos = bestCross`, :399). Its "best way out"
+edge-score (:309) is **degenerate for thin / near-parallel triangles** and **fails to
+converge — it still times out at 3000 iterations** (`GAMEOBJECT_MOVE_TIMEOUT`). On timeout
+it strands `pos` on the wandered edge (:432). Force `pos=stop` instead
+(`GAMEOBJECT_MOVE_KEEP_DEST 1`) and `FindCurrentFace` (:519-558) then relocates it by the
+same amount — **both fallbacks teleport the cycle**. Measured strays up to 166 units for a
+32-unit intended move. A backward strand crosses the cycle's own wall → death.
+
+### Why the mesh fills with thin triangles (the user's Q1/Q2)
+- The whole arena is **ONE bounding triangle** (corners A/B/C, `eGrid::Create`), so every
+  point fans toward 3 distant corners → long thin triangles blanket the arena.
+- `DrawLine` inserts a wall by walking start→end, **flipping** crossed edges out of the way
+  *if possible*, else **cutting** them (inserting a point). Thin fan-triangles are usually
+  un-flippable (degenerate) → it **cuts** → a new point at every un-flippable crossing. So
+  a wall carries **1 point per turn PLUS 1 per un-flippable crossing** — not 1 per turn.
+  That is the "many points along a straight wall" and "20 lines into a rim wall".
+- `Simplify` (eGrid.cpp:1890) **hard-aborts on ANY wall-adjacent point** — even a redundant
+  collinear point on a straight wall. So those points can't be merged back; wall-dense
+  regions stay over-triangulated until the walls expire. This is why a parallel-wall
+  corridor never collapses to 2 triangles.
+
+### Eliminated — each with evidence, don't re-chase
+- **Distance-space wall-begin stamping** (`distance − F(dir,pos−lastTurnPos)`, the OLD
+  leading hypothesis in the sections below): that formula is in `SyncFromExtrapolator`
+  (gCycle.cpp:5250) — the **remote/network** path. Local single-player never runs it.
+- **CorrectArea self-heal**: instrumented with a yellow marker — it NEVER fired.
+- **DrawLine give-up** (:806): instrumented — `/tmp/arma-drawline.log` stayed EMPTY. Walls
+  insert fine.
+- **A leak / unbounded runaway**: DISPROVEN. The mesh is **Euler-minimal on every sample**
+  (`faces = 2·points − 5` held on every log line; half-edges = 6·points − 12). With
+  reclamation scaled to mesh size it always recovers (spiked to 12k faces, fell back to
+  ~65). It **bursts** (over-subdivision on deaths/teleports) then reclaims — not a leak.
+- **Flipped / non-triangle faces**: the overlay highlight for those never lit — the mesh is
+  topologically valid, just badly shaped.
+- **Raising thresholds**: move-timeout 3000 still fails (non-convergence); simplify-rate
+  helps reclaim but does not stop the burst.
+
+### Fix landscape
+- **Delaunay legalization — REJECTED.** The problem triangles are wall-**constrained**
+  (unflippable) and legalization removes no points, so it fixes neither the teleport nor
+  the burst. Looked attractive before the context; the context kills it.
+- **#1 Collinear-wall-point merge in `Simplify`** *(recommended, surgical)*: allow removing
+  a point on a straight wall (two collinear wall-edges, nothing else attached), merging
+  them into one edge. Collapses over-subdivided straight walls / parallel corridors (Q1/Q2).
+  CAUTION: the wall's danger interval (`begDist_`/`endDist_`, collision) spans the merge and
+  must be preserved — core geometry+collision surgery; wants its own session + tests.
+- **#2 Tighter bounding structure** (not one distant-corner triangle) → walls cross fewer
+  fans → fewer cuts up front. Architectural, bigger.
+- **#3 Harden the walk** so a non-convergent `Move` ends benignly at the destination AND
+  `FindCurrentFace` tolerates a sliver-sized negative insideness. Makes the teleport
+  harmless regardless of mesh (the thin wall-bounded triangles are inherent).
+- **Shipped mitigation (debug branch): adaptive reclamation** — `SimplifyAll` adds
+  `edges/32` to its budget (eGrid.cpp:~2097) so cleanup scales with density; stops the
+  monotonic accumulation. Removes only wall-free redundant geometry; walls/collision safe.
+
+### Compatibility — verified, applies to every fix above
+The grid is **local, never on the wire** (`eGrid`/`eFace`/`eHalfEdge`/`ePoint` are not net
+objects; walls are the net objects, each peer triangulates locally). Deaths are
+**server-authoritative** (`Kill`/`Die` gated on `nSERVER`). So these fixes are wire-safe
+both directions (you on others' servers; others on yours). Only caveat: `tRecorder` demos —
+changing the triangulation breaks bit-identical replay of *old* recordings.
+
+### Debug tooling (all on branch `grid-teleport-debug`)
+- `GRID_DEBUG_DRAW` mesh overlay: green rim / red wall / orange hole-edge / grey plain /
+  blue no-face; flipped face = red fill, non-triangle = magenta fill. `GRID_DEBUG_HEIGHT`
+  (lift above trail), `GRID_DEBUG_MAX_EDGE` (skip big faces). Stats → `/tmp/arma-gridstats.log`.
+- Teleport probe → `/tmp/arma-teleport.log`; `GAMEOBJECT_MOVE_KEEP_DEST`.
+- DrawLine give-up → `/tmp/arma-drawline.log`. `GRID_SIMPLIFY_RATE` (reclamation base).
+
+---
+
 ## The world triangle (the whole grid lives inside one triangle)
 
 Construction (`eGrid::Create()`, eGrid.cpp:2075):
