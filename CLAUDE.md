@@ -99,6 +99,37 @@ the task — but still one area at a time, building between steps. See `docs/TAS
   shared `.cpp`s (the include may be needed by Win32/Linux targets), already suppressed
   in `.clangd` so it shouldn't appear; don't blind-remove includes.
 
+## Debugging meta-lessons (learned the hard way on #9 — the expensive ones)
+- **Suspect the PRODUCER, not just the consumer.** When code that cleans/reduces/processes
+  data keeps choking on bad inputs, question whether the thing *producing* the data is
+  broken — don't keep hardening the consumer. (#9: ~5 rounds fixing the mesh reducer before
+  realising the mesh *construction* was emitting non-manifold garbage. That question was the
+  whole game.)
+- **Verify a debug channel actually EMITS in this build before trusting its silence.**
+  `eDebugLine` markers are `#ifdef DEBUG` no-ops in the default Release build; "no marker on
+  screen" got read as "event didn't happen" twice. The *file* logs were ground truth.
+- **Front-load the safety net for work you can't test yourself.** Before writing risky code
+  you can't exercise (DCEL surgery; you can't run the game), stand up the checker FIRST —
+  the `DEBUG=1` Xcode build (`sharp-edges.md`) makes a bad edit trip a precise assert instead
+  of silently corrupting. Don't write blind then hope.
+- **Whack-a-mole tripwire + fresh-eyes checkpoint.** If ~3 iterations of fixes produce no
+  *net* progress (e.g. MERGED stayed 0), STOP and challenge the approach/assumption instead
+  of patching again. This is the antidote to anchoring — see the note below on using a
+  cold-context reviewer (subagent or fresh session) to de-bias.
+- **Calibrate confidence.** Say "deep/uncertain/fragile" when it is; don't call something a
+  "one-line fix" or "almost there" when it's unverified surgery.
+
+### Using a cold-context reviewer to break anchoring (opt-in)
+The anchoring miss above is the one thing extra *agents* genuinely help — because a fresh
+subagent (or fresh session) starts **cold, with no bias toward the path we're already on**.
+Use it as a deliberate **skeptic at a tripwire**, not as continuous observers (more watchers
+add cost/noise, not insight). Mechanism: at a stuck point, hand a fresh agent a tight problem
+statement + current hypothesis + the stuck symptom and ask *"what are we assuming that's
+wrong? producer or consumer? should we step back?"* Caveats: it can't run the game (no
+surgery verification), and it starts cold (costs context to brief) — so propose it at the
+tripwire and let the user decide, don't spawn reflexively. The other meta-lessons above are
+discipline, not agent problems.
+
 ## Fresh-session continuity
 The user prefers starting **new sessions** over compacting context. So everything a
 fresh session needs lives in files — keep them current as you work, and when you learn
