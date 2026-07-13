@@ -1572,6 +1572,7 @@
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = "-ffp-contract=off";
 				OTHER_LDFLAGS = (
 					"-framework",
 					"SDL3",
@@ -1627,6 +1628,7 @@
 					/Library/Frameworks/ArmagetronAdvanced/current,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = "-ffp-contract=off";
 				OTHER_LDFLAGS = (
 					"-framework",
 					"SDL3",
