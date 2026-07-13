@@ -86,12 +86,19 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       alternate backend actually render. Hide the item on non-Metal platforms.
 
 ## Open items (not started)
-- [ ] `armagetronad://` **running-app** direct-connect. Launch-time works (2026-07-13:
-      Info.plist scheme + GetURL handler → `st_QueueDirectConnect` → consumed before
-      `MainMenu()`). When the app is *already open*, the GetURL handler still queues the
-      target (`sg_haveDirectConnect`), but nothing consumes it until the next `MainMenu()`
-      entry. Wire a poll into the menu idle pump (or interrupt the current session) to act
-      on it live. Also: runtime-test the launch path (never exercised — see dev-log).
+- [ ] `armagetronad://` **running-app** direct-connect. Launch-time works + runtime-
+      verified (2026-07-13: Info.plist scheme + GetURL handler → `st_QueueDirectConnect` →
+      consumed before `MainMenu()`). When the app is *already open*, the GetURL handler
+      still queues the target (`sg_haveDirectConnect`), but nothing consumes it until the
+      next `MainMenu()` entry. Design questions to settle (user, 2026-07-13):
+      - **Not in a match** (sitting in menus): just join.
+      - **Mid-game:** don't yank the player out — prompt with a yes/no menu
+        ("Join <server>? / Cancel") and only connect on confirm.
+      - **Multiple instances running:** macOS routes the URL to *one* app (usually the
+        most-recently-active); decide whether that's acceptable or if we care which.
+      Mechanism: poll `sg_haveDirectConnect` from the menu idle pump (`uMenu` idle
+      callback), not a thread (net is single-threaded). Watch re-entrancy calling
+      `ConnectToServer` from inside the menu loop.
 - [ ] #1 Decide: rip out OpenGL display lists for VBOs? (legacy frozen-geometry path)
       Related modern-GL debt: `gluBuild2DMipmaps` (deprecated on modern macOS) in
       `rTexture.cpp` → `glTexImage2D` + `glGenerateMipmap`. See docs/sharp-edges.md.
