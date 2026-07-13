@@ -100,6 +100,14 @@ the task — but still one area at a time, building between steps. See `docs/TAS
   in `.clangd` so it shouldn't appear; don't blind-remove includes.
 
 ## Debugging meta-lessons (learned the hard way on #9 — the expensive ones)
+- **Platform/build-specific bug? DIFF AGAINST A KNOWN-GOOD BUILD before diagnosing logic.**
+  The moment "same version, behaves differently on another platform/build" is on the table
+  (e.g. "it works on Steam"), it's a build/float/toolchain question — check it FIRST, it's
+  cheap and decisive. (#9: the grid-teleport bug was FMA contraction on Apple Silicon
+  flipping near-zero geometric-predicate signs — the mesh code is *identical* to the x86
+  build that works fine. A 2-minute `git diff macos… origin/legacy_0.2.9` on the core files
+  would have short-circuited a whole session of DCEL surgery. The fix was one flag,
+  `-ffp-contract=off`.)
 - **Suspect the PRODUCER, not just the consumer.** When code that cleans/reduces/processes
   data keeps choking on bad inputs, question whether the thing *producing* the data is
   broken — don't keep hardening the consumer. (#9: ~5 rounds fixing the mesh reducer before

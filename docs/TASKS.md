@@ -117,8 +117,17 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       turn-branching reachable set; swap each branch's raw-`lag` extent for a
       `MaxSpaceAhead`/`gSensor` wall-limited one. MEDIUM. HAZARD: read-only sensor
       probes only — never the mutating Timestep/DoTurn (determinism). Do after #6.
-- [~] #9 "Big slide" / teleport bug. **DIAGNOSED 2026-07-10** (full writeup +
-      corrections at the top of `docs/grid-mesh-geometry.md`). Root: `eGameObject::Move`'s
+- [~] #9 "Big slide" / teleport bug. **MOSTLY FIXED 2026-07-13** (`ee238322`): the REAL
+      root was **FMA contraction on Apple Silicon** flipping near-zero geometric-predicate
+      signs → degenerate faces → the movement walk teleports. Same mesh code runs clean on
+      Steam 0.2.9.3 (x86). Fix = **`-ffp-contract=off`** in the client target (both configs).
+      Removed ~all teleports + cratered the `wrong orientation` / `FindSurroundingFace failed`
+      counts. **Residual:** the mesh still degenerates a bit (genuine f32 precision ceiling at
+      size-10 scale) → *rare* slides/overhangs. Optional gold-plated follow-up: robust /
+      double-precision geometric predicates (area/orientation/insideness). **#11 is now moot**
+      — the triangulation was never broken; the compiler was. Full FMA writeup + all the (now
+      largely academic) mesh diagnosis + debug tooling on branch `grid-teleport-debug`.
+      Earlier (superseded) diagnosis: Root was thought to be `eGameObject::Move`'s
       face-walk can't converge across the **thin, wall-bounded triangles** that pile up in
       dense-turn regions (times out even at 3000 iters) → strands the cycle on a wandered
       edge, or `FindCurrentFace` relocates it → teleport (up to 166u), backward → death.
