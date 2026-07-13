@@ -185,12 +185,16 @@ throughout.
   `git add <files> && pre-commit run --files <files> ; git add <files>` then commit.
   (`pre-commit run` exits non-zero if it changed anything — that's fine; just re-add.)
   One clean pass, no failed first commit.
-  - **The hook also has a lock bug:** its internal `git read-tree` collides with git's
-    own commit-time `.git/index.lock` and aborts with *"Unable to create index.lock"* even
-    when clang-format reports *"did not modify any files"*. When you've already run the
-    formatter manually and it's clean, that abort is spurious — `rm -f .git/index.lock`
-    and commit with `--no-verify` (the formatter's intent is already satisfied). It also
-    can't format Objective-C(++); `src/macosx/` is excluded from the hook for that reason.
+  - **A leaked `.git/index.lock` breaks every subsequent run.** If a git op is interrupted
+    (or the hook aborts mid-run), `.git/index.lock` is left behind and the hook then fails
+    on *every* invocation with *"Unable to create index.lock / Another git process seems to
+    be running"* — even though nothing is actually running. Fix is just `rm -f
+    .git/index.lock`, then commit normally. Do **not** reach for `--no-verify`: the hook
+    itself works fine (reformat → abort → re-add → commit); the lock was only stale.
+  - **It can't format Objective-C(++)** (clang-format is `Language: Cpp`), so `src/macosx/`
+    is excluded from the hook (`.pre-commit-config.yaml`). Before that exclude it errored on
+    `SDLMain.*` and aborted mid-run, which is what left the stale lock above — the two
+    compounded and looked like one deeper bug.
 - End commit messages with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
 - Commit signing is configured; if it ever fails with a key/agent error, ask the
   user rather than disabling signing.
