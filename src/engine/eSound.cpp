@@ -55,8 +55,7 @@ static Mix_Music* music = NULL;
 #endif
 
 static SDL_AudioSpec audio;
-static bool sound_is_there=false;
-static bool uses_sdl_mixer=false;
+static bool sound_is_there = false;
 static SDL_AudioStream* sg_audioStream = NULL;
 #endif
 
@@ -80,9 +79,9 @@ static int real_sound_sources=0;
 
 static tList<eSoundPlayer> se_globalPlayers;
 
+#ifndef DEDICATED
 void fill_audio(void* udata, SDL_AudioStream* out, int additional, int total)
 {
-#ifndef DEDICATED
     (void)udata;
     (void)total;
     if (additional <= 0)
@@ -122,8 +121,8 @@ void fill_audio(void* udata, SDL_AudioStream* out, int additional, int total)
         loudness_thresh=0;
 
     SDL_PutAudioStreamData(out, stream, additional);
-#endif
 }
+#endif
 
 #ifndef DEDICATED
 #ifdef DEFAULT_SDL_AUDIODRIVER
@@ -140,14 +139,14 @@ static bool se_SoundInitPrepare()
         char * arg = "SDL_AUDIODRIVER=" STRING(DEFAULT_SDL_AUDIODRIVER);
         putenv(arg);
 
-        if (SDL_Init(SDL_INIT_AUDIO) >= 0)
+        if (SDL_Init(SDL_INIT_AUDIO))
             return true;
 
         putenv("SDL_AUDIODRIVER=");
     }
 
     // if that fails, try what the user wanted
-    return (SDL_Init(SDL_INIT_AUDIO) >= 0);
+    return SDL_Init(SDL_INIT_AUDIO);
 }
 #endif
 #endif

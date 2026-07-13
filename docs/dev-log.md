@@ -6,6 +6,53 @@ is that a fresh session can read the top entry and know exactly where things sta
 
 ---
 
+## 2026-07-13 — full-release (Dedicated target) build fix + warning cleanup
+
+**Fixed the release build.** "Build for Any Mac" compiles the **Dedicated** target too
+(the "My Mac" client build never touches it). It failed: `eSound.cpp` `fill_audio`'s
+`SDL_AudioStream*` signature sat *outside* the `#ifndef DEDICATED` guard, and the
+dedicated SDL shim (`rSDL.h`) has no `SDL_AudioStream` typedef. Fix: guard the whole
+function (dead in a headless server anyway).
+
+**Warning cleanup (292 → 234, −58), no bulk risk taken:**
+- Real SDL3 bug surfaced by `-Wtautological-constant-compare`: SDL3 `SDL_Init` returns
+  `bool`, so `SDL_Init(...) < 0` (gArmagetron) and `>= 0` (eSound) were dead checks —
+  init failure never detected / always "ok". Fixed to `!SDL_Init(...)` / bare. See
+  sharp-edges "Audio (SDL3)".
+- 48 GL `-Wdeprecated-declarations` → 2 (leftover are AppKit `sizeToFit`, not GL):
+  moved `GL_SILENCE_DEPRECATION` from `rGL.h` to a **global** build define (covered
+  `opengl.cpp` too; removed the 104 `-Wmacro-redefined` the header-local define caused).
+- `SDLMain`: added `<NSApplicationDelegate>` conformance (kills incompatible-pointer),
+  fixed the non-existent `stringByReplacingRange:with:` selector →
+  `stringByReplacingCharactersInRange:withString:` (menu-rename was silently no-op).
+- Removed unused `uses_sdl_mixer`.
+
+**Deferred (not touched, on purpose):** 210 `-Wshorten-64-to-32` (size_t→int truncation
+sweep — its own task, wire/behavior risk), 8 unused static functions in `tDirectories`/
+`rScreen` (need per-platform check before deleting), 8 `-Wunreachable-code` in gameplay
+files, `testgl.cpp` SDL_Init `<0` (not in app build).
+
+**Also:** opted out of macOS window restoration explicitly in `SDLMain` (kills the
+`restoreWindowWithIdentifier … className=(null)` launch log). The `linkd.autoShortcut` /
+App-Intents / Process-Instance-Registry console spam is OS daemon noise from a dev-signed
+unsandboxed build — not our code, not fixable, ignored.
+
+**Rewired `armagetronad://host:port` direct-connect (launch-time).** Registered the
+`armagetronad` scheme in `src/macosx/Info.plist` (`CFBundleURLTypes`) and a GetURL Apple
+Event handler in `SDLMain` (`applicationWillFinishLaunching`, so the launch URL is captured
+*before* `didFinishLaunching` hands off to the blocking `SDL_main`). Handler → C shim
+`st_QueueDirectConnectC` → `st_QueueDirectConnect` (gGame.cpp) stashes host/port; consumed
+by `st_ConsumeDirectConnect()` right before `MainMenu()` in gArmagetron.cpp, building an
+`nServerInfoRedirect` + `ConnectToServer` (same path as favorites). Both targets build,
+no new warnings. **Runtime-verified 2026-07-13** (user): clicking an `armagetronad://`
+link launches the game and joins the server. **Launch-time only** — clicking a link when
+the app is *already running* queues the
+target but the in-menu loop doesn't poll it yet (needs a menu-pump hook → TASKS). Test:
+build the .app, `lsregister -f "…/Armagetron Advanced.app"`, then `open
+armagetronad://157.245.224.31:4536`.
+
+---
+
 ## 2026-07-10 — #9 teleport bug: diagnosed end-to-end (debug branch parked)
 
 **Diagnosed** the grid-teleport/"big slide" bug via an instrumented session. Root:

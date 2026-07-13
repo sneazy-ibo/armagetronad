@@ -803,10 +803,11 @@ int SDL_main(int argc, char** argv)
             if (
 #ifndef NOSOUND
 #ifndef DEFAULT_SDL_AUDIODRIVER
-                SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0 &&
+                !SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) &&
 #endif
 #endif
-                SDL_Init(SDL_INIT_VIDEO) < 0 )            {
+                !SDL_Init(SDL_INIT_VIDEO))
+            {
                 tERR_ERROR("Couldn't initialize SDL: " << SDL_GetError());
             }
             SDLCleanup sdlCleanup; // call SDL_Quit later
@@ -846,6 +847,10 @@ int SDL_main(int argc, char** argv)
                     gLogo::SetSpinning(true);
 
                     sn_bigBrotherString = renderer_identification + "VER=" + sn_programVersion + "\n\n";
+
+                    // honour a platform direct-connect URL (armagetronad://host:port)
+                    // delivered before launch; falls through to the menu afterwards.
+                    st_ConsumeDirectConnect();
 
                     MainMenu();
 

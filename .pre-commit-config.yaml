@@ -21,4 +21,7 @@ repos:
   hooks:
   - id: git-clang-format
     args: []
+    # clang-format is Language: Cpp and errors on the Objective-C(++) Cocoa glue
+    # in src/macosx/ ("Configuration file does not support Objective-C"). Skip it.
+    exclude: '^src/macosx/'
 

@@ -74,6 +74,37 @@ something surprises you — it's cheaper than re-discovering it in a fresh sessi
   from the SDL audio thread; the interim no-op stub was a latent data race.
 - **Music (`fire.xm` via SDL_mixer) is WIN32-only** (`HAVE_LIBSDL_MIXER`). The mac
   build never had it; don't reintroduce SDL3_mixer for the mac path.
+- **SDL3 turned many `int`-returning functions into `bool` (true = success).** So
+  the old idioms `SDL_Init(...) < 0` (fail) and `>= 0` (ok) are now *always false* /
+  *always true* — a silently-broken check. `< 0` at least trips
+  `-Wtautological-constant-compare`; `>= 0` compiles clean. Fixed:
+  `gArmagetron.cpp` init (`!SDL_Init(...)`), `eSound.cpp` `se_SoundInitPrepare`.
+  Still latent in `render/testgl.cpp` (not in the app build). Grep new SDL calls for
+  `< 0`/`>= 0` before trusting them.
+
+## Dedicated (headless server) build
+- **The dedicated target links no SDL** — `render/rSDL.h`/`rGL.h` hand out *fake* SDL
+  typedefs under `#ifdef DEDICATED` (`SDL_AudioSpec`, keycodes, …) and skip the GL
+  includes. When the SDL3 port adds a *new* SDL type, the dedicated shim doesn't have
+  it: e.g. `SDL_AudioStream` broke the `fill_audio` **signature** (it sat outside the
+  `#ifndef DEDICATED` guard while only its body was guarded). Fix pattern: guard the
+  *whole* audio/render function, don't just guard the body. The mac ("My Mac") build
+  is the client only, so these never show until a **full** build compiles Dedicated.
+- `GL_SILENCE_DEPRECATION` is defined **globally** now (Xcode project-level
+  `GCC_PREPROCESSOR_DEFINITIONS`, autotools `-D`), not in `rGL.h` — the header-local
+  define missed TUs that include GL directly (`thirdparty/particles/opengl.cpp`) and
+  double-defined (→ 104 `-Wmacro-redefined`) the ones that include the header. One
+  global define, no per-file `#define`.
+- **`SDL_main` blocks the Cocoa run loop, so use the GetURL Apple Event, not the modern
+  `application:openURLs:`.** `SDLMain applicationDidFinishLaunching` calls `SDL_main`,
+  which runs the whole game and never returns to AppKit. The modern `openURLs:` delegate
+  can fire *after* `didFinishLaunching` → we'd be blocked in `SDL_main` and miss it. The
+  classic `kInternetEventClass`/`kAEGetURL` event is delivered by LaunchServices *between*
+  `applicationWillFinishLaunching` and `didFinishLaunching`, so registering the handler in
+  `willFinishLaunching` reliably captures a link-launched `armagetronad://host:port`
+  **before** the game starts. Constants come from `<CoreServices/CoreServices.h>` (no
+  Carbon). Consumed by `st_ConsumeDirectConnect()` just before `MainMenu()`. The
+  already-running case is unhandled (queues but nothing polls — see TASKS).
 
 ## Cycle walls / trails (learned shipping the trail-end fade, #6)
 

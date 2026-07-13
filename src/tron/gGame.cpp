@@ -2175,6 +2175,38 @@ bool ConnectToServerCore(nServerInfoBase *server)
     return ret;
 }
 
+// Direct-connect target queued from a platform URL handler (e.g. the macOS
+// armagetronad:// scheme). Consumed once, just before the main menu comes up.
+static bool sg_haveDirectConnect = false;
+static tString sg_directConnectHost;
+static unsigned int sg_directConnectPort = 0;
+
+void st_QueueDirectConnect(tString const& host, unsigned int port)
+{
+    sg_directConnectHost = host;
+    sg_directConnectPort = port ? port : sn_defaultPort;
+    sg_haveDirectConnect = true;
+}
+
+bool st_ConsumeDirectConnect()
+{
+    if (!sg_haveDirectConnect)
+        return false;
+    sg_haveDirectConnect = false;
+
+    nServerInfoRedirect server(sg_directConnectHost, sg_directConnectPort);
+    gLogo::SetDisplayed(false);
+    ConnectToServer(&server);
+    return true;
+}
+
+// C shim so the Obj-C++ macOS URL handler needn't pull in the game headers.
+extern "C" void st_QueueDirectConnectC(char const* host, unsigned int port)
+{
+    if (host && *host)
+        st_QueueDirectConnect(tString(host), port);
+}
+
 void ConnectToServer(nServerInfoBase *server)
 {
     bool to = sr_textOut;

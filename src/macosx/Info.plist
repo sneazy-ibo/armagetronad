@@ -16,6 +16,17 @@
 	<string>Armagetron Advanced</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Armagetron Advanced server</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>armagetronad</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>

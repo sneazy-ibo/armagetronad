@@ -7,7 +7,10 @@
 #define SDL_MAIN_HANDLED
 #import <SDL3/SDL.h>
 extern "C" int SDL_main(int argc, char *argv[]);
+// queue an armagetronad://host:port direct-connect (implemented in gGame.cpp)
+extern "C" void st_QueueDirectConnectC(const char *host, unsigned int port);
 #import "SDLMain.h"
+#import <CoreServices/CoreServices.h> /* kInternetEventClass, kAEGetURL, keyDirectObject */
 #import <sys/param.h> /* for MAXPATHLEN */
 #import <unistd.h>
 #include "config.h"
@@ -117,14 +120,14 @@ void MacOSX_SetCWD(char **argv) {
 
     aRange = [[aMenu title] rangeOfString:@"SDL App"];
     if (aRange.length != 0)
-        [aMenu setTitle: [[aMenu title] stringByReplacingRange:aRange with:appName]];
+        [aMenu setTitle: [[aMenu title] stringByReplacingCharactersInRange:aRange withString:appName]];
 
     enumerator = [[aMenu itemArray] objectEnumerator];
     while ((menuItem = [enumerator nextObject]))
     {
         aRange = [[menuItem title] rangeOfString:@"SDL App"];
         if (aRange.length != 0)
-            [menuItem setTitle: [[menuItem title] stringByReplacingRange:aRange with:appName]];
+            [menuItem setTitle: [[menuItem title] stringByReplacingCharactersInRange:aRange withString:appName]];
         if ([menuItem hasSubmenu])
             [self fixMenu:[menuItem submenu] withAppName:appName];
     }
@@ -132,6 +135,35 @@ void MacOSX_SetCWD(char **argv) {
 }
 
 /* Called when the internal event loop has just started running */
+// We manage our own SDL/GL window; opt out of macOS window-state restoration
+// explicitly (SDL's NSWindow has no restoration class, which otherwise logs
+// "restoreWindowWithIdentifier … className=(null)" on launch).
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app { return NO; }
+
+// Register the armagetronad:// URL handler *before* didFinishLaunching hands off to
+// SDL_main (which blocks). LaunchServices delivers the launch URL as a GetURL Apple
+// Event in this window, so a link-launched connect is queued before the game starts.
+- (void)applicationWillFinishLaunching:(NSNotification *)note
+{
+    [[NSAppleEventManager sharedAppleEventManager]
+        setEventHandler:self
+            andSelector:@selector(handleGetURLEvent:withReplyEvent:)
+          forEventClass:kInternetEventClass
+             andEventID:kAEGetURL];
+}
+
+- (void)handleGetURLEvent:(NSAppleEventDescriptor *)event
+           withReplyEvent:(NSAppleEventDescriptor *)reply
+{
+    NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
+    NSURL *url = urlStr ? [NSURL URLWithString:urlStr] : nil;
+    NSString *host = [url host];
+    if ([host length] == 0)
+        return;
+    NSNumber *port = [url port];
+    st_QueueDirectConnectC([host UTF8String], port ? [port unsignedIntValue] : 0);
+}
+
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
     int status;

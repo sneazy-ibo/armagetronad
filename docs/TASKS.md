@@ -86,6 +86,12 @@ bypass the abstraction). So the ordering below is a hard dependency chain.
       alternate backend actually render. Hide the item on non-Metal platforms.
 
 ## Open items (not started)
+- [ ] `armagetronad://` **running-app** direct-connect. Launch-time works (2026-07-13:
+      Info.plist scheme + GetURL handler → `st_QueueDirectConnect` → consumed before
+      `MainMenu()`). When the app is *already open*, the GetURL handler still queues the
+      target (`sg_haveDirectConnect`), but nothing consumes it until the next `MainMenu()`
+      entry. Wire a poll into the menu idle pump (or interrupt the current session) to act
+      on it live. Also: runtime-test the launch path (never exercised — see dev-log).
 - [ ] #1 Decide: rip out OpenGL display lists for VBOs? (legacy frozen-geometry path)
       Related modern-GL debt: `gluBuild2DMipmaps` (deprecated on modern macOS) in
       `rTexture.cpp` → `glTexImage2D` + `glGenerateMipmap`. See docs/sharp-edges.md.
