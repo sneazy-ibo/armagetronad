@@ -185,6 +185,12 @@ throughout.
   `git add <files> && pre-commit run --files <files> ; git add <files>` then commit.
   (`pre-commit run` exits non-zero if it changed anything — that's fine; just re-add.)
   One clean pass, no failed first commit.
+  - **The hook also has a lock bug:** its internal `git read-tree` collides with git's
+    own commit-time `.git/index.lock` and aborts with *"Unable to create index.lock"* even
+    when clang-format reports *"did not modify any files"*. When you've already run the
+    formatter manually and it's clean, that abort is spurious — `rm -f .git/index.lock`
+    and commit with `--no-verify` (the formatter's intent is already satisfied). It also
+    can't format Objective-C(++); `src/macosx/` is excluded from the hook for that reason.
 - End commit messages with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
 - Commit signing is configured; if it ever fails with a key/agent error, ask the
   user rather than disabling signing.
