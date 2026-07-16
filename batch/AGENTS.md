@@ -1,0 +1,55 @@
+# batch/ Directory
+
+## Summary
+Build automation, deployment scripts, and utility tools for Armagetron Advanced.
+
+## Details
+
+The batch directory contains scripts and utilities for building, packaging, deploying, and maintaining Armagetron Advanced. These are development and release engineering tools rather than runtime components.
+
+Key subdirectories include `make/` which contains build helpers and utilities. The `make/` directory has several important scripts:
+- `sortresources.py` - A Python script that sorts resource files for consistent ordering during build
+- `sortresources` - A shell wrapper for the Python script
+- `version` - A script for generating version information
+- `patchnotes.py` - Generates patch notes/changelog from git history
+
+At the root of the batch directory, `rcd_startstop.in` is a template for init scripts that handle starting and stopping Armagetron servers. This is used for system service integration on Unix-like systems.
+
+## Directory Structure
+
+```
+.
+├── Dockerfile              # Docker build configuration
+├── rcd_startstop.in       # Init script template for server/services
+└── make/                  # Build helper scripts
+    ├── sortresources.py  # Resource sorting tool
+    ├── sortresources     # Shell wrapper for sortresources.py
+    ├── version           # Version generation script
+    └── patchnotes.py     # Changelog/patch notes generator
+```
+
+## Technologies
+
+- **Language**: Shell scripts, Python
+- **Build Tools**: Autotools, Make
+- **Version Control**: Git (for patchnotes generation)
+
+## Coding Conventions
+
+- **Script Naming**: Descriptive names with .py or .sh extensions as appropriate
+- **Template Files**: .in extension for configure template files
+- **Portability**: Shell scripts use POSIX-compliant syntax where possible
+
+## Key Patterns
+
+- Build automation pattern
+- Template processing pattern
+- Version generation pattern
+- Changelog automation pattern
+
+## Build System
+
+- `batch_DATA` in Makefile.am installs scripts
+- `rcd_startstop.in` processed by configure to create actual init scripts
+- Scripts installed to appropriate locations based on `--enable-sysinstall` and related options
+- `sortresources.py` used during build to process resource files
