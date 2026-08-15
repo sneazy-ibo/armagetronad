@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tRandom.h"
 #include "tError.h"
 #include <string>
+#include <vector>
 #include "tConfiguration.h"
 #include "uMenu.h"
 #include "eCamera.h"
@@ -49,13 +50,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef DEDICATED
 #ifdef  HAVE_LIBSDL_MIXER
-#include <SDL_mixer.h>
+#include <SDL3_mixer/SDL_mixer.h>
 static Mix_Music* music = NULL;
 #endif
 
 static SDL_AudioSpec audio;
-static bool sound_is_there=false;
-static bool uses_sdl_mixer=false;
+static bool sound_is_there = false;
+static SDL_AudioStream* sg_audioStream = NULL;
 #endif
 
 // sound quality
@@ -65,13 +66,8 @@ static bool uses_sdl_mixer=false;
 #define SOUND_MED 2
 #define SOUND_HIGH 3
 
-#ifdef WIN32
-static int buffer_shift=1;
-#else
-static int buffer_shift=0;
-#endif
-
-static tConfItem<int> bs("SOUND_BUFFER_SHIFT",buffer_shift);
+static int sound_volume = 100; // master output gain, 0..100
+static tConfItem<int> sv("SOUND_VOLUME", sound_volume);
 
 static int sound_quality=SOUND_MED;
 static tConfItem<int> sq("SOUND_QUALITY",sound_quality);
@@ -83,10 +79,23 @@ static int real_sound_sources=0;
 
 static tList<eSoundPlayer> se_globalPlayers;
 
-
-void fill_audio(void *udata, Uint8 *stream, int len)
-{
 #ifndef DEDICATED
+void fill_audio(void* udata, SDL_AudioStream* out, int additional, int total)
+{
+    (void)udata;
+    (void)total;
+    if (additional <= 0)
+        return;
+
+    // SDL3 hands us a stream to fill, not a pre-silenced device buffer. The mix
+    // below is additive (reads dest before writing), so start from silence.
+    static std::vector<Uint8> buffer;
+    if ((int)buffer.size() < additional)
+        buffer.resize(additional);
+    Uint8* stream = buffer.data();
+    int len = additional;
+    memset(stream, 0, additional);
+
     real_sound_sources=0;
     int i;
     if (eGrid::CurrentGrid())
@@ -110,8 +119,10 @@ void fill_audio(void *udata, Uint8 *stream, int len)
         loudness_thresh-=.0001;
     if (loudness_thresh<0)
         loudness_thresh=0;
-#endif
+
+    SDL_PutAudioStreamData(out, stream, additional);
 }
+#endif
 
 #ifndef DEDICATED
 #ifdef DEFAULT_SDL_AUDIODRIVER
@@ -128,14 +139,14 @@ static bool se_SoundInitPrepare()
         char * arg = "SDL_AUDIODRIVER=" STRING(DEFAULT_SDL_AUDIODRIVER);
         putenv(arg);
 
-        if ( SDL_InitSubSystem(SDL_INIT_AUDIO) >= 0 )
+        if (SDL_Init(SDL_INIT_AUDIO))
             return true;
 
         putenv("SDL_AUDIODRIVER=");
     }
 
     // if that fails, try what the user wanted
-    return ( SDL_InitSubSystem(SDL_INIT_AUDIO) >= 0 );
+    return SDL_Init(SDL_INIT_AUDIO);
 }
 #endif
 #endif
@@ -186,70 +197,23 @@ void se_SoundInit()
             desired.freq=22050;
         }
 
-        desired.format=AUDIO_S16SYS;
-        desired.samples=128;
-        while (desired.samples <= desired.freq >> (6-buffer_shift))
-            desired.samples <<= 1;
+        desired.format = SDL_AUDIO_S16;
         desired.channels = 2;
-        desired.callback = fill_audio;
-        desired.userdata = NULL;
 
-#ifdef HAVE_LIBSDL_MIXER
-        uses_sdl_mixer=true;
+        // SDL3 audio streams auto-convert to the device format, so we always
+        // get our S16 stereo spec back — no 16-bit-emulation fallback needed.
+        sg_audioStream = SDL_OpenAudioDeviceStream(
+            SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &desired, fill_audio, NULL);
+        sound_is_there = (sg_audioStream != NULL);
 
-        // init using SDL_Mixer
-        sound_is_there=(Mix_OpenAudio(desired.freq, desired.format, desired.channels, desired.samples)>=0);
-
-        if ( sound_is_there )
+        if (sound_is_there)
         {
-            // query actual sound info
             audio = desired;
-            int channels;
-            Mix_QuerySpec( &audio.freq, &audio.format, &channels );
-            audio.channels = channels;
-
-            // register callback
-            Mix_SetPostMix( &fill_audio, NULL );
-
-            const tPath& vpath = tDirectories::Data();
-            tString musFile = vpath.GetReadPath( "music/fire.xm" );
-
-            music = Mix_LoadMUS( musFile );
-
-            if ( music )
-                Mix_FadeInMusic( music, -1, 2000 );
-
+            SDL_SetAudioStreamGain(sg_audioStream, static_cast<float>(sound_volume) / 100.0f);
+            se_SoundPause(false); // streams start paused; resume
         }
-#else
-        // just use SDL to init sound
-        uses_sdl_mixer=false;
-        sound_is_there=(SDL_OpenAudio(&desired,&audio)>=0);
-#endif
-        if (sound_is_there && (audio.format!=AUDIO_S16SYS || audio.channels!=2))
-        {
-            uses_sdl_mixer=false;
-            se_SoundExit();
-            // force emulation of 16 bit stereo; sadly, this cannot use SDL_Mixer :-(
-            audio.format=AUDIO_S16SYS;
-            audio.channels=2;
-            sound_is_there=(SDL_OpenAudio(&audio,NULL)>=0);
-            con << tOutput("$sound_error_no16bit");
-        }
-        if (!sound_is_there)
-            con << tOutput("$sound_error_initfailed");
         else
-        {
-            //for(int i=wavs.Len()-1;i>=0;i--)
-            //wavs(i)->Init();
-#ifdef DEBUG
-            tOutput o;
-            o.SetTemplateParameter(1,audio.freq);
-            o.SetTemplateParameter(2,audio.samples);
-            o << "$sound_inited";
-            con << o;
-#endif
-            se_SoundPause(false);
-        }
+            con << tOutput("$sound_error_initfailed");
     }
 
     // save sound settings, they appear to work
@@ -275,25 +239,11 @@ void se_SoundExit(){
         //    for(int i=wavs.Len()-1;i>=0;i--)
         //wavs(i)->Exit();
 
-#ifdef HAVE_LIBSDL_MIXER
-        if ( music )
+        if (sg_audioStream)
         {
-            if( Mix_PlayingMusic() )
-            {
-                Mix_FadeOutMusic(100);
-                SDL_Delay(100);
-            }
-            Mix_FreeMusic( music );
-            music = NULL;
+            SDL_DestroyAudioStream(sg_audioStream); // also closes the bound device
+            sg_audioStream = NULL;
         }
-
-        se_SoundPause(true);
-
-        if ( uses_sdl_mixer )
-            Mix_CloseAudio();
-        else
-#endif
-            SDL_CloseAudio();
 
 #ifdef DEBUG
         con << tOutput("$sound_disabling_done");
@@ -309,8 +259,8 @@ static unsigned int locks;
 
 void se_SoundLock(){
 #ifndef DEDICATED
-    if (!locks)
-        SDL_LockAudio();
+    if (sg_audioStream && !locks)
+        SDL_LockAudioStream(sg_audioStream);
     locks++;
 #endif
 }
@@ -318,14 +268,20 @@ void se_SoundLock(){
 void se_SoundUnlock(){
 #ifndef DEDICATED
     locks--;
-    if (!locks)
-        SDL_UnlockAudio();
+    if (sg_audioStream && !locks)
+        SDL_UnlockAudioStream(sg_audioStream);
 #endif
 }
 
-void se_SoundPause(bool p){
+void se_SoundPause(bool pause)
+{
 #ifndef DEDICATED
-    SDL_PauseAudio(p);
+    if (!sg_audioStream)
+        return;
+    if (pause)
+        SDL_PauseAudioStreamDevice(sg_audioStream);
+    else
+        SDL_ResumeAudioStreamDevice(sg_audioStream);
 #endif
 }
 
@@ -342,19 +298,6 @@ eWavData::eWavData(const char * fileName,const char *alternative)
 }
 
 #ifndef DEDICATED
-
-#ifdef SDL_LoadWAV
-#undef SDL_LoadWAV
-#endif
-
-static SDL_AudioSpec * SDLCALL SDL_LoadWAV(char const *file, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len)
-{
-    auto *rw = SDL_RWFromFile(file, "rb");
-    if(!rw)
-        return nullptr;
-
-    return SDL_LoadWAV_RW(rw,1, spec,audio_buf,audio_len);
-}
 
 #endif
 
@@ -379,11 +322,10 @@ void eWavData::Load(){
 
     const tPath& path = tDirectories::Data();
 
-    SDL_AudioSpec *result=SDL_LoadWAV( path.GetReadPath( filename ) ,&spec,&data,&len);
-    if (result!=&spec || !data){
+    if (!SDL_LoadWAV(path.GetReadPath(filename), &spec, &data, &len) || !data)
+    {
         if (filename_alt.Len()>1){
-            result=SDL_LoadWAV( path.GetReadPath( filename_alt ),&spec,&data,&len);
-            if (result!=&spec || !data)
+            if (!SDL_LoadWAV(path.GetReadPath(filename_alt), &spec, &data, &len) || !data)
             {
                 tOutput err;
                 err.SetTemplateParameter(1, filename);
@@ -394,8 +336,7 @@ void eWavData::Load(){
                 alt=true;
         }
         else{
-            result=SDL_LoadWAV( path.GetReadPath( "sound/expl.wav" ) ,&spec,&data,&len);
-            if (result!=&spec || !data)
+            if (!SDL_LoadWAV(path.GetReadPath("sound/expl.wav"), &spec, &data, &len) || !data)
             {
                 tOutput err;
                 err.SetTemplateParameter(1, "sound/expl.waw");
@@ -405,14 +346,11 @@ void eWavData::Load(){
             else
                 len=0;
         }
-        /*
-          tERR_ERROR("Sound file " << fileName << " not found. Have you called "
-          "Armagetron from the right directory?"); */
     }
 
-    if (spec.format==AUDIO_S16SYS)
+    if (spec.format == SDL_AUDIO_S16)
         samples=len>>1;
-    else if(spec.format==AUDIO_U8)
+    else if (spec.format == SDL_AUDIO_U8)
         samples=len;
     else
     {
@@ -421,30 +359,8 @@ void eWavData::Load(){
         err.SetTemplateParameter(1, filename);
         err << "$sound_error_unsupported";
 
-        // convert to 16 bit system format
-        SDL_AudioCVT cvt;
-        if ( -1 == SDL_BuildAudioCVT( &cvt, spec.format, spec.channels, spec.freq, AUDIO_S16SYS, spec.channels, spec.freq ) )
-        {
-            throw tGenericException(err, errorName);
-        }
-
-        cvt.buf=reinterpret_cast<Uint8 *>( malloc( len * cvt.len_mult ) );
-        cvt.len=len;
-        memcpy(cvt.buf, data, len);
-        freeData = true;
-
-
-        if ( -1 == SDL_ConvertAudio( &cvt ) )
-        {
-            throw tGenericException(err, errorName);
-        }
-
-        SDL_FreeWAV( data );
-        data = cvt.buf;
-        spec.format = AUDIO_S16SYS;
-        len    = len * cvt.len_ratio;
-
-        samples = len >> 1;
+        // ponytail: SDL_BuildAudioCVT removed in SDL3; unsupported formats fail
+        throw tGenericException(err, errorName);
     }
 
     samples/=spec.channels;
@@ -453,8 +369,12 @@ void eWavData::Load(){
 #ifdef LINUX
     con << "Sound file " << filename << " loaded: ";
     switch (spec.format){
-    case AUDIO_S16SYS: con << "16 bit "; break;
-    case AUDIO_U8: con << "8 bit "; break;
+    case SDL_AUDIO_S16:
+        con << "16 bit ";
+        break;
+    case SDL_AUDIO_U8:
+        con << "8 bit ";
+        break;
     default: con << "unknown "; break;
     }
     if (spec.channels==2)
@@ -490,8 +410,7 @@ void eWavData::Unload(){
 
         {
 
-            SDL_FreeWAV(data);
-
+            SDL_free(data);
         }
 
 
@@ -583,7 +502,7 @@ bool eWavData::Mix( Uint8* dest_u8, Uint32 playlen, eAudioPos& pos,
 
     while (goon){
         if (spec.channels==2){
-            if (spec.format==AUDIO_U8)
+            if (spec.format == SDL_AUDIO_U8)
                 while (playlen>0 && pos.pos<samples){
                     // fix endian problems for the Mac port, as well as support for other
                     // formats than  stereo...
@@ -640,7 +559,8 @@ bool eWavData::Mix( Uint8* dest_u8, Uint32 playlen, eAudioPos& pos,
             }
         }
         else{
-            if (spec.format==AUDIO_U8){
+            if (spec.format == SDL_AUDIO_U8)
+            {
                 while (playlen>0 && pos.pos<samples){
                     // fix endian problems for the Mac port, as well as support for other
                     // formats than  stereo...
@@ -718,7 +638,8 @@ void eWavData::Loop(){
         memcpy(buff2,data,len);
         Uint32 samples;
 
-        if (spec.format==AUDIO_U8){
+        if (spec.format == SDL_AUDIO_U8)
+        {
             samples=len;
             for(int i=samples-1;i>=0;i--){
                 Uint32 j=i+((len>>2)<<1);
@@ -731,7 +652,8 @@ void eWavData::Loop(){
                 data[i]=int(a*buff2[i]+b*buff2[j]);
             }
         }
-        else if (spec.format==AUDIO_S16SYS){
+        else if (spec.format == SDL_AUDIO_S16)
+        {
             samples=len>>1;
             auto data_s = reinterpret_cast<short*>( data );
             auto buff2_s = reinterpret_cast<short*>( buff2 );
@@ -846,11 +768,27 @@ static uMenuItemInt sources_men
  "$sound_menu_sources_help",
  sound_sources,2,20,2);
 
-static uMenuItemSelection<int> sq_men
-(&Sound_menu,"$sound_menu_quality_text",
- "$sound_menu_quality_help",
- sound_quality);
+// re-initialise the audio device the instant the quality changes
+class eSoundQualityMenuItem : public uMenuItemSelection<int>
+{
+public:
+    eSoundQualityMenuItem(uMenu* m, int& targ)
+        : uMenuItemSelection<int>(m, "$sound_menu_quality_text",
+                                  "$sound_menu_quality_help", targ) {}
 
+    virtual void LeftRight(int lr)
+    {
+        int old = sound_quality;
+        uMenuItemSelection<int>::LeftRight(lr);
+        if (sound_quality != old)
+        {
+            se_SoundExit();
+            se_SoundInit();
+        }
+    }
+};
+
+static eSoundQualityMenuItem sq_men(&Sound_menu, sound_quality);
 
 static uSelectEntry<int> a(sq_men,
                            "$sound_menu_quality_off_text",
@@ -869,50 +807,30 @@ static uSelectEntry<int> d(sq_men,
                            "$sound_menu_quality_high_help",
                            SOUND_HIGH);
 
-static uMenuItemSelection<int> bm_men
-(&Sound_menu,
- "$sound_menu_buffer_text",
- "$sound_menu_buffer_help",
- buffer_shift);
+// applies the new master volume the instant the slider moves
+class eSoundVolumeMenuItem : public uMenuItemInt
+{
+public:
+    eSoundVolumeMenuItem(uMenu* m, int& targ)
+        : uMenuItemInt(m, "$sound_menu_volume_text", "$sound_menu_volume_help",
+                       targ, 0, 100, 10) {}
 
-static uSelectEntry<int> ba(bm_men,
-                            "$sound_menu_buffer_vsmall_text",
-                            "$sound_menu_buffer_vsmall_help",
-                            -2);
+    virtual void LeftRight(int dir)
+    {
+        uMenuItemInt::LeftRight(dir);
+#ifndef DEDICATED
+        if (sg_audioStream)
+            SDL_SetAudioStreamGain(sg_audioStream, static_cast<float>(sound_volume) / 100.0f);
+#endif
+    }
+};
 
-static uSelectEntry<int> bb(bm_men,
-                            "$sound_menu_buffer_small_text",
-                            "$sound_menu_buffer_small_help",
-                            -1);
-
-static uSelectEntry<int> bc(bm_men,
-                            "$sound_menu_buffer_med_text",
-                            "$sound_menu_buffer_med_help",
-                            0);
-
-static uSelectEntry<int> bd(bm_men,
-                            "$sound_menu_buffer_high_text",
-                            "$sound_menu_buffer_high_help",
-                            1);
-
-static uSelectEntry<int> be(bm_men,
-                            "$sound_menu_buffer_vhigh_text",
-                            "$sound_menu_buffer_vhigh_help",
-                            2);
-
+static eSoundVolumeMenuItem volume_men(&Sound_menu, sound_volume);
 
 void se_SoundMenu(){
-    //	se_SoundPause(true);
-    //	se_SoundLock();
-    int oldsettings=sound_quality;
-    int oldshift=buffer_shift;
+    // every item applies live (quality re-inits, volume sets gain, sources is read
+    // by the mix callback each call), so nothing to reconcile on close.
     Sound_menu.Enter();
-    if (oldsettings!=sound_quality || oldshift!=buffer_shift){
-        se_SoundExit();
-        se_SoundInit();
-    }
-    //	se_SoundUnlock();
-    //  se_SoundPause(false);
 }
 
 eSoundLocker::eSoundLocker()

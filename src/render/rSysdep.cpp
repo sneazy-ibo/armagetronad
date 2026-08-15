@@ -45,15 +45,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tRecorder.h"
 
 #ifndef DEDICATED
-#include "SDL_thread.h"
-#include "SDL_mutex.h"
+#include <SDL3/SDL_thread.h>
 
 #include <png.h>
 #define SCREENSHOT_PNG_BITDEPTH 8
 #define SCREENSHOT_BYTES_PER_PIXEL 3
 #ifndef SDL_OPENGL
+#ifndef __APPLE__
 #ifndef DIRTY
 #define DIRTY
+#endif
 #endif
 #endif
 
@@ -91,13 +92,14 @@ Window  win;
 #endif
 
 #ifdef DIRTY
-#include <SDL_syswm.h>
+#include <SDL3/SDL_syswm.h>
 
 // graphics initialisation and cleanup:
 bool  rSysDep::InitGL(){
     SDL_SysWMinfo system;
     SDL_VERSION(&system.version);
-    if (!SDL_GetWMInfo(&system)){
+    if (!SDL_GetWindowWMInfo(sr_window, &system))
+    {
         std::cerr << "Video information not available!\n";
         return(false);
     }
@@ -209,7 +211,8 @@ bool  rSysDep::InitGL(){
 
 void  rSysDep::ExitGL(){
     SDL_SysWMinfo system;
-    SDL_GetWMInfo(&system);
+    SDL_VERSION(&system.version);
+    SDL_GetWindowWMInfo(sr_window, &system);
 
     /*
     #ifdef HAVE_FXMESA
@@ -311,10 +314,8 @@ static void make_screenshot(){
     SDL_Surface *image;
     SDL_Surface *temp;
     int idx;
-    image = SDL_CreateRGBSurface(SDL_SWSURFACE, sr_screenWidth, sr_screenHeight,
-                                 24, 0x0000FF, 0x00FF00, 0xFF0000 ,0);
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE, sr_screenWidth, sr_screenHeight,
-                                24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    image = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
+    temp = SDL_CreateSurface(sr_screenWidth, sr_screenHeight, SDL_PIXELFORMAT_RGB24);
 
     // make upside down screenshot
     glReadPixels(0,0,sr_screenWidth, sr_screenHeight, GL_RGB,
@@ -359,8 +360,8 @@ static void make_screenshot(){
     }
 
     // cleanup
-    SDL_FreeSurface(image);
-    SDL_FreeSurface(temp);
+    SDL_DestroySurface(image);
+    SDL_DestroySurface(temp);
 #endif
 }
 
@@ -457,87 +458,8 @@ int sr_maxFPS = 360;
 // for setting breakpoints in optimized mode, too
 static void breakpoint(){}
 
-static bool sr_netSyncThreadGoOn = true;
-static rSysDep::rNetIdler * sr_netIdler = NULL;
-int sr_NetSyncThread(void *lockVoid)
-{
-    SDL_mutex *lock = (SDL_mutex *)lockVoid;
-
-    SDL_mutexP(lock);
-
-    while ( sr_netSyncThreadGoOn )
-    {
-        SDL_mutexV(lock);
-        // wait for network data
-        bool toDo = sr_netIdler->Wait();
-        SDL_mutexP(lock);
-
-        if ( toDo )
-        {
-            // disable rendering (during auto-scrolling of console, for example)
-            bool glout = sr_glOut;
-            sr_glOut = false;
-
-            // new network data arrived, handle it
-            sr_netIdler->Do();
-
-            // enable rendering again
-            sr_glOut = glout;
-        }
-    }
-
-    SDL_mutexV(lock);
-
-    return 0;
-}
-
-static SDL_Thread * sr_netSyncThread = NULL;
-static SDL_mutex * sr_netLock = NULL;
-void rSysDep::StartNetSyncThread( rNetIdler * idler )
-{
-    sr_netIdler = idler;
-
-    return;
-
-    // can't use thrading trouble while recording
-    if ( tRecorder::IsRunning() )
-        return;
-
-    if ( sr_netSyncThread )
-        return;
-
-    // create lock
-    if ( !sr_netLock )
-        sr_netLock = SDL_CreateMutex();
-
-    // start thread
-    sr_netSyncThread = SDL_CreateThread( sr_NetSyncThread, sr_netLock );
-    if ( !sr_netSyncThread )
-        return;
-
-    // lock mutex, the thread should only do work while the main thread is waiting for the refresh
-    SDL_mutexP( sr_netLock );
-}
-
-void rSysDep::StopNetSyncThread()
-{
-    // stop and delete thread
-    if ( sr_netSyncThread )
-    {
-        SDL_mutexV(  sr_netLock );
-        sr_netSyncThreadGoOn = false;
-        SDL_WaitThread( sr_netSyncThread, NULL );
-        sr_netSyncThread = NULL;
-        sr_netIdler = NULL;
-    }
-
-    // delete lock
-    if ( sr_netLock )
-    {
-        SDL_DestroyMutex( sr_netLock );
-        sr_netLock = NULL;
-    }
-}
+// ponytail: the background net-sync thread was never enabled (creation
+// early-returned); network is processed via per-frame tasks instead. Removed.
 
 static tConfItem<int> sr_maxFPSConf("MAX_FPS", sr_maxFPS,
                                     [](const int& val) { return (val >= 0); });
@@ -565,6 +487,10 @@ void sr_LimitFPS()
 }
 
 void rSysDep::SwapGL(){
+    // ponytail: ensure GL context is current before each frame
+    if (sr_window && sr_glcontext)
+        SDL_GL_MakeCurrent(sr_window, sr_glcontext);
+
     if ( s_benchmark )
     {
         static PerformanceCounter counter;
@@ -642,10 +568,6 @@ void rSysDep::SwapGL(){
 
     rPerFrameTask::DoPerFrameTasks();
 
-    // unlock the mutex while waiting for the swap operation to finish
-    SDL_mutexV(  sr_netLock );
-    sr_LockSDL();
-
     switch( swapMode_ )
     {
     case rSwap_Fastest:
@@ -658,12 +580,12 @@ void rSysDep::SwapGL(){
         break;
     }
 
-#if defined(SDL_OPENGL)
     if (lastSuccess.useSDL)
-        SDL_GL_SwapBuffers();
-    //#elif defined(HAVE_FXMESA)
-    //fxMesaSwapBuffers();
-#endif
+    {
+        SDL_GL_SwapWindow(sr_window);
+    }
+    // #elif defined(HAVE_FXMESA)
+    // fxMesaSwapBuffers();
 
 #ifdef DIRTY
     if (!lastSuccess.useSDL){
@@ -679,11 +601,6 @@ void rSysDep::SwapGL(){
         make_screenshot();
         sr_screenshotIsPlanned=false;
     }
-
-    sr_UnlockSDL();
-    // lock mutex again
-    SDL_mutexP(  sr_netLock );
-
 
     // disable output in fast forward mode
     if ( s_fastForward && tRecorder::IsPlayingBack() )
@@ -721,7 +638,7 @@ void rSysDep::SwapGL(){
 #endif // dedicated
 
 #ifndef DEDICATED
-static SDL_mutex *mut;
+static SDL_Mutex* mut;
 
 static void stuff_init(){
     mut=SDL_CreateMutex();
@@ -729,26 +646,6 @@ static void stuff_init(){
 
 static tInitExit stuff_ie(&stuff_init);
 #endif
-
-void sr_LockSDL(){
-    //std::cerr << "locking...";
-#ifndef DEDICATED
-#ifndef WIN32
-    //SDL_mutexP(mut);
-#endif
-#endif
-    //std::cerr << " locked!\n";
-}
-
-void sr_UnlockSDL(){
-    //std::cerr << "unlocking...";
-#ifndef DEDICATED
-#ifndef WIN32
-    //SDL_mutexV(mut);
-#endif
-#endif
-    //std::cerr << " unlocked!\n";
-}
 
 #ifndef DEDICATED
 void  rSysDep::ClearGL(){
@@ -766,5 +663,3 @@ void  rSysDep::ClearGL(){
     }
 }
 #endif
-
-

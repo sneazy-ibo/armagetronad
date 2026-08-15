@@ -109,7 +109,7 @@ void rFont::ProcessImage( SDL_Surface * surface )
     // pre-blend alpha values
     GLubyte *pixels =reinterpret_cast<GLubyte *>(surface->pixels);
 
-    if (surface->format->BytesPerPixel == 4)
+    if (SDL_GetPixelFormatDetails(surface->format)->bytes_per_pixel == 4)
     {
         for (int i=surface->w*surface->h-1;i>=0;i--){
             GLubyte alpha=pixels[4*i+3];
@@ -118,7 +118,7 @@ void rFont::ProcessImage( SDL_Surface * surface )
             pixels[4*i+2] = (alpha * pixels[4*i+2]) >> 8;
         }
     }
-    else if (surface->format->BytesPerPixel == 2)
+    else if (SDL_GetPixelFormatDetails(surface->format)->bytes_per_pixel == 2)
     {
         for (int i=surface->w*surface->h-1;i>=0;i--){
             GLubyte alpha=pixels[2*i+1];

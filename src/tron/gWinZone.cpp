@@ -67,6 +67,11 @@ static tSettingItem<REAL> sg_zoneBottomConf( "ZONE_BOTTOM", sg_zoneBottom );
 static REAL sg_zoneHeight = 5.0f;
 static tSettingItem<REAL> sg_zoneHeightConf( "ZONE_HEIGHT", sg_zoneHeight );
 
+static bool sg_zoneCenterLine = false;
+static tSettingItem<bool> sg_zoneCenterLineConf("ZONE_CENTER_LINE", sg_zoneCenterLine);
+
+static REAL sg_zoneCenterLineHeight = 10.0f; //!< world height of the center marker line
+static tSettingItem<REAL> sg_zoneCenterLineHeightConf("ZONE_CENTER_LINE_HEIGHT", sg_zoneCenterLineHeight);
 
 //! creates a win or death zone (according to configuration) at the specified position
 gZone * sg_CreateWinDeathZone( eGrid * grid, const eCoord & pos )
@@ -527,6 +532,19 @@ void gZone::Render( const eCamera * cam )
         sr_DepthOffset(false);
         glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
         glDepthMask(GL_TRUE);
+    }
+
+    // center marker line, drawn outside the cached cylinder list so the toggle
+    // applies instantly. The active matrix maps local (0,0,z) to world height
+    // sg_zoneBottom + z*sg_zoneHeight, so the line at x=y=0 stands on the zone axis.
+    if (sg_zoneCenterLine && sg_zoneHeight > 0)
+    {
+        glDisable(GL_TEXTURE_2D);
+        Color(color_.r, color_.g, color_.b);
+        BeginLines();
+        Vertex(0, 0, 0);
+        Vertex(0, 0, sg_zoneCenterLineHeight / sg_zoneHeight);
+        RenderEnd();
     }
 
     glPopMatrix();

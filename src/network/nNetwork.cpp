@@ -3143,7 +3143,8 @@ void sn_Bend( tString const & server, unsigned int port)
     sn_Bend( address );
 }
 
-nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket const * socket ){
+nConnectError sn_Connect(nAddress const& server, nLoginType loginType, nSocket const* socket, bool waitSync)
+{
     sn_DenyReason = "";
 
     // reset redirection
@@ -3270,7 +3271,7 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
     else if (tSysTimeFloat()>=timeout || sn_GetNetState()!=nCLIENT){
         if ( loginType == Login_All )
         {
-            return 	sn_Connect( server, Login_Pre0252, socket );
+            return sn_Connect(server, Login_Pre0252, socket, waitSync);
         }
         else
         {
@@ -3292,7 +3293,8 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
         mess << "$network_login_success";
         con << mess;
         con << tOutput("$network_login_sync");
-        sn_Sync(40);
+        if (waitSync)
+            sn_Sync(40);
 
         if(sn_GetNetState() != nCLIENT)
         {
@@ -3302,7 +3304,8 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
         con << tOutput("$network_login_relabeling");
         con << tOutput("$network_login_sync2");
 
-        sn_Sync(40,true);
+        if (waitSync)
+            sn_Sync(40, true);
 
         if(sn_GetNetState() != nCLIENT)
         {
@@ -3317,7 +3320,6 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
         return nOK;
     }
 }
-
 
 void nReadError( bool critical )
 {

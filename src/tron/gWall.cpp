@@ -847,6 +847,14 @@ void gPlayerWall::RenderList(bool list)
 bool sg_simpleTrail = false;
 static tConfItem< bool > sgc_simpleTrail( "SIMPLE_TRAIL", sg_simpleTrail );
 
+// fade the lag-uncertain band at the disappearing (tail) end of the trail
+bool sg_trailEndFade = false;
+static tConfItem<bool> sgc_trailEndFade("TRAIL_END_FADE", sg_trailEndFade);
+
+// multiplier on the band length (speed*lag); crank up to see it at low ping
+REAL sg_trailEndFadeScale = 1;
+static tConfItem<REAL> sgc_trailEndFadeScale("TRAIL_END_FADE_SCALE", sg_trailEndFadeScale);
+
 void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
     if ( !cycle_ )
     {
@@ -908,6 +916,23 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
         }
 
         REAL a=1;
+
+        // The tail is cut at (distance - wall length); under lag that cut point
+        // is uncertain by ~speed*lag, so fade the band just inside the cut toward
+        // 0.5 alpha to show it may already be gone on the server.
+        bool fade = false;
+        REAL fadeCut = 0;
+        REAL fadeSpan = 0;
+        if (sg_trailEndFade && bool(cycle_) && cycle_->Alive() && gCycle::WallsLength() > 0)
+        {
+            fadeSpan = cycle_->Speed() * cycle_->Lag() * sg_trailEndFadeScale;
+            fadeCut = cycle_->GetDistance() - cycle_->ThisWallsLength();
+            if (fadeSpan > 0 && EndPos() > fadeCut && BegPos() < fadeCut + fadeSpan)
+            {
+                fade = true;
+                ClearDisplayList(); // the band moves every frame; don't freeze it
+            }
+        }
 
 #define SEGLEN 2.5
         //REAL ta=startTime*3;
@@ -976,6 +1001,30 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
                 }
             }
 
+            // lag-uncertain tail band: flat 0.5 alpha over a length of fadeSpan
+            // (speed*lag) at the cut, split at the band edge for an exact length.
+            // Handled here, before the trail-style dispatch, so it works for both
+            // simple and normal trails. Faded walls are always tail walls, so their
+            // segments never need the growing-tip logic below.
+            if (fade)
+            {
+                REAL bandTop = fadeCut + fadeSpan;
+                REAL olderPos = (pa < fadeCut) ? fadeCut : pa; // position of p1
+                if (pe <= bandTop)
+                    RenderNormal(p1, p2, ta, te, r, g, b, REAL(.5), renderMode);
+                else if (olderPos >= bandTop)
+                    RenderNormal(p1, p2, ta, te, r, g, b, 1, renderMode);
+                else
+                {
+                    REAL s = (bandTop - olderPos) / (pe - olderPos);
+                    eCoord pm = p1 + (p2 - p1) * s;
+                    REAL tm = ta + (te - ta) * s;
+                    RenderNormal(p1, pm, ta, tm, r, g, b, REAL(.5), renderMode); // in band
+                    RenderNormal(pm, p2, tm, te, r, g, b, 1, renderMode);        // past band
+                }
+                continue;
+            }
+
             if(sg_simpleTrail)
             {
                 if (te+gBEG_LEN_GIVEUP <= time)
@@ -984,6 +1033,12 @@ void gNetPlayerWall::RenderList(bool list, gWallRenderMode renderMode ){
                 }
                 else if( ta+gBEG_LEN_GIVEUP <= time )
                 {
+                    // Tip is still inside the giveup zone, so this segment grows every
+                    // frame.  Don't let it freeze into a display list (same as the
+                    // non-simple path below) — otherwise the held-back partial wall
+                    // sticks, leaving the corner gap until the next turn.
+                    ClearDisplayList();
+
                     REAL denom = te - ta;
                     if( denom <= 0 )
                     {
@@ -1067,6 +1122,7 @@ static const bool sg_renderBulkQuads = true;
 #endif
 
 void gNetPlayerWall::RenderNormal(const eCoord &p1,const eCoord &p2,REAL ta,REAL te,REAL r,REAL g,REAL b,REAL a, gWallRenderMode mode ){
+    REAL lineAlpha = a; // upper edge line fades on death; the quad body keeps a
     REAL hfrac=1;
 
     if (bool(cycle_) && !cycle_->Alive() && gCycle::WallsStayUpDelay() >= 0 ){
@@ -1090,7 +1146,7 @@ void gNetPlayerWall::RenderNormal(const eCoord &p1,const eCoord &p2,REAL ta,REAL
             b+=ca;
             g+=ca;
 
-            a*=alpha;
+            lineAlpha *= alpha;
         }
     }
     REAL h=1;
@@ -1101,9 +1157,9 @@ void gNetPlayerWall::RenderNormal(const eCoord &p1,const eCoord &p2,REAL ta,REAL
 
             BeginLines();
 
-            upperlinecolor(r,g,b,a);
+            upperlinecolor(r, g, b, lineAlpha);
             glVertex3f(p1.x,p1.y,h*hfrac);
-            upperlinecolor(r,g,b,a);
+            upperlinecolor(r, g, b, lineAlpha);
             glVertex3f(p2.x,p2.y,h*hfrac);
         }
 
@@ -1122,19 +1178,19 @@ void gNetPlayerWall::RenderNormal(const eCoord &p1,const eCoord &p2,REAL ta,REAL
         {
             BeginQuads();
 
-            glColor4f(r,g,b,1);
+            glColor4f(r, g, b, a);
             glTexCoord2f(ta,hfrac);
             glVertex3f(p1.x,p1.y,extrarise);
-            
-            glColor4f(r,g,b,1);
+
+            glColor4f(r, g, b, a);
             glTexCoord2f(ta,0);
             glVertex3f(p1.x,p1.y,extrarise + h*hfrac);
-            
-            glColor4f(r,g,b,1);
+
+            glColor4f(r, g, b, a);
             glTexCoord2f(te,0);
             glVertex3f(p2.x,p2.y,extrarise + h*hfrac);
-            
-            glColor4f(r,g,b,1);
+
+            glColor4f(r, g, b, a);
             glTexCoord2f(te,hfrac);
             glVertex3f(p2.x,p2.y,extrarise);
         }

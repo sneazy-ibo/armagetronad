@@ -113,6 +113,11 @@ void update_settings( bool const * goon = 0 );
 
 void ConnectToServer(nServerInfoBase *server);
 
+//! queue a direct-connect target from a platform URL handler (armagetronad://host:port)
+void st_QueueDirectConnect( tString const & host, unsigned int port );
+//! if a direct-connect target is queued, connect to it now; returns true if it did
+bool st_ConsumeDirectConnect();
+
 void sg_EnterGame( nNetState enter_state );
 void sg_HostGame();
 void sg_HostGameMenu();

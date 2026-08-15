@@ -180,8 +180,10 @@ static tConfItem<bool> chl("HEADLIGHT",headlights);
 #endif
 
 #ifndef SDL_OPENGL
+#ifndef __APPLE__
 #ifndef DIRTY
 #define DIRTY
+#endif
 #endif
 #endif
 
@@ -220,55 +222,35 @@ public:
              res)
     {
 #ifndef DEDICATED
-        // fetch valid screen modes from SDL
-        SDL_Rect **modes;
-        modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-
-        // Check is there are any modes available
-        int i;
-        if(modes == 0 || modes == (SDL_Rect **)-1)
+        // SDL3: fetch valid screen modes from all displays
+        int numDisplays = 0;
+        SDL_DisplayID* displays = SDL_GetDisplays(&numDisplays);
+        for (int di = 0; di < numDisplays; ++di)
         {
-            // add all fixed resolutions
-            for ( i = ArmageTron_Custom; i>=0; --i )
+            int modeCount = 0;
+            SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(displays[di], &modeCount);
+            for (int mi = 0; mi < modeCount; ++mi)
             {
-                NewChoice( rResolution(i) );
+                if (modes[mi]->w > 0 && modes[mi]->h > 0)
+                    NewChoice(rScreenSize(modes[mi]->w, modes[mi]->h));
             }
+            SDL_free(modes);
         }
-        else
+        SDL_free(displays);
+
+        // add custom resolution
+        NewChoice(ArmageTron_Custom);
+
+        // add desktop resolution
+        if (sr_DesktopScreensizeSupported())
+            NewChoice(ArmageTron_Desktop);
+
+        // optionally add old fixed presets
+        if (addFixed)
         {
-            // add custom resolution
-            NewChoice( ArmageTron_Custom );
-
-            // add desktop resolution
-            if ( sr_DesktopScreensizeSupported() && !addFixed )
-                NewChoice( ArmageTron_Desktop );
-
-            // the maximal allowed screen size
-            rScreenSize maxSize(0,0);
-
-            // fill in available modes (avoid duplicates)
-            for(i=0;modes[i];++i)
+            for (int i = ArmageTron_Custom; i >= 0; --i)
             {
-                // add mode (if it's new)
-                rScreenSize size(modes[i]->w, modes[i]->h);
-                NewChoice( size );
-                if ( maxSize.width < size.width )
-                    maxSize.width = size.width;
-                if ( maxSize.height < size.height )
-                    maxSize.height = size.height;
-            }
-
-            // add fixed resolutions (as window sizes)
-            if ( addFixed )
-            {
-                for ( i = ArmageTron_Custom; i>=ArmageTron_Min; --i )
-                {
-                    rScreenSize size( static_cast< rResolution >(i) );
-
-                    // only add those that fit the maximal resolution
-                    if ( maxSize.height >= size.height && maxSize.width >= size.width )
-                        NewChoice( size );
-                }
+                NewChoice(rResolution(i));
             }
         }
 
@@ -350,16 +332,7 @@ static void sg_ScreenModeMenu()
         }
     }
 
-#ifdef SDL_OPENGL
-#ifdef DIRTY
-    uMenuItemToggle sdl_t
-    (&screen_menu_mode,
-     "$screen_use_sdl_text",
-     "$screen_use_sdl_help",
-     currentScreensetting.useSDL);
-#endif // dirty
-
-#if SDL_VERSION_ATLEAST(1, 2, 10)
+    // SDL2 always uses the SDL window/GL path, so the old "use SDL" toggle is gone.
     uMenuItemSelection<rVSync> zvs_t
     (&screen_menu_mode,
      "$screen_vsync_text",
@@ -372,8 +345,6 @@ static void sg_ScreenModeMenu()
 #ifdef HAVE_GLEW
     uSelectEntry<rVSync> zvs_blur(zvs_t,"$screen_vsync_motionblur_text","$screen_vsync_motionblur_help",ArmageTron_VSync_MotionBlur);
 #endif // HAVE_GLEW
-#endif // SDL_GL_SWAP_CONTROL
-#endif // SDL_OPENGL
 
     uMenuItemToggle gm(
         &screen_menu_mode,
@@ -709,8 +680,38 @@ public:
     //virtual void Render(REAL x,REAL y,REAL alpha=1,bool selected=0);
 
     virtual bool Event(SDL_Event &e){
-        if (e.type==SDL_KEYDOWN &&
-                (e.key.keysym.sym==SDLK_KP_ENTER || e.key.keysym.sym==SDLK_RETURN)){
+        // Multi-line paste (Ctrl/Cmd+V): run each pasted line as its own console
+        // command, in order. Single-line paste falls through to the base editor.
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_V &&
+            (e.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_GUI)))
+        {
+            char* clip = SDL_GetClipboardText();
+            if (clip)
+            {
+                std::string text(clip);
+                SDL_free(clip);
+                if (text.find('\n') != std::string::npos)
+                {
+                    tCurrentAccessLevel level(tAccessLevel_Owner, true);
+                    std::stringstream lines(text);
+                    std::string line;
+                    while (std::getline(lines, line))
+                    {
+                        if (!line.empty() && line.back() == '\r')
+                            line.pop_back();
+                        if (line.empty())
+                            continue;
+                        con << tColoredString::ColorString(.5, .5, 1) << " > " << line.c_str() << '\n';
+                        std::stringstream s(line);
+                        tConfItemBase::LoadLine(s);
+                    }
+                    return true;
+                }
+            }
+        }
+        if (e.type == SDL_EVENT_KEY_DOWN &&
+            (e.key.key == SDLK_KP_ENTER || e.key.key == SDLK_RETURN))
+        {
 
             con << tColoredString::ColorString(.5,.5,1) << " > " << *content << '\n';
 
@@ -724,8 +725,8 @@ public:
             MyMenu()->Exit();
             return true;
         }
-        else if (e.type==SDL_KEYDOWN &&
-                 uActionGlobal::IsBreakingGlobalBind(e.key.keysym.sym))
+        else if (e.type == SDL_EVENT_KEY_DOWN &&
+                 uActionGlobal::IsBreakingGlobalBind(e.key.key))
             return su_HandleEvent(e, true);
         else
             return uMenuItemStringWithHistory::Event(e);
@@ -1229,10 +1230,49 @@ static bool toggle_fullscreen_func( REAL x )
 #endif
 
     // only do anything if the application is active (work around odd bug)
-    if ( x > 0 && ( SDL_GetAppState() & SDL_APPACTIVE ) )
+    // SDL2: SDL_GetAppState is deprecated, always assume active
+    if (x > 0)
     {
-        currentScreensetting.fullscreen = !currentScreensetting.fullscreen;
-        sr_ReinitDisplay();
+        bool const targetFullscreen = !currentScreensetting.fullscreen;
+
+        // ponytail: avoid full display reinit on toggle; SDL2 can switch mode in place
+        bool switchedInPlace = false;
+        if (sr_window)
+        {
+            if (SDL_SetWindowFullscreen(sr_window, targetFullscreen))
+            {
+                currentScreensetting.fullscreen = targetFullscreen;
+                lastSuccess.fullscreen = targetFullscreen;
+
+                int windowW = 0;
+                int windowH = 0;
+                int drawableW = 0;
+                int drawableH = 0;
+                SDL_GetWindowSize(sr_window, &windowW, &windowH);
+                SDL_GetWindowSizeInPixels(sr_window, &drawableW, &drawableH);
+
+                // ponytail: viewport follows actual drawable size after mode switch
+                sr_screenWidth = drawableW > 0 ? drawableW : windowW;
+                sr_screenHeight = drawableH > 0 ? drawableH : windowH;
+
+                if (targetFullscreen)
+                    SDL_HideCursor();
+                else
+                    SDL_ShowCursor();
+                if (sr_glcontext)
+                {
+                    SDL_GL_MakeCurrent(sr_window, sr_glcontext);
+                }
+                sr_ResetRenderState(true);
+                switchedInPlace = true;
+            }
+        }
+
+        if (!switchedInPlace)
+        {
+            currentScreensetting.fullscreen = targetFullscreen;
+            sr_ReinitDisplay();
+        }
     }
 #endif
 

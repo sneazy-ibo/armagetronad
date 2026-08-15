@@ -1,0 +1,421 @@
+diff --git a/MacOS/Armagetron Advanced.xcodeproj/project.pbxproj b/MacOS/Armagetron Advanced.xcodeproj/project.pbxproj
+index ed281f82..6e4b9a12 100644
+--- a/MacOS/Armagetron Advanced.xcodeproj/project.pbxproj	
++++ b/MacOS/Armagetron Advanced.xcodeproj/project.pbxproj	
+@@ -493,8 +493,8 @@
+ 		8CAD9136095A379B00DA0ECC /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../src/macosx/dedicated/config.h; sourceTree = SOURCE_ROOT; };
+ 		8CAD9140095A37DD00DA0ECC /* rConsoleCout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rConsoleCout.cpp; sourceTree = "<group>"; };
+ 		8CB97B30096265A800AE8BCD /* Armagetron Advanced.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Armagetron Advanced.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+-		8CB97B3F0962676B00AE8BCD /* libxml2.2.6.22.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.2.6.22.dylib; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/libxml2.2.6.22.dylib; sourceTree = "<absolute>"; };
+-		8CB97BAA0962719600AE8BCD /* libpng12.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng12.0.dylib; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/libpng12.0.dylib; sourceTree = "<absolute>"; };
++		8CB97B3F0962676B00AE8BCD /* libxml2.2.6.22.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.2.6.22.dylib; path = /opt/homebrew/opt/sdl12-compat/libxml2.2.6.22.dylib; sourceTree = "<absolute>"; };
++		8CB97BAA0962719600AE8BCD /* libpng12.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng12.0.dylib; path = /opt/homebrew/opt/sdl12-compat/libpng12.0.dylib; sourceTree = "<absolute>"; };
+ 		8CBA5E07089EEC5B007E21DC /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = SDLMain.h; path = ../src/macosx/SDLMain.h; sourceTree = SOURCE_ROOT; };
+ 		8CBA5E08089EEC5B007E21DC /* SDLMain.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; name = SDLMain.mm; path = ../src/macosx/SDLMain.mm; sourceTree = SOURCE_ROOT; };
+ 		8CBA5E0B089EEC66007E21DC /* defs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = defs.h; path = ../src/defs.h; sourceTree = SOURCE_ROOT; };
+@@ -696,7 +696,7 @@
+ 		8CBA5EF9089EEC7E007E21DC /* uInputQueue.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = uInputQueue.h; sourceTree = "<group>"; };
+ 		8CBA5EFA089EEC7E007E21DC /* uMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = uMenu.cpp; sourceTree = "<group>"; };
+ 		8CBA5EFB089EEC7E007E21DC /* uMenu.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = uMenu.h; sourceTree = "<group>"; };
+-		8CBA6032089EF32F007E21DC /* SDLMain.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = SDLMain.nib; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Versions/A/Resources/SDLMain.nib; sourceTree = "<absolute>"; };
++		8CBA6032089EF32F007E21DC /* SDLMain.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = SDLMain.nib; path = /opt/homebrew/SDL.framework/Versions/A/Resources/SDLMain.nib; sourceTree = "<absolute>"; };
+ 		8CBA6039089EF359007E21DC /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = AUTHORS; path = ../AUTHORS; sourceTree = SOURCE_ROOT; };
+ 		8CBA603B089EF359007E21DC /* config */ = {isa = PBXFileReference; lastKnownFileType = folder; name = config; path = ../config; sourceTree = SOURCE_ROOT; };
+ 		8CBA603D089EF359007E21DC /* language */ = {isa = PBXFileReference; lastKnownFileType = folder; name = language; path = ../language; sourceTree = SOURCE_ROOT; };
+@@ -709,20 +709,20 @@
+ 		8CBA62E008A01A55007E21DC /* Armagetron Advanced.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "Armagetron Advanced.icns"; sourceTree = "<group>"; };
+ 		8CBA646108A065A8007E21DC /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../src/macosx/Info.plist; sourceTree = SOURCE_ROOT; };
+ 		8D1107320486CEB800E47090 /* Armagetron Advanced.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Armagetron Advanced.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+-		9B5414A20A45C78200745CE6 /* libpng.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libpng.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/libpng.framework; sourceTree = "<absolute>"; };
+-		9B5414A30A45C78200745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework; sourceTree = "<absolute>"; };
+-		9B5414A40A45C78200745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL.framework; sourceTree = "<absolute>"; };
+-		9B5414E70A45C7CB00745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework; sourceTree = "<absolute>"; };
+-		9B5414E80A45C7CB00745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework; sourceTree = "<absolute>"; };
++		9B5414A20A45C78200745CE6 /* libpng.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libpng.framework; path = /opt/homebrew/libpng.framework; sourceTree = "<absolute>"; };
++		9B5414A30A45C78200745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /opt/homebrew/SDL_image.framework; sourceTree = "<absolute>"; };
++		9B5414A40A45C78200745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /opt/homebrew/SDL.framework; sourceTree = "<absolute>"; };
++		9B5414E70A45C7CB00745CE6 /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /opt/homebrew/opt/sdl12-compat/SDL_image.framework; sourceTree = "<absolute>"; };
++		9B5414E80A45C7CB00745CE6 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /opt/homebrew/opt/sdl12-compat/SDL.framework; sourceTree = "<absolute>"; };
+ 		9B5E11BE0D5EC32500175ABB /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+ 		9B5FE82D0D57B2FC004AC137 /* nAuthentication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nAuthentication.h; sourceTree = "<group>"; };
+ 		9B5FE82E0D57B2FC004AC137 /* nAuthentication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nAuthentication.cpp; sourceTree = "<group>"; };
+ 		9B69F6210A63E1A700F5F2E4 /* eLagCompensation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = eLagCompensation.cpp; sourceTree = "<group>"; };
+ 		9B69F6220A63E1A700F5F2E4 /* eLagCompensation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eLagCompensation.h; sourceTree = "<group>"; };
+-		9B7870670D5E4FD20088A96F /* libZThread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libZThread.a; path = /Library/Frameworks/ArmagetronAdvanced/current/libZThread.a; sourceTree = "<absolute>"; };
++		9B7870670D5E4FD20088A96F /* libZThread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libZThread.a; path = /opt/homebrew/libZThread.a; sourceTree = "<absolute>"; };
+ 		9B865B6F0F4B3445003FCD2C /* eChat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eChat.h; sourceTree = "<group>"; };
+ 		9B865B700F4B3445003FCD2C /* eChat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = eChat.cpp; sourceTree = "<group>"; };
+-		9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework; sourceTree = "<absolute>"; };
++		9BA9771F0F1EC45500F02184 /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /opt/homebrew/SDL_mixer.framework; sourceTree = "<absolute>"; };
+ 		D01641330D904A6600FC0A23 /* tColor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tColor.cpp; sourceTree = "<group>"; };
+ /* End PBXFileReference section */
+ 
+@@ -799,7 +799,6 @@
+ 				8CBA603F089EF359007E21DC /* resource */,
+ 				8CBA6040089EF359007E21DC /* sound */,
+ 				8CBA6041089EF359007E21DC /* textures */,
+-				8CBA6032089EF32F007E21DC /* SDLMain.nib */,
+ 			);
+ 			name = Resources;
+ 			sourceTree = "<group>";
+@@ -1249,7 +1248,6 @@
+ 			isa = PBXNativeTarget;
+ 			buildConfigurationList = 8CBA5D44089EE60D007E21DC /* Build configuration list for PBXNativeTarget "Armagetron Advanced" */;
+ 			buildPhases = (
+-				8CBA6203089F11BE007E21DC /* Process Files */,
+ 				8CA7C30608B71B3B00BE10F2 /* Sort Resources */,
+ 				8D1107290486CEB800E47090 /* Resources */,
+ 				8CBA5DD5089EEBB3007E21DC /* Copy Frameworks */,
+@@ -1274,9 +1272,17 @@
+ /* Begin PBXProject section */
+ 		29B97313FDCFA39411CA2CEA /* Project object */ = {
+ 			isa = PBXProject;
++			attributes = {
++			};
+ 			buildConfigurationList = 8CBA5D48089EE60D007E21DC /* Build configuration list for PBXProject "Armagetron Advanced" */;
+ 			compatibilityVersion = "Xcode 2.4";
++			developmentRegion = en;
+ 			hasScannedForEncodings = 1;
++			knownRegions = (
++				en,
++				Base,
++				English,
++			);
+ 			mainGroup = 29B97314FDCFA39411CA2CEA /* Armagetron Advanced */;
+ 			projectDirPath = "";
+ 			projectRoot = ..;
+@@ -1315,7 +1321,6 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
+-				8CBA6033089EF32F007E21DC /* SDLMain.nib in Resources */,
+ 				8CBA6043089EF359007E21DC /* AUTHORS in Resources */,
+ 				8CBA6045089EF359007E21DC /* config in Resources */,
+ 				8CBA6047089EF359007E21DC /* language in Resources */,
+@@ -1880,7 +1885,7 @@
+ 				GCC_OPTIMIZATION_LEVEL = 0;
+ 				HEADER_SEARCH_PATHS = (
+ 					/usr/include/libxml2,
+-					/Library/Frameworks/ArmagetronAdvanced/current/include,
++					/opt/homebrew/include,
+ 				);
+ 				INSTALL_PATH = "$(HOME)/bin";
+ 				LIBRARY_SEARCH_PATHS = (
+@@ -1917,7 +1922,7 @@
+ 				GCC_OPTIMIZATION_LEVEL = 1;
+ 				HEADER_SEARCH_PATHS = (
+ 					/usr/include/libxml2,
+-					/Library/Frameworks/ArmagetronAdvanced/current/include,
++					/opt/homebrew/include,
+ 				);
+ 				INSTALL_PATH = "$(HOME)/bin";
+ 				LIBRARY_SEARCH_PATHS = (
+@@ -1964,10 +1969,10 @@
+ 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				HEADER_SEARCH_PATHS = (
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
++					/opt/homebrew/opt/sdl12-compat/SDL.framework/Headers,
++					/opt/homebrew/opt/sdl12-compat/SDL_image.framework/Headers,
++					/opt/homebrew/libpng.framework/Headers,
++					/opt/homebrew/opt/sdl12-compat/,
+ 				);
+ 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+ 				INSTALL_PATH = "$(HOME)/Applications";
+@@ -1989,8 +1994,8 @@
+ 				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
+ 				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
+ 				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
+-				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
+-				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
++				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/opt/homebrew -F/opt/homebrew/ -lxml2";
++				OTHER_LDFLAGS_ppc = "-L/opt/homebrew/opt/sdl12-compat -F/opt/homebrew/opt/sdl12-compat -lxml2.2.6.22";
+ 				PREBINDING = NO;
+ 				PRODUCT_NAME = "Armagetron Advanced";
+ 				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
+@@ -2018,10 +2023,10 @@
+ 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				HEADER_SEARCH_PATHS = (
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/SDL_image.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/10.2.8/,
++					/opt/homebrew/opt/sdl12-compat/SDL.framework/Headers,
++					/opt/homebrew/opt/sdl12-compat/SDL_image.framework/Headers,
++					/opt/homebrew/libpng.framework/Headers,
++					/opt/homebrew/opt/sdl12-compat/,
+ 				);
+ 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+ 				INSTALL_PATH = "$(HOME)/Applications";
+@@ -2044,8 +2049,8 @@
+ 				OTHER_LDFLAGS_QUOTED_1 = "-framework\\ SDL";
+ 				OTHER_LDFLAGS_QUOTED_2 = "-framework\\ SDL_image";
+ 				OTHER_LDFLAGS_QUOTED_3 = "-framework\\ SDL_mixer";
+-				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/Library/Frameworks/ArmagetronAdvanced/current -F/Library/Frameworks/ArmagetronAdvanced/current/ -lxml2";
+-				OTHER_LDFLAGS_ppc = "-L/Library/Frameworks/ArmagetronAdvanced/10.2.8 -F/Library/Frameworks/ArmagetronAdvanced/10.2.8 -lxml2.2.6.22";
++				OTHER_LDFLAGS_i386 = "-L/usr/lib -L/opt/homebrew -F/opt/homebrew/ -lxml2";
++				OTHER_LDFLAGS_ppc = "-L/opt/homebrew/opt/sdl12-compat -F/opt/homebrew/opt/sdl12-compat -lxml2.2.6.22";
+ 				PREBINDING = NO;
+ 				PRODUCT_NAME = "Armagetron Advanced";
+ 				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
+@@ -2059,7 +2064,7 @@
+ 			buildSettings = {
+ 				ARCHS = "$(NATIVE_ARCH)";
+ 				COPY_PHASE_STRIP = NO;
+-				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/ArmagetronAdvanced/current/;
++				FRAMEWORK_SEARCH_PATHS = /opt/homebrew/;
+ 				GCC_DYNAMIC_NO_PIC = NO;
+ 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+ 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+@@ -2069,18 +2074,18 @@
+ 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				HEADER_SEARCH_PATHS = (
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
++					/opt/homebrew/SDL.framework/Headers,
++					/opt/homebrew/SDL_mixer.framework/Headers,
++					/opt/homebrew/SDL_image.framework/Headers,
++					/opt/homebrew/libpng.framework/Headers,
+ 					/usr/include/libxml2,
+-					/Library/Frameworks/ArmagetronAdvanced/current/include,
++					/opt/homebrew/include,
+ 				);
+ 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+ 				INSTALL_PATH = "$(HOME)/Applications";
+ 				LIBRARY_SEARCH_PATHS = (
+ 					/usr/lib,
+-					/Library/Frameworks/ArmagetronAdvanced/current,
++					/opt/homebrew,
+ 				);
+ 				MACOSX_DEPLOYMENT_TARGET = 10.3;
+ 				OTHER_LDFLAGS = (
+@@ -2111,7 +2116,7 @@
+ 					i386,
+ 				);
+ 				COPY_PHASE_STRIP = YES;
+-				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/ArmagetronAdvanced/current/;
++				FRAMEWORK_SEARCH_PATHS = /opt/homebrew/;
+ 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+ 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+ 				GCC_MODEL_TUNING = G5;
+@@ -2121,18 +2126,18 @@
+ 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				HEADER_SEARCH_PATHS = (
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_mixer.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/SDL_image.framework/Headers,
+-					/Library/Frameworks/ArmagetronAdvanced/current/libpng.framework/Headers,
++					/opt/homebrew/SDL.framework/Headers,
++					/opt/homebrew/SDL_mixer.framework/Headers,
++					/opt/homebrew/SDL_image.framework/Headers,
++					/opt/homebrew/libpng.framework/Headers,
+ 					/usr/include/libxml2,
+-					/Library/Frameworks/ArmagetronAdvanced/current/include,
++					/opt/homebrew/include,
+ 				);
+ 				INFOPLIST_FILE = ../src/macosx/Info.plist;
+ 				INSTALL_PATH = "$(HOME)/Applications";
+ 				LIBRARY_SEARCH_PATHS = (
+ 					/usr/lib,
+-					/Library/Frameworks/ArmagetronAdvanced/current,
++					/opt/homebrew,
+ 				);
+ 				MACOSX_DEPLOYMENT_TARGET = 10.3;
+ 				OTHER_LDFLAGS = (
+diff --git a/src/macosx/Armagetron Advanced_Prefix.pch b/src/macosx/Armagetron Advanced_Prefix.pch
+index 1e930999..2c8e63bd 100644
+--- a/src/macosx/Armagetron Advanced_Prefix.pch	
++++ b/src/macosx/Armagetron Advanced_Prefix.pch	
+@@ -5,3 +5,6 @@
+ #ifdef __OBJC__
+     #import <Cocoa/Cocoa.h>
+ #endif
++
++#include "tUniversalVariables.h"
++#include "config_common.h"
+diff --git a/src/macosx/Info.plist b/src/macosx/Info.plist
+index 9dbfe5ff..b3f4b9fc 100644
+--- a/src/macosx/Info.plist
++++ b/src/macosx/Info.plist
+@@ -9,7 +9,7 @@
+ 	<key>CFBundleIconFile</key>
+ 	<string>Armagetron Advanced.icns</string>
+ 	<key>CFBundleIdentifier</key>
+-	<string>org.armagetronad</string>
++	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+ 	<key>CFBundleInfoDictionaryVersion</key>
+ 	<string>6.0</string>
+ 	<key>CFBundleName</key>
+@@ -18,10 +18,11 @@
+ 	<string>APPL</string>
+ 	<key>CFBundleSignature</key>
+ 	<string>????</string>
++	<key>NSHighResolutionCapable</key>
++	<true/>
+ 	<key>NSMainNibFile</key>
+ 	<string>SDLMain</string>
+ 	<key>NSPrincipalClass</key>
+ 	<string>NSApplication</string>
+-	<key>NSHighResolutionCapable</key><true/>
+ </dict>
+ </plist>
+diff --git a/src/render/rSDL.h b/src/render/rSDL.h
+index 1fd4ebd8..ad32f6a4 100755
+--- a/src/render/rSDL.h
++++ b/src/render/rSDL.h
+@@ -5,6 +5,7 @@
+ 
+ #ifndef DEDICATED
+ #include <SDL.h>
++#include <SDL_image.h>
+ #else
+ #define SDLK_LAST 1024
+ typedef int SDL_keysym;
+diff --git a/src/render/rTexture.cpp b/src/render/rTexture.cpp
+index ee2371ac..120f7745 100644
+--- a/src/render/rTexture.cpp
++++ b/src/render/rTexture.cpp
+@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ #include "rSDL.h"
+ 
+ #include "config.h"
++#include <SDL_image.h>
+ 
+ #include "rTexture.h"
+ #include "rDisplayList.h"
+@@ -221,10 +222,13 @@ void rSurface::Create( char const * fileName )
+ 
+     // Load image
+     IMG_InvertAlpha(true);
+-    Create( IMG_Load(s) );
+-
+-    //if ( surface_ )
+-    //    std::cerr << "loaded surface " << fileName << "\n";
++    SDL_Surface *surf = IMG_Load(s);
++    if (!surf) {
++        std::cerr << "Failed to load image: " << fileName << " path=" << s << " error=" << SDL_GetError() << "\n";
++    } else {
++        std::cerr << "Loaded image: " << fileName << " " << surf->w << "x" << surf->h << " bpp=" << surf->format->BytesPerPixel << "\n";
++    }
++    Create(surf);
+ 
+     sr_UnlockSDL();
+ #endif
+@@ -504,19 +508,70 @@ void rISurfaceTexture::Upload( rSurface & surface )
+         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+ 
+     int format;
+-    if (sr_texturesTruecolor)
+-        if (storageHack_ || ( storeAlpha_ && texalpha ) )
+-            format=GL_RGBA8;
+-        else
+-            format=GL_RGB8;
+-    else
+-        if (storageHack_ || ( storeAlpha_ && texalpha ) )
+-            format=GL_RGBA4;
+-        else
+-            format=GL_RGB5;
+-
+-    gluBuild2DMipmaps(GL_TEXTURE_2D,format,tex->w,tex->h,
+-                      texformat,GL_UNSIGNED_BYTE,tex->pixels);
++    // Use GL_RGBA for all textures - most compatible with modern OpenGL
++    format = GL_RGBA;
++
++    // gluBuild2DMipmaps is deprecated/removed on modern macOS
++    // Use glTexImage2D + glGenerateMipmap
++    std::cerr << "Uploading texture: " << tex->w << "x" << tex->h << " format=" << texformat << " internal=" << format << "\n";
++    
++    // Check OpenGL version
++    const GLubyte* glVersion = glGetString(GL_VERSION);
++    static bool printedVersion = false;
++    if (!printedVersion) {
++        std::cerr << "OpenGL Version: " << glVersion << "\n";
++        std::cerr << "OpenGL Renderer: " << glGetString(GL_RENDERER) << "\n";
++        printedVersion = true;
++    }
++    
++    glTexImage2D(GL_TEXTURE_2D, 0, format, tex->w, tex->h, 0,
++                 texformat, GL_UNSIGNED_BYTE, tex->pixels);
++    
++    // Generate mipmaps using OpenGL function
++    typedef void (*GLGENMIPMAPFUNC)(GLenum);
++    GLGENMIPMAPFUNC glGenerateMipmap = (GLGENMIPMAPFUNC)SDL_GL_GetProcAddress("glGenerateMipmap");
++    if (glGenerateMipmap) {
++        glGenerateMipmap(GL_TEXTURE_2D);
++        std::cerr << "Used glGenerateMipmap\n";
++    } else {
++        // Fallback: manual mipmap generation
++        std::cerr << "glGenerateMipmap not available, using manual mipmaps\n";
++        int w = tex->w, h = tex->h;
++        int level = 1;
++        unsigned char *pixels = (unsigned char *)tex->pixels;
++        int bpp = tex->format->BytesPerPixel;
++        
++        while (w > 1 || h > 1) {
++            int nw = (w / 2) > 0 ? (w / 2) : 1;
++            int nh = (h / 2) > 0 ? (h / 2) : 1;
++            
++            unsigned char *next_pixels = new unsigned char[nw * nh * bpp];
++            
++            for (int y = 0; y < nh; y++) {
++                for (int x = 0; x < nw; x++) {
++                    for (int c = 0; c < bpp; c++) {
++                        int src_x = (x * 2) < w ? (x * 2) : (w - 1);
++                        int src_y = (y * 2) < h ? (y * 2) : (h - 1);
++                        int idx = (src_y * w + src_x) * bpp + c;
++                        next_pixels[(y * nw + x) * bpp + c] = pixels[idx];
++                    }
++                }
++            }
++            
++            glTexImage2D(GL_TEXTURE_2D, level, format, nw, nh, 0,
++                         texformat, GL_UNSIGNED_BYTE, next_pixels);
++            delete[] next_pixels;
++            
++            w = nw;
++            h = nh;
++            level++;
++        }
++    }
++    
++    GLenum err = glGetError();
++    if (err != GL_NO_ERROR) {
++        std::cerr << "OpenGL error in texture upload: " << err << "\n";
++    }
+ 
+     sr_UnlockSDL();
+  #endif
+diff --git a/src/tron/gArmagetron.cpp b/src/tron/gArmagetron.cpp
+index 800a48a2..746f1c96 100644
+--- a/src/tron/gArmagetron.cpp
++++ b/src/tron/gArmagetron.cpp
+@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ #include "rScreen.h"
+ #include "rSysdep.h"
+ #include "uInputQueue.h"
++#include "SDL_image.h"
+ //#include "eTess.h"
+ #include "rTexture.h"
+ #include "tConfiguration.h"
+@@ -809,6 +810,13 @@ int main(int argc,char **argv){
+             }
+             SDLCleanup sdlCleanup; // call SDL_Quit later
+ 
++            // Initialize SDL_image for loading PNG, JPG, etc.
++            int img_flags = IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
++            std::cerr << "IMG_Init result: " << img_flags << "\n";
++            if (img_flags == 0) {
++                std::cerr << "WARNING: IMG_Init failed!\n";
++            }
++
+             sr_glRendererInit();
+ 
+             SDL_SetEventFilter(&filter);

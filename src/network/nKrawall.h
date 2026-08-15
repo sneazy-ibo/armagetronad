@@ -269,7 +269,7 @@ public:
     static const nScrambledPassword& SecretLeagueKey();
 
     // called on the servers to create a league message
-    static void SendLeagueMessage(const tString& message = *reinterpret_cast<tString *>(0));
+    static void SendLeagueMessage(const tString& message);
 
     // called on the master server when the league message is received
     static void ReceiveLeagueMessage(const tString& message);

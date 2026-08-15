@@ -39,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "uInputQueue.h"
 //#include "eTess.h"
 #include "rTexture.h"
+#ifndef DEDICATED
+#include <SDL3_image/SDL_image.h>
+#endif
 #include "tConfiguration.h"
 #include "tRandom.h"
 #include "tRecorder.h"
@@ -62,6 +65,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef DEDICATED
 #include "rRender.h"
 #include "rSDL.h"
+#include <SDL3/SDL_main.h>
+#else
+#define SDL_main main
 #endif
 
 // data structure for command line parsing
@@ -324,8 +330,8 @@ static void welcome(){
             timeout = tSysTimeFloat() + 6;
 
             uInputProcessGuard inputProcessGuard;
-            while ((!su_GetSDLInput(tEvent) || tEvent.type!=SDL_KEYDOWN) &&
-                    tSysTimeFloat() < timeout)
+            while ((!su_GetSDLInput(tEvent) || tEvent.type != SDL_EVENT_KEY_DOWN) &&
+                   tSysTimeFloat() < timeout)
             {
                 if ( sr_glOut )
                 {
@@ -462,7 +468,8 @@ static void sg_DelayedActivation()
     Activate( sg_active );
 }
 
-int filter(const SDL_Event *tEvent){
+int filter(void* userdata, SDL_Event* tEvent)
+{
     // recursion avoidance
     static bool recursion = false;
     if ( !recursion )
@@ -488,11 +495,12 @@ int filter(const SDL_Event *tEvent){
         RecursionGuard guard( recursion );
 
         // boss key or OS X quit command
-        if ((tEvent->type==SDL_KEYDOWN && tEvent->key.keysym.sym==27 &&
-                tEvent->key.keysym.mod & KMOD_SHIFT) ||
-                (tEvent->type==SDL_KEYDOWN && tEvent->key.keysym.sym==113 &&
-                 tEvent->key.keysym.mod & KMOD_META) ||
-                (tEvent->type==SDL_QUIT)){
+        if ((tEvent->type == SDL_EVENT_KEY_DOWN && tEvent->key.key == 27 &&
+             tEvent->key.mod & SDL_KMOD_SHIFT) ||
+            (tEvent->type == SDL_EVENT_KEY_DOWN && tEvent->key.key == 113 &&
+             tEvent->key.mod & SDL_KMOD_GUI) ||
+            (tEvent->type == SDL_EVENT_QUIT))
+        {
             // sn_SetNetState(nSTANDALONE);
             // sn_Receive();
 
@@ -504,43 +512,49 @@ int filter(const SDL_Event *tEvent){
             return false;
         }
 
-        if (tEvent->type==SDL_MOUSEMOTION)
+        if (tEvent->type == SDL_EVENT_MOUSE_MOTION)
             if (tEvent->motion.x==sr_screenWidth/2 && tEvent->motion.y==sr_screenHeight/2)
                 return 0;
         if (su_mouseGrab &&
-                tEvent->type!=SDL_MOUSEBUTTONDOWN &&
-                tEvent->type!=SDL_MOUSEBUTTONUP &&
-                ((tEvent->motion.x>=sr_screenWidth-10  || tEvent->motion.x<=10) ||
-                 (tEvent->motion.y>=sr_screenHeight-10 || tEvent->motion.y<=10)))
-            SDL_WarpMouse(sr_screenWidth/2,sr_screenHeight/2);
+            tEvent->type != SDL_EVENT_MOUSE_BUTTON_DOWN &&
+            tEvent->type != SDL_EVENT_MOUSE_BUTTON_UP &&
+            ((tEvent->motion.x >= sr_screenWidth - 10 || tEvent->motion.x <= 10) ||
+             (tEvent->motion.y >= sr_screenHeight - 10 || tEvent->motion.y <= 10)))
+            SDL_WarpMouseInWindow(sr_window, sr_screenWidth / 2, sr_screenHeight / 2);
 
-        // fetch alt-tab
-
-        if (tEvent->type==SDL_ACTIVEEVENT)
+        // SDL3: window events are promoted to top-level event types
+        if (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED ||
+            tEvent->type == SDL_EVENT_WINDOW_FOCUS_LOST)
         {
-            // Jonathans fullscreen bugfix.
-#ifdef MACOSX
-            if (currentScreensetting.fullscreen ^ lastSuccess.fullscreen) return false;
-#endif
-            int flags = SDL_APPINPUTFOCUS;
-            if ( tEvent->active.state & flags )
+            sg_active = (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED);
+            st_ToDo(sg_DelayedActivation);
+            if (tEvent->type == SDL_EVENT_WINDOW_FOCUS_GAINED)
             {
-                // con << tSysTimeFloat() << " " << "active: " << (tEvent->active.gain ? "on" : "off") << "\n";
-                sg_active = tEvent->active.gain;
-                st_ToDo(sg_DelayedActivation);
-            }
-
-            // reload GL stuff if application gets reactivated
-            if ( tEvent->active.gain && tEvent->active.state & SDL_APPACTIVE )
-            {
-                // just treat it like a screen mode change, gets the job done
                 st_ToDo(rCallbackBeforeScreenModeChange::Exec);
                 st_ToDo(rCallbackAfterScreenModeChange::Exec);
             }
             return false;
         }
 
+        if (tEvent->type == SDL_EVENT_WINDOW_RESIZED ||
+            tEvent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
+        {
+            int windowW = 0, windowH = 0, drawableW = 0, drawableH = 0;
+            SDL_GetWindowSize(sr_window, &windowW, &windowH);
+            SDL_GetWindowSizeInPixels(sr_window, &drawableW, &drawableH);
+            sr_screenWidth = drawableW > 0 ? drawableW : windowW;
+            sr_screenHeight = drawableH > 0 ? drawableH : windowH;
+            st_ToDo(rCallbackAfterScreenModeChange::Exec);
+            return false;
+        }
+
         if (su_prefetchInput){
+            // SDL3: SDL_TextInputEvent.text is a const char* into SDL-owned memory.
+            // Storing it in the ring buffer (shallow copy) leaves a dangling pointer.
+            // Let text events stay in SDL's queue so SDL_PollEvent returns them with valid text.
+            if (tEvent->type == SDL_EVENT_TEXT_INPUT ||
+                tEvent->type == SDL_EVENT_TEXT_EDITING)
+                return 1;
             return su_StoreSDLEvent(*tEvent);
         }
 
@@ -552,17 +566,6 @@ int filter(const SDL_Event *tEvent){
 
 //from game.C
 void Update_netPlayer();
-
-void sg_SetIcon()
-{
-#ifndef DEDICATED
-    rSurface tex( "textures/icon.png" );
-    //    SDL_Surface *tex=IMG_Load( tDirectories::Data().GetReadPath( "textures/icon.png" ) );
-
-    if (tex.GetSurface())
-        SDL_WM_SetIcon(tex.GetSurface(),NULL);
-#endif
-}
 
 class gAutoStringArray
 {
@@ -617,13 +620,13 @@ struct SDLSoundCleanup
 #endif
 }
 
-int main(int argc,char **argv){
-    //std::cout << "enter\n";
-    //  net_test();
+#ifndef DEDICATED
+int filter(void* userdata, SDL_Event* tEvent);
+#endif
 
+int SDL_main(int argc, char** argv)
+{
     bool dedicatedServer = false;
-
-    //  std::cout << "Running " << argv[0] << "...\n";
 
     // tERR_MESSAGE( "Start!" );
 
@@ -635,8 +638,9 @@ int main(int argc,char **argv){
         // analyse command line
         // tERR_MESSAGE( "Analyzing command line." );
         if ( ! commandLine.Analyse(argc, argv) )
+        {
             return 0;
-
+        }
 
         {
             // embed version in recording
@@ -755,8 +759,6 @@ int main(int argc,char **argv){
             sr_glOut=1;
 #endif
 
-            //std::cout << "checked mp\n";
-
             // while DGA mouse is buggy in XFree 4.0:
 #ifdef linux
             // Sam 5/23 - Don't ever use DGA, we don't need it for this game.
@@ -801,21 +803,18 @@ int main(int argc,char **argv){
             if (
 #ifndef NOSOUND
 #ifndef DEFAULT_SDL_AUDIODRIVER
-                SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0 &&
+                !SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) &&
 #endif
 #endif
-                SDL_Init(SDL_INIT_VIDEO) < 0 )            {
+                !SDL_Init(SDL_INIT_VIDEO))
+            {
                 tERR_ERROR("Couldn't initialize SDL: " << SDL_GetError());
             }
             SDLCleanup sdlCleanup; // call SDL_Quit later
 
             sr_glRendererInit();
 
-            SDL_SetEventFilter(&filter);
-
-            //std::cout << "set filter\n";
-
-            sg_SetIcon();
+            SDL_SetEventFilter((SDL_EventFilter)filter, NULL);
 
             tConsole::RegisterMessageCallback(&uMenu::Message);
             tConsole::RegisterIdleCallback(&uMenu::IdleInput);
@@ -838,24 +837,20 @@ int main(int argc,char **argv){
 
                 try
                 {
-                    //std::cout << "init disp\n";
-
-                    //std::cout << "init sound\n";
-
                     welcome();
-
-                    //std::cout << "atexit\n";
 
                     sr_con.autoDisplayAtSwap=false;
 
                     se_SoundPause(false);
 
-                    //std::cout << "sound started\n";
-
                     gLogo::SetBig(false);
                     gLogo::SetSpinning(true);
 
                     sn_bigBrotherString = renderer_identification + "VER=" + sn_programVersion + "\n\n";
+
+                    // honour a platform direct-connect URL (armagetronad://host:port)
+                    // delivered before launch; falls through to the menu afterwards.
+                    st_ConsumeDirectConnect();
 
                     MainMenu();
 
@@ -880,13 +875,8 @@ int main(int argc,char **argv){
                 sr_ExitDisplay();
                 sr_RendererCleanup();
 
-                //std::cout << "exit\n";
-
                 st_SaveConfig();
 
-                //std::cout << "saved\n";
-
-                //    cleanup(grid);
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
             }
 #else
@@ -958,6 +948,3 @@ static tConfItemFunc st_Dummy11("MASTER_SAVE_INTERVAL", &st_Dummy);
 static tConfItemFunc st_Dummy12("MASTER_IDLE", &st_Dummy);
 static tConfItemFunc st_Dummy13("MASTER_PORT", &st_Dummy);
 #endif
-
-
-

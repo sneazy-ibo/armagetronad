@@ -9,7 +9,10 @@
 
 
 #define NO_SDL_GLEXT
-#include <SDL_opengl.h>
+// GL_SILENCE_DEPRECATION is defined globally by the build (Xcode preprocessor
+// macro / autotools -D) so it also covers TUs that include GL without this header.
+#include <SDL3/SDL_opengl.h>
+#include <OpenGL/glu.h>
 
 /*
 // include OpenGL header

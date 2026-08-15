@@ -90,7 +90,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef DEDICATED
 #include "rSDL.h"
-#include <SDL_thread.h>
+#include <SDL3/SDL_thread.h>
 
 #ifdef DEBUG
 #ifndef WIN32
@@ -2175,6 +2175,38 @@ bool ConnectToServerCore(nServerInfoBase *server)
     return ret;
 }
 
+// Direct-connect target queued from a platform URL handler (e.g. the macOS
+// armagetronad:// scheme). Consumed once, just before the main menu comes up.
+static bool sg_haveDirectConnect = false;
+static tString sg_directConnectHost;
+static unsigned int sg_directConnectPort = 0;
+
+void st_QueueDirectConnect(tString const& host, unsigned int port)
+{
+    sg_directConnectHost = host;
+    sg_directConnectPort = port ? port : sn_defaultPort;
+    sg_haveDirectConnect = true;
+}
+
+bool st_ConsumeDirectConnect()
+{
+    if (!sg_haveDirectConnect)
+        return false;
+    sg_haveDirectConnect = false;
+
+    nServerInfoRedirect server(sg_directConnectHost, sg_directConnectPort);
+    gLogo::SetDisplayed(false);
+    ConnectToServer(&server);
+    return true;
+}
+
+// C shim so the Obj-C++ macOS URL handler needn't pull in the game headers.
+extern "C" void st_QueueDirectConnectC(char const* host, unsigned int port)
+{
+    if (host && *host)
+        st_QueueDirectConnect(tString(host), port);
+}
+
 void ConnectToServer(nServerInfoBase *server)
 {
     bool to = sr_textOut;
@@ -2377,23 +2409,6 @@ void sg_HostGameMenu(){
     sg_HostMenu = NULL;
 }
 
-#ifndef DEDICATED
-class gNetIdler: public rSysDep::rNetIdler
-{
-public:
-    virtual bool Wait() //!< wait for something to do, return true if there is work
-    {
-        return sn_BasicNetworkSystem.Select( 0.1 );
-    }
-    virtual void Do()  //!< do the work.
-    {
-        tAdvanceFrame();
-        sg_Receive();
-        sn_SendPlanned();
-    }
-};
-#endif
-
 void net_game(){
 #ifndef DEDICATED
     uMenu net_menu("$network_menu_text");
@@ -2432,10 +2447,7 @@ void net_game(){
     (&net_menu,"$network_menu_internet_text",
      "$network_menu_internet_help",&gServerBrowser::BrowseMaster);
 
-    gNetIdler idler;
-    // rSysDep::StartNetSyncThread( &idler );
     net_menu.Enter();
-    rSysDep::StopNetSyncThread();
 #endif
 }
 
@@ -4243,10 +4255,11 @@ bool gGame::GameLoop(bool input){
 
             if (!su_HandleEvent(tEvent, false))
                 switch (tEvent.type){
-                case SDL_MOUSEBUTTONDOWN:
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     break;
-                case SDL_KEYDOWN:
-                    switch (tEvent.key.keysym.sym){
+                case SDL_EVENT_KEY_DOWN:
+                    switch (tEvent.key.key)
+                    {
 
                     case(27):
                                     //                                case('q'):

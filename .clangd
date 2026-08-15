@@ -1,0 +1,11 @@
+# clangd configuration.
+#
+# This codebase is old and multi-platform. clangd's include-cleaner routinely flags
+# a header as "unused" in a .cpp when it's actually needed by another build target
+# (Win32/Linux), reached through a macro, or relied on for a transitive include that
+# the macOS TU happens not to need. Those are false positives here and just create
+# noise — see docs/sharp-edges.md. So disable the include-cleaner diagnostics while
+# keeping the rest of clangd's analysis (and clang-tidy bug checks) on.
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None

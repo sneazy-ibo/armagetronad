@@ -44,42 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rRender.h"
 #include "rGL.h"
 
-// Load the right SDL_IMAGE header
-
-#ifdef _MSC_VER
-#include <SDL_image.h>
-#else
-#ifdef __MINGW32__
-#include <SDL_image.h>
-#else
-#ifdef HAVE_SDL_IMG_H
-#include <SDL_image.h>
-#else
-#ifdef HAVE_SDL_SDL_IMAGE_H
-#include <SDL/SDL_image.h>
-#else
-#ifdef HAVE_IMG_H
-#include <IMG.h>
-#else
-#ifdef HAVE_SDL_IMG_H
-#include <SDL/IMG.h>
-#else
-#ifdef HAVE_LIBSDL
-#include <SDL_image.h>
-#else
-#ifdef HAVE_LIBIMG
-#include <IMG.h>
-#else
-// if the following include ( or one of the earlier ones ) fails, you don't have SDL_image properly installed.
-#include <SDL_image.h>
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
+// Load SDL2_image
+#include <SDL3_image/SDL_image.h>
 #endif
 
 
@@ -194,7 +160,7 @@ void rSurface::Clear( void )
 #ifndef DEDICATED
     // delete surface
     if ( surface_ )
-        SDL_FreeSurface( surface_ );
+        SDL_DestroySurface(surface_);
 
 #endif
     surface_ = 0;
@@ -213,20 +179,12 @@ void rSurface::Clear( void )
 void rSurface::Create( char const * fileName )
 {
 #ifndef DEDICATED
-    sr_LockSDL();
-
     // find path of image
-    // tString s = tResourceManager::locateResource("", fileName);
     tString s = tDirectories::Data().GetReadPath( fileName );
 
     // Load image
-    IMG_InvertAlpha(true);
-    Create( IMG_Load(s) );
-
-    //if ( surface_ )
-    //    std::cerr << "loaded surface " << fileName << "\n";
-
-    sr_UnlockSDL();
+    // IMG_InvertAlpha(true); // SDL3-only, not needed for SDL2
+    Create(IMG_Load(s));
 #endif
 }
 
@@ -252,7 +210,8 @@ void rSurface::Create( SDL_Surface * surface )
     // determine texture format
     if ( surface_ )
     {
-        switch (surface_->format->BytesPerPixel){
+        switch (SDL_GetPixelFormatDetails(surface_->format)->bytes_per_pixel)
+        {
         case 1:
             format_ = GL_LUMINANCE;
             break;
@@ -262,10 +221,24 @@ void rSurface::Create( SDL_Surface * surface )
             break;
 
         case 3:
+            // SDL3's IMG_Load may return BGR24 (e.g. JPEGs); GL_RGB trusts byte
+            // order, so convert to canonical RGB24 to avoid red/blue swap.
+            if (surface_->format != SDL_PIXELFORMAT_RGB24)
+            {
+                SDL_Surface* conv = SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGB24);
+                SDL_DestroySurface(surface_);
+                surface_ = conv;
+            }
             format_ = GL_RGB;
             break;
 
         case 4:
+            if (surface_->format != SDL_PIXELFORMAT_RGBA32)
+            {
+                SDL_Surface* conv = SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGBA32);
+                SDL_DestroySurface(surface_);
+                surface_ = conv;
+            }
             format_ = GL_RGBA;
             break;
 
@@ -273,23 +246,16 @@ void rSurface::Create( SDL_Surface * surface )
             {
                 // fallback: convert the texture into a known format.
 
-                SDL_Surface *dummy =
-                    SDL_CreateRGBSurface(SDL_SWSURFACE, 1, 1,
-                                         32,
-                                         0x0000FF, 0x00FF00,
-                                         0xFF0000 ,0xFF000000);
+                SDL_Surface* convtex =
+                    SDL_ConvertSurface(surface_, SDL_PIXELFORMAT_RGBA8888);
 
-                SDL_Surface *convtex =
-                    SDL_ConvertSurface(surface_, dummy->format, SDL_SWSURFACE);
-
-                SDL_FreeSurface(surface_);
+                SDL_DestroySurface(surface_);
                 surface_ = convtex;
-                SDL_FreeSurface(dummy);
 
                 format_ = GL_RGBA;
             }
             break;
-        }
+            }
     }
 #endif
 }
@@ -311,7 +277,7 @@ void rSurface::CopyFrom( rSurface const & other )
     tASSERT( other.surface_ );
 
     // copy surface
-    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format, SDL_SWSURFACE);
+    surface_ = SDL_ConvertSurface(other.surface_, other.surface_->format);
 
     // copy flags
     format_ = other.format_;
@@ -485,12 +451,11 @@ void rISurfaceTexture::Upload( rSurface & surface )
 #define GL_CLAMP_TO_EDGE GL_CLAMP
 #endif
 
-    sr_LockSDL();
     GLenum texformat = surface.GetFormat();
     SDL_Surface * tex = surface.GetSurface();
     tASSERT( tex );
 
-    bool texalpha=tex->format->Amask;
+    bool texalpha = SDL_GetPixelFormatDetails(tex->format)->Amask;
 
     ProcessImage(tex);
 
@@ -515,11 +480,9 @@ void rISurfaceTexture::Upload( rSurface & surface )
         else
             format=GL_RGB5;
 
-    gluBuild2DMipmaps(GL_TEXTURE_2D,format,tex->w,tex->h,
-                      texformat,GL_UNSIGNED_BYTE,tex->pixels);
-
-    sr_UnlockSDL();
- #endif
+        gluBuild2DMipmaps(GL_TEXTURE_2D, format, tex->w, tex->h,
+                          texformat, GL_UNSIGNED_BYTE, tex->pixels);
+#endif
 }
 
 // ******************************************************************************************
