@@ -204,3 +204,10 @@ debugdistclean:
 clean-local: debugclean
 
 distclean-local: debugdistclean
+
+######
+# CI #
+######
+
+# target to run in CI pipelines. Builds and runs unit tests.
+ci: all unit_tests
