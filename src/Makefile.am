@@ -176,7 +176,7 @@ armagetronad_main_master_CXXFLAGS =$(libtron_a_CXXFLAGS)
 armagetronad_main_master_LDADD=libnetwork.a libtools.a
 
 unit_tests_SOURCES = test/main.cpp test/factorial.cpp
-unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS)
+unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/test
 unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a
 
 endif
