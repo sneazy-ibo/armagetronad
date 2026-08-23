@@ -119,3 +119,8 @@ src/nTrueVersion.h
 .changetag
 fingerprint
 wget-log*
+
+# AI work and config directories
+.vibe
+.claude
+.flow
