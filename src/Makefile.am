@@ -149,7 +149,8 @@ else
 buildmain =
 endif
 
-games_PROGRAMS = $(buildmain) $(buildthemaster) unit_tests
+games_PROGRAMS = $(buildmain) $(buildthemaster)
+check_PROGRAMS = unit_tests
 #EXTRA_PROGRAMS = armagetronad_main_master
 
 
