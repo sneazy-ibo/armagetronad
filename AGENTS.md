@@ -587,10 +587,8 @@ make distcheck   # Create and test distribution
 
 ### Branch Information
 
-- **Current Branch**: z-man/0.2.9/ai_start
-- **Main Branch**: master
+- **Main Branch**: trunk
 - **Legacy Branch**: legacy_0.2.9
-- **Beta Branch**: beta_0.2.9
 
 ### Version
 
@@ -598,13 +596,16 @@ make distcheck   # Create and test distribution
 - **Version File**: version.m4
 - **Source Date**: From git or SOURCE_DATE_EPOCH
 
-### Related Branches
-
-- `origin/legacy_0.2.9` - Remote tracking branch
-- `origin/beta_0.2.9` - Beta version branch
-- `z-man/conan` - Conan package management branch
-
 ## Notes from Humans
 ### GUARDRAIL: The AI Agents keep out of this section.
 
-<This section is reserved for human developers to add notes, warnings, or guidance for AI agents.>
+### General Remarks
+
+- Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
+- Avoid sweeping changes in the `legacy_*` branches. We regularly merge them to `trunk` and want to avoid merge conflicts.
+
+### Coding Style
+
+- Use the top level `.clang-format` file for whitespace decisions. Most existing code was formatted with a different tool, if at all; only format code you touch. If available, just use `git clang-format`. 
+- New member variables should be marked by an uderscore at the end.
+- Boolean parameters to methods are only allowed if the function name clearly indicates what 'true' or 'false' means, like `EnableHeadlights(true)`. Otherwise, define a custom enum so code reads like `SetLights(gEnableHeadlights | gEnableTaillights)` instead of `SetLights(true, true, false)`.
