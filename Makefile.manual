@@ -21,6 +21,13 @@ beautify-personal:
 	rm -f $(srcdir)/.beautytag $(srcdir)/.beautytag.re
 #	ARTISTIC_STYLE_OPTIONS=~/.astylerc sh $(srcdir)/batch/make/beautify $(srcdir) .beautytag.personal 
 
+##############
+# Unit Tests #
+##############
+
+unit_tests: all
+	src/unit_tests -ni
+
 ##########
 # Checks #
 ##########
@@ -134,7 +141,7 @@ devcheck: beautify myinstallcheck
 fullcheck: beautify devcheck distcheck
 
 # run all that don't require a full rebuild
-test: installcheck
+test: installcheck unit_tests
 
 ###############
 # Fingerprint #

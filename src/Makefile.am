@@ -149,7 +149,7 @@ else
 buildmain =
 endif
 
-games_PROGRAMS = $(buildmain) $(buildthemaster)
+games_PROGRAMS = $(buildmain) $(buildthemaster) unit_tests
 #EXTRA_PROGRAMS = armagetronad_main_master
 
 
@@ -174,6 +174,11 @@ armagetronad_main_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui
 armagetronad_main_master_SOURCES = network/master.cpp
 armagetronad_main_master_CXXFLAGS =$(libtron_a_CXXFLAGS)
 armagetronad_main_master_LDADD=libnetwork.a libtools.a
+
+unit_tests_SOURCES = test/main.cpp test/factorial.cpp
+unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS)
+unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a
+
 endif
 
 ## Note: tron/gFloor.cpp is not referenced from the outside, but required anyway. So it can't be put into
