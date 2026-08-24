@@ -85,9 +85,9 @@ TEST_CASE("eCoord cross product operator*") {
     eCoord a(1.0f, 0.0f);
     eCoord b(0.0f, 1.0f);
 
-    // Cross product in 2D: -x1*y2 + y1*x2
+    // Cross product in 2D: -x*a.y + y*a.x
     REAL cross = a * b;
-    CHECK(cross == 1.0f);
+    CHECK(cross == -1.0f); // 1*1 + 0*0 with the negative sign = -1
 
     eCoord c(1.0f, 1.0f);
     eCoord d(1.0f, 1.0f);
