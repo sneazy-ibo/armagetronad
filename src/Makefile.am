@@ -176,7 +176,7 @@ armagetronad_main_master_SOURCES = network/master.cpp
 armagetronad_main_master_CXXFLAGS =$(libtron_a_CXXFLAGS)
 armagetronad_main_master_LDADD=libnetwork.a libtools.a
 
-unit_tests_SOURCES = thirdparty/doctest/doctest.h test/factorial.cpp test/unit_tests_main.cpp
+unit_tests_SOURCES = thirdparty/doctest/doctest.h test/factorial.cpp test/eCoord.cpp test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
 unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a
 
