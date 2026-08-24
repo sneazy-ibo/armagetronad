@@ -127,13 +127,13 @@ TEST_CASE("eCoord V function") {
 TEST_CASE("eCoord equality operators") {
     eCoord a(1.0f, 2.0f);
     eCoord b(1.0f, 2.0f);
-    eCoord c(1.0f, 2.00001f);
 
     // Equality with EPS tolerance
     CHECK(a == b);
-    // These might be equal due to EPS tolerance
-    // Just document the behavior
-    CHECK((a != c) || (a == c)); // Document current behavior
+    
+    // Test inequality
+    eCoord c(3.0f, 4.0f);
+    CHECK(a != c);
 }
 
 TEST_CASE("eCoord se_EstimatedRangeOfMult") {
