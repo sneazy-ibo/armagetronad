@@ -103,7 +103,6 @@ src/.cproject
 src/.project
 src/.settings
 autogen.sh
-.vscode
 autogen.sh
 *.o
 *.a
@@ -124,3 +123,7 @@ wget-log*
 .vibe
 .claude
 .flow
+
+# visual studio code things
+.vscode
+.devcontainers
