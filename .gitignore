@@ -103,7 +103,6 @@ src/.cproject
 src/.project
 src/.settings
 autogen.sh
-autogen.sh
 *.o
 *.a
 *.dmg
@@ -126,4 +125,4 @@ wget-log*
 
 # visual studio code things
 .vscode
-.devcontainers
+.devcontainer
