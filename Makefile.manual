@@ -25,8 +25,7 @@ beautify-personal:
 # Unit Tests #
 ##############
 
-unit_tests:
-	$(MAKE) -C src unit_tests
+unit_tests: check
 	src/unit_tests -ni
 
 ##########
