@@ -209,7 +209,6 @@ distclean-local: debugdistclean
 # CI #
 ######
 
-# target to run in CI pipelines. Builds all and runs unit tests, then removes them.
+# target to run in CI pipelines. Builds all and runs unit tests.
 ci: all
 	$(MAKE) unit_tests
-	rm -f src/unit_tests
