@@ -150,7 +150,8 @@ buildmain =
 endif
 
 games_PROGRAMS = $(buildmain) $(buildthemaster)
-check_PROGRAMS = unit_tests
+noinst_PROGRAMS = unit_tests 
+# chat_prefix_test # does not work yet
 #EXTRA_PROGRAMS = armagetronad_main_master
 
 
@@ -179,6 +180,10 @@ armagetronad_main_master_LDADD=libnetwork.a libtools.a
 unit_tests_SOURCES = thirdparty/doctest/doctest.h test/factorial.cpp test/eCoord.cpp test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
 unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a
+
+chat_prefix_test_SOURCES = test/chat_prefix_test.cpp
+chat_prefix_test_CXXFLAGS = $(libengine_a_CXXFLAGS)
+chat_prefix_test_LDADD=libtron.a libengine.a libenginecore.a libnetwork.a libui.a librender.a libtools.a
 
 endif
 
