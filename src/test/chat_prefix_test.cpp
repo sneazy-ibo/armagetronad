@@ -30,7 +30,8 @@ struct Session
     
     void AddSaid( const tString & say , nTimeRolling time )
     {
-        eChatSaidEntry entry( say, time, eChatMessageType_Public );
+        tString player{"me"};
+        eChatSaidEntry entry( say, player, time, eChatMessageType_Public );
         chatlog_.push_back( entry );
     }
     
@@ -69,7 +70,7 @@ void TestSession( const Session & session )
         else
         {
             Stats::stats.chatsThrough += 1;
-            player.lastSaid_.AddSaid( entry );
+            player.GetLastSaid().AddSaid( entry );
         }
     }
 }
