@@ -603,6 +603,7 @@ make distcheck   # Create and test distribution
 
 - Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
 - Avoid sweeping changes in the `legacy_*` branches. We regularly merge them to `trunk` and want to avoid merge conflicts.
+- Unless specifically ordered otherwise, put analysis and planning markdown files you generate for your future use into the folder `ai_docs`. Keep them out of the main git.
 
 ### Coding Style
 

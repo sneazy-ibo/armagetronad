@@ -25,7 +25,6 @@ Makefile.in
 /config.h.in
 /config.sub
 /configure
-/builds
 /depcomp
 /install-sh
 /ylwrap
@@ -70,7 +69,6 @@ aa_config.h.in
 *.layout
 *.depend
 .objs
-/build
 .objs_release
 desktop/armagetronad.protocol
 src/vParser.cpp
@@ -118,11 +116,16 @@ src/nTrueVersion.h
 fingerprint
 wget-log*
 
+# possible test build locations
+/build
+/builds
+
 # AI work and config directories
-.vibe
-.claude
-.flow
+/.vibe
+/.claude
+/.flow
+/ai_docs # put your personal markdown files in here
 
 # visual studio code things
-.vscode
-.devcontainer
+/.vscode
+/.devcontainer
