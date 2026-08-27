@@ -648,6 +648,8 @@ if test x$use_curl = xtrue; then
     )
 fi
 
+AC_LANG([C++])
+
 dnl *************************************************
 dnl         Armathentication Threading
 dnl *************************************************
@@ -657,8 +659,6 @@ if test x$enable_armathentication = xyes; then
 dnl AM_PATH_ZTHREAD_AA(2.3.2)
 CXXFLAGS="${CXXFLAGS} ${ZTHREAD_CXXFLAGS}"
 LIBS="${LIBS} ${ZTHREAD_LIBS}"
-
-AC_LANG([C++])
 
 if test "x$ZTHREAD_LIB" = x; then
 
