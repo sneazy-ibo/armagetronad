@@ -46,7 +46,7 @@ CONFIGURATIONS=(
     "debug2:DEBUGLEVEL=2"
     "debug5:DEBUGLEVEL=5"
     "strict:CODELEVEL=3"
-    "minimal:--disable-music --disable-curl --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
+    "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
     "client:--disable-dedicated --enable-glout"
     "server:--enable-dedicated --disable-glout"
     "master:--enable-master --enable-dedicated --disable-glout"
@@ -88,7 +88,7 @@ elif [ "$1" = "list" ]; then
     done
     exit 0
 elif [ "$1" = "clean" ]; then
-    for BUILD_DIR in "${ROOT}/build/test_*"; do
+    for BUILD_DIR in ${ROOT}/build/test_*; do
         if [ -d "$BUILD_DIR" ]; then
             echo "Removing $BUILD_DIR..."
             rm -rf "$BUILD_DIR"
@@ -243,7 +243,6 @@ if [ $FAILURES -gt 0 ]; then
     done
     echo ""
     echo "To see detailed logs, run with VERBOSE=1"
-    echo "To keep build directories for inspection, run with KEEP=1"
 fi
 
 echo "============================================================"
