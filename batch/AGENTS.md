@@ -60,7 +60,6 @@ For AI and CI use, `test_builds.sh` provides a canonical way to build and test t
 ## Test Build Automation
 
 - `test_builds.sh` - Canonical script for building and testing with multiple configurations
-  - Supports 10 predefined configurations: default, dedicated, debug, debug2, debug5, strict, minimal, client, server, master
   - Environment variables for customization: TEST_ONLY, FORCE_RECONFIGURE, VERBOSE, JOBS
   - Each configuration builds in a separate `/build/test_<name>` directory
   - Returns exit code equal to number of failed configurations
