@@ -15,12 +15,15 @@ Key subdirectories include `make/` which contains build helpers and utilities. T
 
 At the root of the batch directory, `rcd_startstop.in` is a template for init scripts that handle starting and stopping Armagetron servers. This is used for system service integration on Unix-like systems.
 
+For AI and CI use, `test_builds.sh` provides a canonical way to build and test the project with multiple configurations.
+
 ## Directory Structure
 
 ```
 .
 ├── Dockerfile              # Docker build configuration
 ├── rcd_startstop.in       # Init script template for server/services
+├── test_builds.sh         # Multi-configuration test build script for AI/CI
 └── make/                  # Build helper scripts
     ├── sortresources.py  # Resource sorting tool
     ├── sortresources     # Shell wrapper for sortresources.py
@@ -53,3 +56,30 @@ At the root of the batch directory, `rcd_startstop.in` is a template for init sc
 - `rcd_startstop.in` processed by configure to create actual init scripts
 - Scripts installed to appropriate locations based on `--enable-sysinstall` and related options
 - `sortresources.py` used during build to process resource files
+
+## Test Build Automation
+
+- `test_builds.sh` - Canonical script for building and testing with multiple configurations
+  - Supports 10 predefined configurations: default, dedicated, debug, debug2, debug5, strict, minimal, client, server, master
+  - Environment variables for customization: TEST_ONLY, FORCE_RECONFIGURE, VERBOSE, KEEP, JOBS
+  - Each configuration builds in a separate `build_test_<name>` directory
+  - Automatically cleans up build directories on exit (unless KEEP=1)
+  - Returns exit code equal to number of failed configurations
+  
+Example usage:
+```bash
+# Run all configurations
+./batch/test_builds.sh all
+
+# Run specific configurations
+./batch/test_builds.sh debug dedicated
+
+# List available configurations
+./batch/test_builds.sh list
+
+# Run with verbose output
+VERBOSE=1 ./batch/test_builds.sh debug
+
+# Keep build directories for inspection
+KEEP=1 ./batch/test_builds.sh debug
+```
