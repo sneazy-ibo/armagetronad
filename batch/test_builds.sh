@@ -33,6 +33,11 @@
 
 set -e
 
+# Ensure we're in the root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+ROOT="$(pwd)"
+
 # Define configurations: name:configure_flags
 CONFIGURATIONS=(
     "default:"
@@ -75,7 +80,6 @@ elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  TEST_ONLY=1        - Skip building, only run tests on existing builds"
     echo "  FORCE_RECONFIGURE=1 - Force re-run of configure step"
     echo "  VERBOSE=1          - Show full build output (not just summary)"
-    echo "  KEEP=1             - Don't remove build directories on exit"
     echo "  JOBS=N             - Number of parallel jobs (default: auto)"
     exit 0
 elif [ "$1" = "list" ]; then
@@ -84,9 +88,7 @@ elif [ "$1" = "list" ]; then
     done
     exit 0
 elif [ "$1" = "clean" ]; then
-    for config in "${CONFIGURATIONS[@]}"; do
-        name="${config%%:*}"
-        BUILD_DIR="build_test_${name}"
+    for BUILD_DIR in "${ROOT}/build/test_*"; do
         if [ -d "$BUILD_DIR" ]; then
             echo "Removing $BUILD_DIR..."
             rm -rf "$BUILD_DIR"
@@ -112,11 +114,6 @@ else
     done
 fi
 
-# Ensure we're in the root directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/.."
-ROOT="$(pwd)"
-
 # Default number of parallel jobs
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 1)}"
 
@@ -134,28 +131,12 @@ FAILURES=0
 TOTAL=0
 FAILED_CONFIGS=()
 
-# Cleanup handler
-cleanup() {
-    if [ "$KEEP" != "1" ]; then
-        for config in "${SELECTED_CONFIGS[@]}"; do
-            name="${config%%:*}"
-            BUILD_DIR="$ROOT/build_test_${name}"
-            if [ -d "$BUILD_DIR" ]; then
-                echo "Cleaning up $BUILD_DIR..."
-                rm -rf "$BUILD_DIR"
-            fi
-        done
-    fi
-}
-
-trap cleanup EXIT
-
 # Process each configuration
 for config in "${SELECTED_CONFIGS[@]}"; do
     NAME="${config%%:*}"
     SPECIFIC_FLAGS="${config#*:}"
 
-    BUILD_DIR="$ROOT/build_test_${NAME}"
+    BUILD_DIR="$ROOT/build/test_${NAME}"
     
     echo ""
     echo "============================================================"
@@ -176,9 +157,9 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     if [ ! -f Makefile ] || [ "$FORCE_RECONFIGURE" = "1" ]; then
         echo "[1/3] Configuring..."
         if [ "$VERBOSE" = "1" ]; then
-            eval "../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
+            eval "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
         else
-            eval "../configure $SPECIFIC_FLAGS $COMMON_FLAGS > /tmp/configure_${NAME}.log 2>&1" || {
+            eval "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS > /tmp/configure_${NAME}.log 2>&1" || {
                 echo "Configure FAILED for $NAME"
                 echo "Log:"
                 cat /tmp/configure_${NAME}.log
@@ -219,17 +200,20 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     TEST_PASSED=false
     
     # Try make check first
-    if make check > /tmp/test_${NAME}.log 2>&1; then
-        TEST_PASSED=true
+    if ! make check > /tmp/test_${NAME}.log 2>&1; then
+        TEST_PASSED=false
     # Try running unit_tests directly
-    elif [ -x ./src/unit_tests ] && ./src/unit_tests > /tmp/test_${NAME}.log 2>&1; then
+    elif [ -x ./src/unit_tests ] && ./src/unit_tests -ni > /tmp/test_${NAME}.log 2>&1; then
         TEST_PASSED=true
     # Try from build directory
-    elif [ -x src/unit_tests ] && src/unit_tests > /tmp/test_${NAME}.log 2>&1; then
+    elif [ -x src/unit_tests ] && src/unit_tests -ni > /tmp/test_${NAME}.log 2>&1; then
         TEST_PASSED=true
     fi
     
     if [ "$TEST_PASSED" = true ]; then
+        if [ "$VERBOSE" = "1" ]; then
+            cat /tmp/test_${NAME}.log
+        fi
         echo "✓ All tests PASSED for $NAME"
     else
         echo "✗ Tests FAILED for $NAME"

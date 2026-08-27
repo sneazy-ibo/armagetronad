@@ -61,9 +61,8 @@ For AI and CI use, `test_builds.sh` provides a canonical way to build and test t
 
 - `test_builds.sh` - Canonical script for building and testing with multiple configurations
   - Supports 10 predefined configurations: default, dedicated, debug, debug2, debug5, strict, minimal, client, server, master
-  - Environment variables for customization: TEST_ONLY, FORCE_RECONFIGURE, VERBOSE, KEEP, JOBS
-  - Each configuration builds in a separate `build_test_<name>` directory
-  - Automatically cleans up build directories on exit (unless KEEP=1)
+  - Environment variables for customization: TEST_ONLY, FORCE_RECONFIGURE, VERBOSE, JOBS
+  - Each configuration builds in a separate `/build/test_<name>` directory
   - Returns exit code equal to number of failed configurations
   
 Example usage:
@@ -79,7 +78,4 @@ Example usage:
 
 # Run with verbose output
 VERBOSE=1 ./batch/test_builds.sh debug
-
-# Keep build directories for inspection
-KEEP=1 ./batch/test_builds.sh debug
 ```
