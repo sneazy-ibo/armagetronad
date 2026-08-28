@@ -188,7 +188,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     if [ "$TEST_ONLY" != "1" ]; then
         echo "[2/3] Building..."
         if [ "$VERBOSE" = "1" ]; then
-            make -j"$JOBS" || {
+            make -k -j"$JOBS" || {
                 echo "Build FAILED for $NAME"
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
@@ -196,10 +196,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                 continue
             }
         else
-            make -j"$JOBS" > /tmp/build_${NAME}.log 2>&1 || {
+            make -k -j"$JOBS" > /dev/null 2>&1 || {
                 echo "Build FAILED for $NAME"
-                echo "Log tail:"
-                tail -20 /tmp/build_${NAME}.log
+                echo "Rerun with output:"
+                make -k -j"$JOBS" || true
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
                 cd "$ROOT"
