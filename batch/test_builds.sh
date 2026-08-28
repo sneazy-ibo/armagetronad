@@ -40,20 +40,28 @@ ROOT="$(pwd)"
 
 # Define configurations: name:configure_flags
 CONFIGURATIONS=(
-    "default:"
-    "dedicated:--enable-dedicated"
-    "debug:DEBUGLEVEL=3"
-    "debug2:DEBUGLEVEL=2"
-    "debug5:DEBUGLEVEL=5"
-    "strict:CODELEVEL=3"
-    "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
     "client:--disable-dedicated --enable-glout"
-    "server:--enable-dedicated --disable-glout"
-    "master:--enable-master --enable-dedicated --disable-glout"
+    "server:--enable-master --enable-dedicated --disable-glout"
+    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout"
+    "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout"
+    "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
+    "default:"
+    "lenient:CODELEVEL=0 CXXFLAGS=''"
 )
 
+# -Wno-error=deprecated-declarations currently required because libxml deprecated some things
+CXXFLAGS_COMMON='-fmessage-length=0 -D__OPTIMIZE__=1 -Wno-error=deprecated-declarations'
+
+# variations of code strictness flags, the goal is to move down the list
+#PEDANTIC_FLAGS=''
+PEDANTIC_FLAGS="CODELEVEL=2 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
+# PEDANTIC_FLAGS='CODELEVEL=3 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
+# PEDANTIC_FLAGS='CODELEVEL=4 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
+
+echo ${PEDANTIC_FLAGS}
+
 # Common configure flags for all test builds
-COMMON_FLAGS="--prefix=/tmp/armagetronad_test --disable-sysinstall --disable-desktop --disable-etc --disable-useradd"
+COMMON_FLAGS="${PEDANTIC_FLAGS} --prefix=/tmp/armagetronad_test --disable-sysinstall --disable-desktop --disable-etc --disable-useradd --enable-curl"
 
 # Parse arguments
 if [ $# -eq 0 ] || [ "$1" = "all" ]; then
@@ -140,7 +148,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # Use that to allow non-conflicting builds between host and container.
     ROOT_KEY=`echo ${ROOT} | sed -e "s,/,_,g" -e "s,[[:space:]],_,g"`
 
-    BUILD_DIR="$ROOT/build/test_${NAME}_${ROOT_KEY}"
+    BUILD_DIR="$ROOT/build/test_${NAME}${ROOT_KEY}"
     
     echo ""
     echo "============================================================"
@@ -161,6 +169,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     if [ ! -f Makefile ] || [ "$FORCE_RECONFIGURE" = "1" ]; then
         echo "[1/3] Configuring..."
         if [ "$VERBOSE" = "1" ]; then
+            echo "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
             eval "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
         else
             eval "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS > /tmp/configure_${NAME}.log 2>&1" || {
