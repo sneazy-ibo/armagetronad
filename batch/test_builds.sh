@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # batch/test_builds.sh - Canonical test build script for AI use
 # 
 # This script builds and tests Armagetron Advanced with multiple configurations,
@@ -136,7 +136,11 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     NAME="${config%%:*}"
     SPECIFIC_FLAGS="${config#*:}"
 
-    BUILD_DIR="$ROOT/build/test_${NAME}"
+    # containers will have the root directory elsewhere than the host system. 
+    # Use that to allow non-conflicting builds between host and container.
+    ROOT_KEY=`echo ${ROOT} | sed -e "s,/,_,g" -e "s,[[:space:]],_,g"`
+
+    BUILD_DIR="$ROOT/build/test_${NAME}_${ROOT_KEY}"
     
     echo ""
     echo "============================================================"
