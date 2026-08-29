@@ -148,7 +148,11 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # Use that to allow non-conflicting builds between host and container.
     ROOT_KEY=`echo ${ROOT} | sed -e "s,/,_,g" -e "s,[[:space:]],_,g"`
 
-    BUILD_DIR="$ROOT/build/test_${NAME}${ROOT_KEY}"
+    # different compilers -> different directories
+    CXX_KEY=""
+    if [ ! -z "${CXX}" ]; then CXX_KEY=_${CXX}; fi
+
+    BUILD_DIR="$ROOT/build/test_${NAME}${ROOT_KEY}${CXX_KEY}"
     
     echo ""
     echo "============================================================"
