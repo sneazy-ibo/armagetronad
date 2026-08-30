@@ -49,8 +49,6 @@ CONFIGURATIONS=(
     "server:--enable-master --enable-dedicated --disable-glout"
     "${DEBUG_CONFIGURATIONS[@]}"
     "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
-    "default:"
-    "lenient:CODELEVEL=0 CXXFLAGS=''"
 )
 
 # -Wno-error=deprecated-declarations currently required because libxml deprecated some things
