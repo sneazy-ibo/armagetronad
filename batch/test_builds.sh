@@ -144,15 +144,16 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     NAME="${config%%:*}"
     SPECIFIC_FLAGS="${config#*:}"
 
-    # containers will have the root directory elsewhere than the host system. 
-    # Use that to allow non-conflicting builds between host and container.
-    ROOT_KEY=`echo ${ROOT} | sed -e "s,/,_,g" -e "s,[[:space:]],_,g"`
+    # Build key: if this changes, we need to rebuild
+    # flags should be self explanatory
+    # the root directory is in there to force rebuild on container/host switches
+    BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
 
     # different compilers -> different directories
     CXX_KEY=""
     if [ ! -z "${CXX}" ]; then CXX_KEY=_${CXX}; fi
 
-    BUILD_DIR="$ROOT/build/test_${NAME}${ROOT_KEY}${CXX_KEY}"
+    BUILD_DIR="$ROOT/build/test_${NAME}${CXX_KEY}"
     
     echo ""
     echo "============================================================"
@@ -167,7 +168,19 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     # Create build directory
     mkdir -p "$BUILD_DIR"
-    cd "$BUILD_DIR"
+    cd "$BUILD_DIR" || continue
+
+    # Clear out directory on relevant changes to build configuration
+    BUILD_KEY_OLD=`cat build_key 2> /dev/null || true`
+    if [ ! "$BUILD_KEY_OLD" = "$BUILD_KEY" ]; then
+        #echo BUILD_KEY    =${BUILD_KEY}
+        #echo BUILD_KEY_OLD=${BUILD_KEY_OLD}
+        if [ -f Makefile ]; then
+            echo "[0/3] Configuration changed, cleaning..."
+        fi
+        rm -rf *
+        echo > build_key "$BUILD_KEY"
+    fi
 
     # Configure
     if [ ! -f Makefile ] || [ "$FORCE_RECONFIGURE" = "1" ]; then
