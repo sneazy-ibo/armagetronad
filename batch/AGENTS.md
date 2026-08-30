@@ -66,11 +66,17 @@ For AI and CI use, `test_builds.sh` provides a canonical way to build and test t
   
 Example usage:
 ```bash
+# Run debug builds with default compiler
+./batch/test_builds.sh debug
+
 # Run all configurations
 ./batch/test_builds.sh all
 
+# Run all configurations with all available compilers
+./batch/test_builds.sh full
+
 # Run specific configurations
-./batch/test_builds.sh debug dedicated
+./batch/test_builds.sh dedicated
 
 # List available configurations
 ./batch/test_builds.sh list
