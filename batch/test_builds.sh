@@ -39,11 +39,15 @@ cd "$SCRIPT_DIR/.."
 ROOT="$(pwd)"
 
 # Define configurations: name:configure_flags
+DEBUG_CONFIGURATIONS=(
+    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout"
+    "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout"
+)
+
 CONFIGURATIONS=(
     "client:--disable-dedicated --enable-glout"
     "server:--enable-master --enable-dedicated --disable-glout"
-    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout"
-    "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout"
+    "${DEBUG_CONFIGURATIONS[@]}"
     "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
     "default:"
     "lenient:CODELEVEL=0 CXXFLAGS=''"
@@ -58,7 +62,13 @@ PEDANTIC_FLAGS="CODELEVEL=2 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
 # PEDANTIC_FLAGS='CODELEVEL=3 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
 # PEDANTIC_FLAGS='CODELEVEL=4 CXXFLAGS=\"-Werror ${CXXFLAGS_COMMON}\""
 
-echo ${PEDANTIC_FLAGS}
+#echo ${PEDANTIC_FLAGS}
+
+# different compilers -> different directories; store for later
+CXX_KEY=""
+if [ ! -z "$CXX" ] && [ ! "$CXX" = "c++" ]; then 
+    CXX_KEY=_${CXX};
+fi
 
 # Common configure flags for all test builds
 COMMON_FLAGS="${PEDANTIC_FLAGS} --prefix=/tmp/armagetronad_test --disable-sysinstall --disable-desktop --disable-etc --disable-useradd --enable-curl"
@@ -67,7 +77,7 @@ COMMON_FLAGS="${PEDANTIC_FLAGS} --prefix=/tmp/armagetronad_test --disable-sysins
 if [ $# -eq 0 ] || [ "$1" = "all" ]; then
     SELECTED_CONFIGS=("${CONFIGURATIONS[@]}")
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: $0 [config1|config2|...|all|list|clean|help]"
+    echo "Usage: $0 [config1|config2|...|debug|all|full|list|clean|help]"
     echo ""
     echo "Builds and tests Armagetron Advanced with multiple configurations."
     echo ""
@@ -79,7 +89,9 @@ elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     done
     echo ""
     echo "Special targets:"
+    echo "  debug     - Builds default server_debug and client_debug for TDD and debugging"
     echo "  all       - Run all configurations"
+    echo "  full      - Build all configurations in all available compilers (clang, gcc and c++)"
     echo "  list      - List available configurations"
     echo "  clean     - Remove all test build directories"
     echo "  help      - Show this help message"
@@ -103,6 +115,28 @@ elif [ "$1" = "clean" ]; then
         fi
     done
     exit 0
+elif [ "$1" = "full" ]; then
+    # set -x
+    # determine default compiler
+    DEFAULT_CXX=${CXX:-c++}
+    # we compare compilers by their version output
+    DEFAULT_V=`$DEFAULT_CXX -v 2>&1`
+    # identify possible compilers
+    for COMPILER in g++ clang c++ `ls /usr/bin/g++-* /usr/bin/clang++-* 2>/dev/null | sed -e s,/usr/bin/,,g`; do
+        # see if they differ from the default; if yes, build with them
+        COMPILER_V=`$COMPILER -v 2>&1` || continue
+        if [ "$DEFAULT_V" = "$COMPILER_V" ]; then continue; fi
+        echo "Building with $COMPILER..."
+        CXX=$COMPILER ./batch/test_builds.sh all || exit $?
+    done
+
+    echo "Building with default..."
+    ./batch/test_builds.sh all || exit $?
+    exit 0
+elif [ "$1" = "debug" ]; then
+    # two configurations, no special directory tag so tools know where to find them
+    SELECTED_CONFIGS=("${DEBUG_CONFIGURATIONS[@]}")
+    CXX_KEY=""
 else
     SELECTED_CONFIGS=()
     for arg in "$@"; do
@@ -148,10 +182,6 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # flags should be self explanatory
     # the root directory is in there to force rebuild on container/host switches
     BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
-
-    # different compilers -> different directories
-    CXX_KEY=""
-    if [ ! -z "${CXX}" ]; then CXX_KEY=_${CXX}; fi
 
     BUILD_DIR="$ROOT/build/test_${NAME}${CXX_KEY}"
     
