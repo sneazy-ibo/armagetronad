@@ -1,0 +1,8 @@
+# exclude everything not explicitly included so we do not accidentally commit some extension configuration
+*
+!.gitignore
+!c_cpp_properties.json
+!launch.json
+!tasks.json
+!README.md
+
