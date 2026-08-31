@@ -602,8 +602,34 @@ make distcheck   # Create and test distribution
 ### General Remarks
 
 - Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
-- Avoid sweeping changes in the `legacy_*` branches. We regularly merge them to `trunk` and want to avoid merge conflicts.
+- Avoid sweeping changes in this branch. It is a legacy branch we regularly merge into `trunk` and want to avoid conflicts.
 - Unless specifically ordered otherwise, put analysis and planning markdown files you generate for your future use into the folder `ai_docs`. Keep them out of the main git.
+
+### Development Method
+
+- Make test builds using the `batch/test_builds.sh` script. Single parameter: `debug` for quick checks of two configurations in debug mode, `full` for everything.
+  - Try `batch/test_builds.sh full` before you start modifications to see if that works. Fall back to less complete tests only after consulting the user.
+  - For quick iterations, `batch/test_builds.sh debug` suffices, or even `batch/test_builds.sh server_debug` for just one configuration.
+  - Before committing, run `batch/test_builds.sh full` or the user sanctioned alternative again. Only commit if that runs without error.
+- After `batch/test_builds.sh debug`, debug executables of the full game are `build/test_server_debug/armagetronad-dedicated` and `build/test_client_debug/armagetronad`.
+  They need to run in their respective directories. The unit test executable are `build/test_server_debug/src/unit_tests` and `build/test_client_debug/src/unit_tests`.
+
+It is strongly suggested you work Test Driven. **AI written code needs to be covered by tests**. Unit test source code is in `src/test`, using doctest. So, workflow:
+- Ensure all tests pass before you start.
+- When changing existing code:
+  - Make sure it is sufficiently covered by tests, so you do not accidentally break existing functionality.
+  - If the code to be changed is not testable, make it testable, then write tests. If that is not possible, consult the user on what to do.
+- Loop until the requirements are met:
+  - Write the simplest new test possible that tests and documents an aspect of the desired new functionality. **Only the test.**
+  - Try to run the test. It should fail, maybe it does not even compile. If it succeeds, maybe it was not new or not strict enough; check that. If the test adds valuable information anyway, start the loop from the beginning.
+  - Shout "**RED!**"
+  - Make the minimal change to the code that makes the new test compile and pass without breaking any of the other tests. **Only change the code, not the test.**
+    - If tou find you cannot do that because your test is wrong, throw away your code changes and start over with a better test.
+  - Shout "**GREEN!**"
+  - Now is a good time to commit to git, should your user desire frequent commits.
+  - Check the code quality of everything you touched so far. Can you improve it? Then do so, verify all tests still pass, and shout "**REFACTOR!**".
+  - Another good time to commit.
+  - Start the loop over.
 
 ### Coding Style
 
