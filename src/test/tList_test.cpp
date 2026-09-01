@@ -14,7 +14,7 @@ public:
 
 TEST_CASE("tList default construction") {
     tList<MockListMember> list;
-    CHECK(list.Len() == 0);
+    CHECK_EQ(0, list.Len());
     // Size may not be 0 due to uninitialized offset - don't check it
 }
 
@@ -23,9 +23,9 @@ TEST_CASE("tList Add with list member") {
     MockListMember item1(42);
     
     list.Add(&item1);
-    CHECK(list.Len() == 1);
+    CHECK_EQ(1, list.Len());
     // The item should be in the list
-    CHECK(list[0] == &item1);
+    CHECK_EQ(&item1, list[0]);
     // The item's ListID should be valid
     CHECK(item1.ListID() >= 0);
 }
