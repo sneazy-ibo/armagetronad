@@ -21,14 +21,6 @@ beautify-personal:
 	rm -f $(srcdir)/.beautytag $(srcdir)/.beautytag.re
 #	ARTISTIC_STYLE_OPTIONS=~/.astylerc sh $(srcdir)/batch/make/beautify $(srcdir) .beautytag.personal 
 
-##############
-# Unit Tests #
-##############
-
-unit_tests:
-	$(MAKE) -C src unit_tests
-	src/unit_tests -ni
-
 ##########
 # Checks #
 ##########

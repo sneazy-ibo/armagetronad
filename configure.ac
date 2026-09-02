@@ -103,6 +103,17 @@ dnl [  --enable-glout          enable graphical output; otherwise, compile
 dnl                          a dedicated server (default=enabled)],,
 dnl enable_glout=yes)
 
+AC_ARG_ENABLE(tests,
+     AC_HELP_STRING([--disable-tests],
+		[disables building and executing unit tests; to be used on systems where they cannot possibly work]),
+     [case "${enableval}" in
+       yes) tests=true ;;
+       no)  tests=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-master) ;;
+     esac],[tests=true])
+
+AM_CONDITIONAL(BUILDTESTS, test x$tests = xtrue)
+
 AC_ARG_ENABLE(master,
      AC_HELP_STRING([--enable-master],
 		[Build the master server]),
@@ -1082,6 +1093,7 @@ echo "Options selected are:"
 echo "     Build Regular Game Client: $build_regular"
 echo "     Build Dedicated Server: $build_dedicated"
 echo "     Build Master Server: $armamaster"
+echo "     Build Unit Tests: $tests"
 echo ""
 echo "Installation options:"
 echo "     Prefix: $prefix"

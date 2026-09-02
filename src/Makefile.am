@@ -150,7 +150,11 @@ buildmain =
 endif
 
 games_PROGRAMS = $(buildmain) $(buildthemaster)
+
+if BUILDTESTS
 noinst_PROGRAMS = unit_tests 
+endif
+
 # chat_prefix_test # does not work yet
 #EXTRA_PROGRAMS = armagetronad_main_master
 
@@ -177,6 +181,7 @@ armagetronad_main_master_SOURCES = network/master.cpp
 armagetronad_main_master_CXXFLAGS =$(libtron_a_CXXFLAGS)
 armagetronad_main_master_LDADD=libnetwork.a libtools.a
 
+if BUILDTESTS
 unit_tests_SOURCES = thirdparty/doctest/doctest.h test/eCoord.cpp test/tArray_test.cpp test/tList_test.cpp test/tString_test.cpp test/tLinkedList_test.cpp test/tRing_test.cpp test/tHeap_test.cpp test/tMemStack_test.cpp test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
 unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a
@@ -184,8 +189,9 @@ unit_tests_LDADD=libtron.a libenginecore.a libengine.a libnetwork.a libui.a libr
 chat_prefix_test_SOURCES = test/chat_prefix_test.cpp
 chat_prefix_test_CXXFLAGS = $(libengine_a_CXXFLAGS)
 chat_prefix_test_LDADD=libtron.a libengine.a libenginecore.a libnetwork.a libui.a librender.a libtools.a
+endif # BUILDTESTS
 
-endif
+endif # BUILDFAKERELEASE
 
 ## Note: tron/gFloor.cpp is not referenced from the outside, but required anyway. So it can't be put into
 ## a library. Adding it to armagetronad_SOURCES has the additional advantage of telling automake that

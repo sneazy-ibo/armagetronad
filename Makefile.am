@@ -151,3 +151,12 @@ distcheck-clean:
 	chmod 755 -R @progname@-$(VERSION)*
 	rm -rf @progname@-$(VERSION)*
 
+##############
+# Unit Tests #
+##############
+
+unit_tests:
+if BUILDTESTS
+	$(MAKE) -C src unit_tests
+	src/unit_tests -ni
+endif
