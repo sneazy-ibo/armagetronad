@@ -12,17 +12,9 @@
 #   FORCE_RECONFIGURE=1 ./batch/test_builds.sh   # Force re-run of configure
 #   VERBOSE=1 ./batch/test_builds.sh            # Show full build output
 #
-# Available configurations (use 'list' or 'help' to see):
-#   default     - Standard client build
-#   dedicated   - Dedicated server (no rendering)
-#   debug       - Debug level 3 (debug symbols, no optimization)
-#   debug2      - Debug level 2
-#   debug5      - Debug level 5 (maximum debugging, MEM_DEB)
-#   strict      - Code level 3 (strictest warnings)
-#   minimal     - Minimal dependencies (no music, curl, auth, krawall)
+# Available configurations (use 'list' or 'help' to see more):
 #   client      - Explicit client build (no server)
 #   server      - Dedicated server build
-#   master      - Master server build
 #   clean       - Clean all test build directories
 #
 # Exit codes:
