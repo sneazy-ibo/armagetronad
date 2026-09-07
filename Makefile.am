@@ -12,7 +12,7 @@ modeldir=${armadatadir}
 include $(top_srcdir)/Makefile.manual
 
 # what goes into the distribution
-EXTRA_DIST = README-DEVELOPER README-Subversion README-SDL \
+EXTRA_DIST = README.md README-DEVELOPER README-Subversion README-SDL \
 armagetron.kdevelop armagetron.kdevelop.pcs armagetron.kdevses tron.ico \
 models sound textures bootstrap.sh accustomdir.m4 fingerprint Dockerfile language
 # language/update.py
@@ -160,3 +160,10 @@ if BUILDTESTS
 	$(MAKE) -C src unit_tests
 	src/unit_tests -ni
 endif
+
+##########
+# README #
+##########
+
+README: Makefile
+	echo "Check README.md instead" > $@
