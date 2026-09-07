@@ -52,3 +52,21 @@ Tests are compiled as separate programs that link against the relevant project l
   - Tests parsing of player chat messages
   - Validates prefix formatting
   - Ensures proper handling of special characters
+
+## Notes from Humans
+### GUARDRAIL: The AI Agents keep out of this section.
+
+### Guidelines
+
+- Code touched by AI agents must be covered by unit tests.
+- Employ Test Driven Development whenever appropriate. As a reminder, that means the development loop is:
+  - Write a test that you know will fail because the change you are instructed to do is missing.
+  - Verify the test fails.
+  - Make the minimal code change that makes the test succeed.
+  - Verify all tests succeed.
+  - If appropriate, refactor the code you touched to improve quality, then verify all tests succeed again.
+- Changes to the tested code are discoraged when writing tests, but sometimes required. All changes should be reported to the user and be noted in commit messages.
+- It is likely you will find classes that are not currently testable in isolation. Your choices then, before doing anything else:
+  - Refactor them to make them testable. As this is a legacy branch, only do this if it is possible with minimal changes.
+  - Test them integrated with the parts they cannot be removed from.
+- If not in conflict with user preferences, do the adaptions that make code testable in separate commits.
