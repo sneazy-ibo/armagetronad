@@ -125,6 +125,7 @@ wget-log*
 /.claude
 /.flow
 /ai_docs # put your personal markdown files in here
+/.memory # project specific memory markdown files for AIs
 
 # visual studio code things
 /.vscode
