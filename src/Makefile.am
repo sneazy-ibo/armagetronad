@@ -77,7 +77,7 @@ libenginecore_a_SOURCES=engine/eGameObject.cpp engine/eGameObject.h \
 	engine/eGrid.cpp engine/eGrid.h
 
 libengine_a_SOURCES=engine/eAdvWall.cpp engine/eAdvWall.h engine/eAuthentication.cpp\
-	engine/eAuthentication.h engine/eAxis.cpp	engine/eAxis.h engine/eCamera.cpp engine/eCamera.h\
+	engine/eAuthentication.h engine/eAxis.cpp engine/eAxis.h engine/eCamera.cpp engine/eCamera.h\
 	engine/eCoord.h engine/eDebugLine.cpp engine/eDebugLine.h engine/eDisplay.cpp engine/eFloor.cpp\
 	engine/eFloor.h \
 	engine/eKrawall.cpp engine/eKrawall.h engine/eNetGameObject.cpp engine/eNetGameObject.h\
@@ -152,12 +152,8 @@ endif
 games_PROGRAMS = $(buildmain) $(buildthemaster)
 
 if BUILDTESTS
-noinst_PROGRAMS = unit_tests 
+noinst_PROGRAMS = unit_tests chat_prefix_test
 endif
-
-# chat_prefix_test # does not work yet
-#EXTRA_PROGRAMS = armagetronad_main_master
-
 
 if BUILDFAKERELEASE
 BUILDFAKE=echo -e "\#!/bin/sh\necho Running FAKE \"\$$0\" \"\$$@\"\ntest \"\$$1\" = "--doc" || test \"\$$1\" = "--help" || sleep 5" > $@; chmod 755 $@
