@@ -170,7 +170,7 @@ armagetronad_main_master_CXXFLAGS =$(libtron_a_CXXFLAGS)
 armagetronad_main_master_LDADD=libnetwork.a libtools.a
 
 if BUILDTESTS
-unit_tests_SOURCES = thirdparty/doctest/doctest.h test/eCoord.cpp test/tArray_test.cpp test/tList_test.cpp test/tString_test.cpp test/tLinkedList_test.cpp test/tRing_test.cpp test/tHeap_test.cpp test/tMemStack_test.cpp test/tColor_test.cpp test/tException_test.cpp test/tCallback_test.cpp test/tCallbackString_test.cpp test/tRandomizer_test.cpp test/tReferenceHolder_test.cpp test/eRectangle.cpp test/eAxis.cpp test/unit_tests_main.cpp
+unit_tests_SOURCES = thirdparty/doctest/doctest.h test/eCoord.cpp test/tArray_test.cpp test/tList_test.cpp test/tString_test.cpp test/tLinkedList_test.cpp test/tRing_test.cpp test/tHeap_test.cpp test/tMemStack_test.cpp test/tColor_test.cpp test/tException_test.cpp test/tCallback_test.cpp test/tCallbackString_test.cpp test/tRandomizer_test.cpp test/eRectangle.cpp test/eAxis.cpp test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
 unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a
 

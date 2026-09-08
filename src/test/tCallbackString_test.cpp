@@ -33,7 +33,7 @@ TEST_CASE("tCallbackString multiple callbacks") {
     tString result = tCallbackString::Exec(anchor);
     
     // Check that we got a result
-    CHECK(result.Length() > 0);
+    CHECK(result.Len() > 0);
 }
 
 TEST_CASE("tCallbackString empty string") {

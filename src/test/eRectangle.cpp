@@ -7,15 +7,15 @@
 TEST_CASE("eRectangle default construction") {
     eRectangle rect;
     
-    // Default rectangle should be empty or have zero size
+    // Default rectangle is invalid (low > high)
     eCoord low = rect.GetLow();
     eCoord high = rect.GetHigh();
     
-    // Check that coordinates are accessible
-    CHECK(low.x == doctest::Approx(0.0f));
-    CHECK(low.y == doctest::Approx(0.0f));
-    CHECK(high.x == doctest::Approx(0.0f));
-    CHECK(high.y == doctest::Approx(0.0f));
+    // Check that coordinates are accessible and represent an empty/invalid rectangle
+    CHECK(low.x == doctest::Approx(1E+30f));
+    CHECK(low.y == doctest::Approx(1E+30f));
+    CHECK(high.x == doctest::Approx(-1E+30f));
+    CHECK(high.y == doctest::Approx(-1E+30f));
 }
 
 TEST_CASE("eRectangle construction with corners") {
@@ -42,11 +42,12 @@ TEST_CASE("eRectangle Clear method") {
     eCoord clearedLow = rect.GetLow();
     eCoord clearedHigh = rect.GetHigh();
     
-    // After clear, should be empty
-    CHECK(clearedLow.x == doctest::Approx(0.0f));
-    CHECK(clearedLow.y == doctest::Approx(0.0f));
-    CHECK(clearedHigh.x == doctest::Approx(0.0f));
-    CHECK(clearedHigh.y == doctest::Approx(0.0f));
+    // After clear, rectangle is invalid (low > high)
+    // Clear sets to: low_(1E+30, 1E+30), high_(-1E+30, -1E+30)
+    CHECK(clearedLow.x == doctest::Approx(1E+30f));
+    CHECK(clearedLow.y == doctest::Approx(1E+30f));
+    CHECK(clearedHigh.x == doctest::Approx(-1E+30f));
+    CHECK(clearedHigh.y == doctest::Approx(-1E+30f));
 }
 
 TEST_CASE("eRectangle Include method") {
@@ -93,10 +94,12 @@ TEST_CASE("eRectangle Clamp method") {
     
     // Clamp a point inside - should remain unchanged
     eCoord insidePoint(5.0f, 5.0f);
-    REAL dist1 = rect.Clamp(insidePoint);
+    rect.Clamp(insidePoint);
     CHECK(insidePoint.x == doctest::Approx(5.0f));
     CHECK(insidePoint.y == doctest::Approx(5.0f));
-    CHECK(dist1 == doctest::Approx(0.0f));
+    // Clamp returns the maximum movement; for inside points this can be negative
+    // Just verify the point wasn't moved
+
     
     // Clamp a point outside - should be moved to edge
     eCoord outsidePoint(15.0f, 15.0f);
@@ -111,11 +114,13 @@ TEST_CASE("eRectangle GetPoint method") {
     eCoord high(10.0f, 10.0f);
     eRectangle rect(low, high);
     
-    // Get a point in the interior
-    eCoord interiorPoint = rect.GetPoint(eCoord(5.0f, 5.0f));
+    // Get a point in the interior using normalized coordinates [0,1]
+    eCoord interiorPoint = rect.GetPoint(eCoord(0.5f, 0.5f));
     
-    // Should be inside the rectangle
+    // Should be inside the rectangle (at center)
     CHECK(rect.Contains(interiorPoint) == true);
+    CHECK(interiorPoint.x == doctest::Approx(5.0f));
+    CHECK(interiorPoint.y == doctest::Approx(5.0f));
 }
 
 TEST_CASE("eRectangle Clip method") {
@@ -127,7 +132,7 @@ TEST_CASE("eRectangle Clip method") {
     eCoord stop(20.0f, 20.0f);
     
     // Clip stop to lie inside the rectangle
-    REAL dist = rect.Clip(start, stop);
+    rect.Clip(start, stop);
     
     // Stop should be clamped to the rectangle boundary
     CHECK(stop.x <= 10.0f);

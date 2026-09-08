@@ -35,7 +35,8 @@ TEST_CASE("tRandomizer Get(int max) returns value in range") {
     // Test with max = 1 (should return 0 or 1)
     for (int i = 0; i < 100; i++) {
         int val = rand.Get(1);
-        CHECK(val == 0 || val == 1);
+        bool valid = (val == 0) || (val == 1);
+        CHECK(valid);
     }
 }
 

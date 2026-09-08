@@ -27,7 +27,7 @@ TEST_CASE("tGenericException with NULL name") {
     tString name = exc.GetName();
     // When name is NULL, it should return empty or description
     // Check that it doesn't crash
-    CHECK(name.Length() >= 0);
+    CHECK(name.Len() >= 0);
     
     tString description = exc.GetDescription();
     CHECK(description == "Test message only");
@@ -39,16 +39,17 @@ TEST_CASE("tCleanQuit exception") {
     // Test GetName
     tString name = quit.GetName();
     // Should return "CleanQuit" or similar
-    CHECK(name.Length() > 0);
+    CHECK(name.Len() > 0);
     
     // Test GetDescription
     tString description = quit.GetDescription();
-    CHECK(description.Length() >= 0);
+    CHECK(description.Len() >= 0);
 }
 
 TEST_CASE("Exception polymorphism") {
     // Test that tGenericException can be treated as tException
-    tException* exc = new tGenericException("Polymorphic test", "PolyError");
+    tGenericException* ge = new tGenericException("Polymorphic test", "PolyError");
+    tException* exc = ge;
     
     tString name = exc->GetName();
     CHECK(name == "PolyError");
@@ -56,5 +57,5 @@ TEST_CASE("Exception polymorphism") {
     tString description = exc->GetDescription();
     CHECK(description == "Polymorphic test");
     
-    delete exc;
+    delete ge;
 }

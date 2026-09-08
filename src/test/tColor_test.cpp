@@ -6,9 +6,10 @@
 
 TEST_CASE("tColor default construction") {
     tColor defaultColor;
-    CHECK(defaultColor.r_ == 0.0f);
-    CHECK(defaultColor.g_ == 0.0f);
-    CHECK(defaultColor.b_ == 0.0f);
+    // Default color is white (1,1,1,1) not black
+    CHECK(defaultColor.r_ == 1.0f);
+    CHECK(defaultColor.g_ == 1.0f);
+    CHECK(defaultColor.b_ == 1.0f);
     CHECK(defaultColor.a_ == 1.0f);
 }
 
