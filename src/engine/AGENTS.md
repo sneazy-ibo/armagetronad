@@ -95,3 +95,7 @@ The engine heavily uses the tools library for data structures and utilities. It 
 - `libengine.a`: Contains all other engine files
 - `libenginecore.a` compiled with `-O2` unless `ENGINECOREDEBUG` is defined
 - Dependencies: `-I${top_srcdir}/src/network -I${top_srcdir}/src/engine`
+
+## Automated Tests
+- Unit tests: `eCoord.cpp` in `src/test/` (from fn-1 and fn-3)
+- Unit tests: `eRectangle.cpp`, `eAxis.cpp` in `src/test/` (from fn-3)

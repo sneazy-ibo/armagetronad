@@ -70,3 +70,4 @@ Tests are compiled as separate programs that link against the relevant project l
   - Refactor them to make them testable. As this is a legacy branch, only do this if it is possible with minimal changes.
   - Test them integrated with the parts they cannot be removed from.
 - If not in conflict with user preferences, do the adaptions that make code testable in separate commits.
+- **Test Framework**: Use doctest as the default test framework. Only write ad-hoc custom test programs when explicitly demanded by the user.

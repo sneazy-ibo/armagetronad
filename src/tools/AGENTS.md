@@ -107,3 +107,5 @@ Build produces `libtools.a` static library. Includes `defs.h` for global definit
 - Includes `-iquote @srcdir@/thirdparty/binreloc` for binreloc headers
 - `tResourceManager.cpp` only included when `BUILDMAIN` is defined
 - Test: `chat_prefix_test.cpp` in `src/test/` uses libtools
+- Unit tests: `tArray_test.cpp`, `tList_test.cpp`, `tString_test.cpp`, `tLinkedList_test.cpp`, `tRing_test.cpp`, `tHeap_test.cpp`, `tMemStack_test.cpp` (from fn-1)
+- Unit tests: `tColor_test.cpp`, `tException_test.cpp`, `tCallback_test.cpp`, `tCallbackString_test.cpp`, `tRandomizer_test.cpp`, `tReferenceHolder_test.cpp` (from fn-3)
