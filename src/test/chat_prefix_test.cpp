@@ -9,12 +9,6 @@
 #undef BAD_CAST
 #define BAD_CAST(x) reinterpret_cast<xmlChar const *>(x)
 
-// weird that these are required, I guess I do not understand the linker.
-#include "eAxis.h"
-static eAxis se_justToWorkAroundLinkerErrors1;
-#include "ePath.h"
-static ePath se_justToWorkAroundLinkerErrors2;
-
 struct Stats
 {
     Stats() : sessions( 0 ), chats( 0 ), chatsThrough( 0 ), foundPrefixes( 0 ) { }

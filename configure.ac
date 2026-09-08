@@ -304,17 +304,6 @@ AC_ARG_ENABLE(games,
 		[decorates all installation paths with "games" (default=enabled)]),,
 enable_games=yes)
 
-AC_ARG_ENABLE(enginecoredebug,
-     AC_HELP_STRING([--enable-enginecoredebug],
-		[Apply debugging options to engine core (for DEBUGLEVEL>0, defaults to enabled)]),
-     [case "${enableval}" in
-       yes) enginecoredebug=true ;;
-       no)  enginecoredebug=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-enginecoredebug) ;;
-     esac],[enginecoredebug=true])
-	 
-AM_CONDITIONAL(ENGINECOREDEBUG, test x$enginecoredebug = xtrue)
-
 if test x$enable_respawn = xyes; then
 AC_DEFINE(RESPAWN_HACK,,enables hacky support for deathmatch mode)
 fi
