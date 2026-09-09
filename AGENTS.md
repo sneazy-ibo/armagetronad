@@ -599,13 +599,6 @@ make distcheck   # Create and test distribution
 ## Notes from Humans
 ### GUARDRAIL: The AI Agents keep out of this section.
 
-### General Remarks
-
-- Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
-- Avoid sweeping changes in this branch. It is a legacy branch we regularly merge into `trunk` and want to avoid conflicts.
-- Unless specifically ordered otherwise, put analysis and planning markdown files you generate for your future use into the folder `ai_docs`. Keep them out of the main git.
-- Keep code comments and commit messages terse as appropriate. Ideally, the code should speak for itself.
-
 ### Branch Classification
 
 We need to distinguish three kinds of branches.
@@ -619,6 +612,13 @@ To find out whether you are on a legacy branch, check how many commits `trunk` i
 usually by running `git log ..origin/trunk --oneline | wc -l`. If that is more than 100,
 consider this branch legacy. If a feature branch gets misclassified, that is easy to rectify
 by merging from `trunk`.
+
+### General Remarks
+
+- Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
+- Avoid sweeping changes in legacy branches. We regularly merge them into `trunk`, which is far ahead, and want to avoid conflicts.
+- Unless specifically ordered otherwise, put analysis and planning markdown files you generate for your future use into the folder `ai_docs`. Keep them out of the main git.
+- Keep code comments and commit messages terse as appropriate. Ideally, the code should speak for itself.
 
 ### Development Method
 

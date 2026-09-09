@@ -62,7 +62,11 @@ Tests are compiled as separate programs that link against the relevant project l
 - Employ Test Driven Development whenever appropriate.
 - Changes to the tested code are discoraged when writing tests, but sometimes required. All changes should be reported to the user and be noted in commit messages.
 - It is likely you will find classes that are not currently testable in isolation. Your choices then, before doing anything else:
-  - Refactor them to make them testable. As this is a legacy branch, only do this if it is possible with minimal changes.
+  - Refactor them to make them testable. On legacy branches, only do this if it is possible with minimal changes.
   - Test them integrated with the parts they cannot be removed from.
 - If not in conflict with user preferences, do the adaptions that make code testable in separate commits.
 - **Test Framework**: Use doctest as the default test framework. Only write ad-hoc custom test programs when explicitly demanded by the user.
+
+### Remarks
+
+- `chat_prefix_test` is just a relic, not actively used.
