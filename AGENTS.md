@@ -635,4 +635,4 @@ by merging from `trunk`.
 - Use the top level `.clang-format` file for whitespace decisions. Most existing code was formatted with a different tool, if at all; only format code you touch. If available, just use `git clang-format`. 
 - New member variables should be marked by an uderscore at the end.
 - Boolean parameters to methods are only allowed if the function name clearly indicates what 'true' or 'false' means, like `EnableHeadlights(true)`. Otherwise, define a custom enum so code reads like `SetLights(gEnableHeadlights | gEnableTaillights)` instead of `SetLights(true, true, false)`.
-- Methods reporting success or failure
+- Methods reporting success or failure in a `bool` or `optional<T>` return should have their name begin with `Try`.
