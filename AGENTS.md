@@ -607,6 +607,20 @@ make distcheck   # Create and test distribution
 - Likewise, memory files go to `.memory`, also not to be placed into git.
 - Keep code comments and commit messages terse as appropriate. Ideally, the code should speak for itself.
 
+### Branch Classification
+
+We need to distinguish three kinds of branches.
+- `trunk` itself
+- feature branches, they are derived from `trunk` and will, if not abandoned, get merged back into `trunk` soon-ish
+- legacy branches.
+
+The same rules apply for feature branches and `trunk` itself. Legacy branches have more restrictions.
+
+To find out whether you are on a legacy branch, check how many commits `trunk` is ahead,
+usually by running `git log ..origin/trunk --oneline | wc -l`. If that is more than 100,
+consider this branch legacy. If a feature branch gets misclassified, that is easy to rectify
+by merging from `trunk`.
+
 ### Development Method
 
 - Make test builds using the `batch/test_builds.sh` script. Single parameter: `debug` for quick checks of two configurations in debug mode, `full` for everything.
