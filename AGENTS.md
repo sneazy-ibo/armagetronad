@@ -604,7 +604,6 @@ make distcheck   # Create and test distribution
 - Many of the coding practices you find in the code are archaic or were never a good idea at any time. If on doubt, follow well know best general practices.
 - Avoid sweeping changes in this branch. It is a legacy branch we regularly merge into `trunk` and want to avoid conflicts.
 - Unless specifically ordered otherwise, put analysis and planning markdown files you generate for your future use into the folder `ai_docs`. Keep them out of the main git.
-- Likewise, memory files go to `.memory`, also not to be placed into git.
 - Keep code comments and commit messages terse as appropriate. Ideally, the code should speak for itself.
 
 ### Branch Classification
