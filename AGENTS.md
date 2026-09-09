@@ -609,9 +609,8 @@ We need to distinguish three kinds of branches.
 The same rules apply for feature branches and `trunk` itself. Legacy branches have more restrictions.
 
 To find out whether you are on a legacy branch, check how many commits `trunk` is ahead,
-usually by running `git log ..origin/trunk --oneline | wc -l`. If that is more than 100,
-consider this branch legacy. If a feature branch gets misclassified, that is easy to rectify
-by merging from `trunk`.
+usually by running `git log ..origin/trunk --oneline | wc -l`. If that is more than 200,
+consider this branch legacy.
 
 ### General Remarks
 
@@ -633,6 +632,6 @@ by merging from `trunk`.
 ### Coding Style
 
 - Use the top level `.clang-format` file for whitespace decisions. Most existing code was formatted with a different tool, if at all; only format code you touch. If available, just use `git clang-format`. 
-- New member variables should be marked by an uderscore at the end.
+- New member variables are marked by an uderscore at the end.
 - Boolean parameters to methods are only allowed if the function name clearly indicates what 'true' or 'false' means, like `EnableHeadlights(true)`. Otherwise, define a custom enum so code reads like `SetLights(gEnableHeadlights | gEnableTaillights)` instead of `SetLights(true, true, false)`.
-- Methods reporting success or failure in a `bool` or `optional<T>` return should have their name begin with `Try`.
+- The name of methods reporting success or failure in a `bool` or `optional<T>` return begin with `Try`.
