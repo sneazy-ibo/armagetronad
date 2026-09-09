@@ -58,13 +58,8 @@ Tests are compiled as separate programs that link against the relevant project l
 
 ### Guidelines
 
-- Code touched by AI agents must be covered by unit tests.
-- Employ Test Driven Development whenever appropriate. As a reminder, that means the development loop is:
-  - Write a test that you know will fail because the change you are instructed to do is missing.
-  - Verify the test fails.
-  - Make the minimal code change that makes the test succeed.
-  - Verify all tests succeed.
-  - If appropriate, refactor the code you touched to improve quality, then verify all tests succeed again.
+- Code touched by AI agents must be covered by automated tests.
+- Employ Test Driven Development whenever appropriate.
 - Changes to the tested code are discoraged when writing tests, but sometimes required. All changes should be reported to the user and be noted in commit messages.
 - It is likely you will find classes that are not currently testable in isolation. Your choices then, before doing anything else:
   - Refactor them to make them testable. As this is a legacy branch, only do this if it is possible with minimal changes.
