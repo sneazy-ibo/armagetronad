@@ -33,10 +33,12 @@ The configuration makes include directories known to the language server, so you
 get meaningful code completion and instant linting.
 
 You get tasks for building various configurations (client/server, debug/release).
+The default build action builds both client and server in debug mode and runs all unit tests.
 
 There is no special test configuration, the recommended "TestMate C++" works out of the box. 
 It discovers the tests compiled by the build tasks and can automatically run them whenever they are rebuilt with "Continuous Run".
 (The build tasks already fail on failing tests, but TestMate then tells you what failed where in the UI.)
+Debugging individual tests from the test explorer works, but the extension will only ever run the pre-launch task of the first launch configuration; we chose this to be "Build Debug", so debugging both client and server in debug configuration works with a single click.
 
 You get debug configurations that run the debug client/server in either record or playback mode.
 

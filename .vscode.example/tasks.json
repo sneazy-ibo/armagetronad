@@ -3,7 +3,7 @@
   "tasks": [
     {
       "type": "shell",
-      "label": "Build Debug",
+      "label": "Build and Test Debug",
       "command": "${workspaceFolder}/batch/test_builds.sh debug",
       "options": {
         "cwd": "${workspaceFolder}"
@@ -23,7 +23,7 @@
     {
       "type": "shell",
       "label": "Build Debug Client",
-      "command": "${workspaceFolder}/batch/test_builds.sh client_debug",
+      "command": "BUILD_ONLY=1 ${workspaceFolder}/batch/test_builds.sh client_debug",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -42,7 +42,7 @@
     {
       "type": "shell",
       "label": "Build Debug Server",
-      "command": "${workspaceFolder}/batch/test_builds.sh server_debug",
+      "command": "BUILD_ONLY=1 ${workspaceFolder}/batch/test_builds.sh server_debug",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -60,7 +60,7 @@
     },
     {
       "type": "shell",
-      "label": "Full Build",
+      "label": "Full Build and Test",
       "command": "${workspaceFolder}/batch/test_builds.sh full",
       "options": {
         "cwd": "${workspaceFolder}"
@@ -89,5 +89,24 @@
         "isDefault": false
       }
     },
+    {
+      "type": "shell",
+      "label": "Build Debug",
+      "command": "BUILD_ONLY=1 ${workspaceFolder}/batch/test_builds.sh debug",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "base": "$gcc",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/build/test_server_debug/src"
+        ]
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    }
   ]
 }
