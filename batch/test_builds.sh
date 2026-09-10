@@ -88,6 +88,7 @@ elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo ""
     echo "Environment variables:"
     echo "  TEST_ONLY=1        - Skip building, only run tests on existing builds"
+    echo "  BUILD_ONLY=1       - Skip testing, only build"
     echo "  FORCE_RECONFIGURE=1 - Force re-run of configure step"
     echo "  VERBOSE=1          - Show full build output (not just summary)"
     echo "  JOBS=N             - Number of parallel jobs (default: auto)"
@@ -186,6 +187,11 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     TOTAL=$((TOTAL + 1))
 
+    STEPS=2
+    if [ "$BUILD_ONLY" != "1" ]; then
+        STEPS=3
+    fi
+
     # Create build directory
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR" || continue
@@ -196,7 +202,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         #echo BUILD_KEY    =${BUILD_KEY}
         #echo BUILD_KEY_OLD=${BUILD_KEY_OLD}
         if [ -f Makefile ]; then
-            echo "[0/3] Configuration changed, cleaning..."
+            echo "[0/$STEPS] Configuration changed, cleaning..."
         fi
         rm -rf *
         echo > build_key "$BUILD_KEY"
@@ -204,7 +210,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     # Configure
     if [ ! -f Makefile ] || [ "$FORCE_RECONFIGURE" = "1" ]; then
-        echo "[1/3] Configuring..."
+        echo "[1/$STEPS] Configuring..."
         if [ "$VERBOSE" = "1" ]; then
             echo "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
             eval "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
@@ -223,9 +229,9 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     # Build (skip if TEST_ONLY)
     if [ "$TEST_ONLY" != "1" ]; then
-        echo "[2/3] Building..."
+        echo "[2/$STEPS] Building..."
         if [ "$VERBOSE" = "1" ]; then
-            make -k -j"$JOBS" debug ci || {
+            make -k -j"$JOBS" debug || {
                 echo "Build FAILED for $NAME"
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
@@ -233,10 +239,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                 continue
             }
         else
-            make -k -j"$JOBS" debug ci > /dev/null 2>&1 || {
+            make -k -j"$JOBS" debug > /dev/null 2>&1 || {
                 echo "Build FAILED for $NAME"
                 echo "Rerun with output:"
-                make -k -j"$JOBS" debug ci || true
+                make -k -j"$JOBS" debug || true
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
                 cd "$ROOT"
@@ -245,32 +251,34 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         fi
     fi
 
-    # Run tests
-    echo "[3/3] Testing..."
-    TEST_PASSED=false
-    
-    # Try make check first
-    if ! make check > /tmp/test_${NAME}.log 2>&1; then
+    if [ "$BUILD_ONLY" != "1" ]; then
+        # Run tests
+        echo "[3/3] Testing..."
         TEST_PASSED=false
-    # Try running unit_tests directly
-    elif [ -x ./src/unit_tests ] && ./src/unit_tests -ni > /tmp/test_${NAME}.log 2>&1; then
-        TEST_PASSED=true
-    # Try from build directory
-    elif [ -x src/unit_tests ] && src/unit_tests -ni > /tmp/test_${NAME}.log 2>&1; then
-        TEST_PASSED=true
-    fi
-    
-    if [ "$TEST_PASSED" = true ]; then
-        if [ "$VERBOSE" = "1" ]; then
-            cat /tmp/test_${NAME}.log
+        
+        # Try make check first
+        if ! make check > /tmp/test_${NAME}.log 2>&1; then
+            TEST_PASSED=false
+        # Try running unit_tests directly
+        elif [ -x ./src/unit_tests ] && ./src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
+            TEST_PASSED=true
+        # Try from build directory
+        elif [ -x src/unit_tests ] && src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
+            TEST_PASSED=true
         fi
-        echo "✓ All tests PASSED for $NAME"
-    else
-        echo "✗ Tests FAILED for $NAME"
-        echo "Test log:"
-        cat /tmp/test_${NAME}.log
-        FAILURES=$((FAILURES + 1))
-        FAILED_CONFIGS+=("$NAME")
+        
+        if [ "$TEST_PASSED" = true ]; then
+            if [ "$VERBOSE" = "1" ]; then
+                cat /tmp/test_${NAME}.log
+            fi
+            echo "✓ All tests PASSED for $NAME"
+        else
+            echo "✗ Tests FAILED for $NAME"
+            echo "Test log:"
+            cat /tmp/test_${NAME}.log
+            FAILURES=$((FAILURES + 1))
+            FAILED_CONFIGS+=("$NAME")
+        fi
     fi
 
     cd "$ROOT"
