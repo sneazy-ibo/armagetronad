@@ -66,6 +66,7 @@ Tests are compiled as separate programs that link against the relevant project l
   - Test them integrated with the parts they cannot be removed from.
 - If not in conflict with user preferences, do the adaptions that make code testable in separate commits.
 - **Test Framework**: Use doctest as the default test framework. Only write ad-hoc custom test programs when explicitly demanded by the user.
+- Test files end in `_test.cpp`.
 
 ### Remarks
 
