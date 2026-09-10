@@ -8,9 +8,15 @@ DOCTEST_TEST_SUITE("eCoord")
 {
     TEST_CASE("eCoord construction and default values")
     {
-        eCoord defaultCoord;
-        CHECK(defaultCoord.x == 0);
-        CHECK(defaultCoord.y == 0);
+        DOCTEST_GIVEN("A default eCoord")
+        {
+            eCoord defaultCoord;
+            DOCTEST_THEN("the coordinates are zero")
+            {
+                CHECK(defaultCoord.x == 0);
+                CHECK(defaultCoord.y == 0);
+            }
+        }
 
         eCoord explicitCoord(1.0f, 2.0f);
         CHECK(explicitCoord.x == 1.0f);
