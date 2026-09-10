@@ -48,6 +48,8 @@ You don't need any specific IDE for development, builds can be done from the com
 
 Check the sample configuration in `.vscode.example`, the `README.md` in there explains how to activate it.
 
+There is also a `devcontainer` setup that includes everything needed to develop the game [in a separate git](https://gitlab.com/zmanuel/armagetron-advanced-devcontainer). Running the client is probably not possible in there, but it can serve as a playpen for AI coding agents.
+
 ## Contributing
 
 This is an open source game, contributions are generally welcome! Read [CONTRIBUTING.md](CONTRIBUTING.md) before jumping in head first.
