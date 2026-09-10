@@ -9,7 +9,14 @@ DOCTEST_TEST_SUITE("tHeap")
 {
     TEST_CASE("tHeap header inclusion")
     {
-        // Just verify the header can be included
-        CHECK(true);
+        DOCTEST_GIVEN("Setup")
+        {
+            // Just verify the header can be included
+            CHECK(true);
+            DOCTEST_THEN("Verification")
+            {
+                // All assertions verified in setup
+            }
+        }
     }
 }
