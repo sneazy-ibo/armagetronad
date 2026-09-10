@@ -34,6 +34,10 @@ get meaningful code completion and instant linting.
 
 You get tasks for building various configurations (client/server, debug/release).
 
+There is no special test configuration, the recommended "TestMate C++" works out of the box. 
+It discovers the tests compiled by the build tasks and can automatically run them whenever they are rebuilt with "Continuous Run".
+(The build tasks already fail on failing tests, but TestMate then tells you what failed where in the UI.)
+
 You get debug configurations that run the debug client/server in either record or playback mode.
 
 The idea there is, since debugging a running game or even a client/server session is hard, that you just record the session without debugger, then play it back with the debugger.
