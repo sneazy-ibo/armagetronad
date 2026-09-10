@@ -13,7 +13,7 @@ DOCTEST_TEST_SUITE("tCallbackString")
 {
     TEST_CASE("tCallbackString construction and execution")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tCallbackString for execution")
         {
             tCallbackString* anchor = NULL;
 
@@ -24,17 +24,16 @@ DOCTEST_TEST_SUITE("tCallbackString")
             tString result = tCallbackString::Exec(anchor);
 
             // Should return the string from our function
-            CHECK(result == "test1");
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Exec returns the callback result")
             {
-                // All assertions verified in setup
+                CHECK(result == "test1");
             }
         }
     }
 
     TEST_CASE("tCallbackString multiple callbacks")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("multiple tCallbackStrings")
         {
             tCallbackString* anchor = NULL;
 
@@ -46,27 +45,25 @@ DOCTEST_TEST_SUITE("tCallbackString")
             tString result = tCallbackString::Exec(anchor);
 
             // Check that we got a result
-            CHECK(result.Len() > 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Exec returns a non-empty result")
             {
-                // All assertions verified in setup
+                CHECK(result.Len() > 0);
             }
         }
     }
 
     TEST_CASE("tCallbackString empty string")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tCallbackString with empty string function")
         {
             tCallbackString* anchor = NULL;
 
             tCallbackString cb(anchor, emptyStringFunc);
 
             tString result = tCallbackString::Exec(anchor);
-            CHECK(result == "");
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Exec returns empty string")
             {
-                // All assertions verified in setup
+                CHECK(result == "");
             }
         }
     }

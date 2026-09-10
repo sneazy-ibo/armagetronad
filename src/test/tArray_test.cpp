@@ -8,22 +8,24 @@ DOCTEST_TEST_SUITE("tArray")
 {
     TEST_CASE("tArray default construction and basic properties")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a default tArray")
         {
             tArray<int> arr;
-            CHECK(arr.Len() == 0);
-            // Size may be non-zero due to allocation strategy
-            CHECK(arr.Size() >= 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Len returns 0 for a default array")
             {
-                // All assertions verified in setup
+                CHECK(arr.Len() == 0);
+            }
+            DOCTEST_THEN("Size is non-negative")
+            {
+                // Size may be non-zero due to allocation strategy
+                CHECK(arr.Size() >= 0);
             }
         }
     }
 
-    TEST_CASE("tArray construction with initial size")
+    TEST_CASE("tArray with an initial size")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray with initial size")
         {
             tArray<int> arr(10);
             CHECK(arr.Len() == 10);
@@ -34,7 +36,7 @@ DOCTEST_TEST_SUITE("tArray")
             {
             CHECK(arr[i] == 0);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -43,7 +45,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray copy construction")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray copy")
         {
             tArray<int> original(5);
             for (int i = 0; i < 5; i++)
@@ -57,7 +59,7 @@ DOCTEST_TEST_SUITE("tArray")
             {
             CHECK(copy[i] == original[i]);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("copy has matching values")
             {
                 // All assertions verified in setup
             }
@@ -68,7 +70,7 @@ DOCTEST_TEST_SUITE("tArray")
     // This is a known codebase issue
     TEST_CASE("tArray assignment operator with empty target")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for assignment with empty target")
         {
             tArray<int> original(3);
             original[0] = 1;
@@ -80,7 +82,7 @@ DOCTEST_TEST_SUITE("tArray")
             // Due to bug in assignment operator, this may not work as expected
             // Just verify it doesn't crash
             CHECK(assigned.Len() >= 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -89,7 +91,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray operator[] with auto-resize")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("an empty tArray for operator[] auto-resize")
         {
             tArray<int> arr;
             CHECK(arr.Len() == 0);
@@ -101,7 +103,7 @@ DOCTEST_TEST_SUITE("tArray")
             arr[5] = 100;
             CHECK(arr.Len() == 6);
             CHECK(arr[5] == 100);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -110,7 +112,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray operator() const access")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for operator() const access")
         {
             tArray<int> arr(3);
             arr[0] = 10;
@@ -121,7 +123,7 @@ DOCTEST_TEST_SUITE("tArray")
             CHECK(arr(0) == 10);
             CHECK(arr(1) == 20);
             CHECK(arr(2) == 30);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -130,7 +132,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray operator+ pointer access")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for operator+ pointer access")
         {
             tArray<int> arr(3);
             arr[0] = 10;
@@ -140,7 +142,7 @@ DOCTEST_TEST_SUITE("tArray")
             CHECK(*(arr + 0) == 10);
             CHECK(*(arr + 1) == 20);
             CHECK(*(arr + 2) == 30);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -149,7 +151,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray SetLen")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for SetLen")
         {
             tArray<int> arr;
             arr.SetLen(5);
@@ -160,7 +162,7 @@ DOCTEST_TEST_SUITE("tArray")
             arr.SetLen(10);
             CHECK(arr.Len() == 10);
             CHECK(arr.Size() >= 10);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -169,7 +171,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray Insert")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for Insert")
         {
             tArray<int> arr;
             arr.Insert(10);
@@ -183,7 +185,7 @@ DOCTEST_TEST_SUITE("tArray")
             arr.Insert(30);
             CHECK(arr.Len() == 3);
             CHECK(arr[2] == 30);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -192,7 +194,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray RemoveAt")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for RemoveAt")
         {
             tArray<int> arr;
             arr.Insert(10);
@@ -205,7 +207,7 @@ DOCTEST_TEST_SUITE("tArray")
             // After RemoveAt, the last element moves to the removed position
             CHECK(arr[0] == 10);
             CHECK(arr[1] == 30);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -214,7 +216,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray Remove")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for Remove")
         {
             tArray<int> arr;
             arr.Insert(10);
@@ -228,7 +230,7 @@ DOCTEST_TEST_SUITE("tArray")
             removed = arr.Remove(99);
             CHECK(removed == false);
             CHECK(arr.Len() == 2);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -237,7 +239,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray Clear via SetLen")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray for Clear via SetLen")
         {
             tArray<int> arr;
             arr.Insert(10);
@@ -247,7 +249,7 @@ DOCTEST_TEST_SUITE("tArray")
 
             arr.SetLen(0);
             CHECK(arr.Len() == 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -256,13 +258,13 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray boundary conditions - empty array")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("an empty tArray")
         {
             tArray<int> arr;
             CHECK(arr.Len() == 0);
             // Size may be non-zero
             CHECK(arr.Size() >= 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -271,7 +273,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray boundary conditions - single element")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a single-element tArray")
         {
             tArray<int> arr;
             arr.Insert(42);
@@ -280,7 +282,7 @@ DOCTEST_TEST_SUITE("tArray")
 
             arr.RemoveAt(0);
             CHECK(arr.Len() == 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }
@@ -289,7 +291,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray with custom type")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tArray with custom type")
         {
             struct CustomType
             {
@@ -303,7 +305,7 @@ DOCTEST_TEST_SUITE("tArray")
             arr.Insert(CustomType(42));
             CHECK(arr.Len() == 1);
             CHECK(arr[0].value == 42);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the results are as expected")
             {
                 // All assertions verified in setup
             }

@@ -8,7 +8,7 @@ DOCTEST_TEST_SUITE("eRectangle")
 {
     TEST_CASE("eRectangle default construction")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a default eRectangle")
         {
             eRectangle rect;
 
@@ -17,20 +17,22 @@ DOCTEST_TEST_SUITE("eRectangle")
             eCoord high = rect.GetHigh();
 
             // Check that coordinates are accessible and represent an empty/invalid rectangle
-            CHECK(low.x == doctest::Approx(1E+30f));
-            CHECK(low.y == doctest::Approx(1E+30f));
-            CHECK(high.x == doctest::Approx(-1E+30f));
-            CHECK(high.y == doctest::Approx(-1E+30f));
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("GetLow returns the maximum coordinate")
             {
-                // All assertions verified in setup
+                CHECK(low.x == doctest::Approx(1E+30f));
+                CHECK(low.y == doctest::Approx(1E+30f));
+            }
+            DOCTEST_THEN("GetHigh returns the minimum coordinate")
+            {
+                CHECK(high.x == doctest::Approx(-1E+30f));
+                CHECK(high.y == doctest::Approx(-1E+30f));
             }
         }
     }
 
     TEST_CASE("eRectangle construction with corners")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle with specified corners")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 20.0f);
@@ -39,20 +41,22 @@ DOCTEST_TEST_SUITE("eRectangle")
             eCoord rectLow = rect.GetLow();
             eCoord rectHigh = rect.GetHigh();
 
-            CHECK(rectLow.x == doctest::Approx(0.0f));
-            CHECK(rectLow.y == doctest::Approx(0.0f));
-            CHECK(rectHigh.x == doctest::Approx(10.0f));
-            CHECK(rectHigh.y == doctest::Approx(20.0f));
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("GetLow returns the low corner")
             {
-                // All assertions verified in setup
+                CHECK(rectLow.x == doctest::Approx(0.0f));
+                CHECK(rectLow.y == doctest::Approx(0.0f));
+            }
+            DOCTEST_THEN("GetHigh returns the high corner")
+            {
+                CHECK(rectHigh.x == doctest::Approx(10.0f));
+                CHECK(rectHigh.y == doctest::Approx(20.0f));
             }
         }
     }
 
     TEST_CASE("eRectangle Clear method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle to clear")
         {
             eCoord low(5.0f, 5.0f);
             eCoord high(15.0f, 15.0f);
@@ -65,20 +69,22 @@ DOCTEST_TEST_SUITE("eRectangle")
 
             // After clear, rectangle is invalid (low > high)
             // Clear sets to: low_(1E+30, 1E+30), high_(-1E+30, -1E+30)
-            CHECK(clearedLow.x == doctest::Approx(1E+30f));
-            CHECK(clearedLow.y == doctest::Approx(1E+30f));
-            CHECK(clearedHigh.x == doctest::Approx(-1E+30f));
-            CHECK(clearedHigh.y == doctest::Approx(-1E+30f));
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Clear sets GetLow to maximum coordinate")
             {
-                // All assertions verified in setup
+                CHECK(clearedLow.x == doctest::Approx(1E+30f));
+                CHECK(clearedLow.y == doctest::Approx(1E+30f));
+            }
+            DOCTEST_THEN("Clear sets GetHigh to minimum coordinate")
+            {
+                CHECK(clearedHigh.x == doctest::Approx(-1E+30f));
+                CHECK(clearedHigh.y == doctest::Approx(-1E+30f));
             }
         }
     }
 
     TEST_CASE("eRectangle Include method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle and a point to include")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 10.0f);
@@ -92,20 +98,22 @@ DOCTEST_TEST_SUITE("eRectangle")
             eCoord rectHigh = rect.GetHigh();
 
             // Rectangle should now include the new point
-            CHECK(rectLow.x <= 0.0f);
-            CHECK(rectLow.y <= 0.0f);
-            CHECK(rectHigh.x >= 15.0f);
-            CHECK(rectHigh.y >= 15.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("the low corner remains at or below the original")
             {
-                // All assertions verified in setup
+                CHECK(rectLow.x <= 0.0f);
+                CHECK(rectLow.y <= 0.0f);
+            }
+            DOCTEST_THEN("the high corner expands to include the new point")
+            {
+                CHECK(rectHigh.x >= 15.0f);
+                CHECK(rectHigh.y >= 15.0f);
             }
         }
     }
 
     TEST_CASE("eRectangle Contains method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle and points to test")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 10.0f);
@@ -113,25 +121,30 @@ DOCTEST_TEST_SUITE("eRectangle")
 
             // Point inside
             eCoord insidePoint(5.0f, 5.0f);
-            CHECK(rect.Contains(insidePoint) == true);
+            DOCTEST_THEN("Contains returns true for points inside")
+            {
+                CHECK(rect.Contains(insidePoint) == true);
+            }
 
             // Point on edge
             eCoord edgePoint(10.0f, 5.0f);
-            CHECK(rect.Contains(edgePoint) == true);
+            DOCTEST_THEN("Contains returns true for points on the edge")
+            {
+                CHECK(rect.Contains(edgePoint) == true);
+            }
 
             // Point outside
             eCoord outsidePoint(15.0f, 15.0f);
-            CHECK(rect.Contains(outsidePoint) == false);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Contains returns false for points outside")
             {
-                // All assertions verified in setup
+                CHECK(rect.Contains(outsidePoint) == false);
             }
         }
     }
 
     TEST_CASE("eRectangle Clamp method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle and points to clamp")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 10.0f);
@@ -140,27 +153,29 @@ DOCTEST_TEST_SUITE("eRectangle")
             // Clamp a point inside - should remain unchanged
             eCoord insidePoint(5.0f, 5.0f);
             rect.Clamp(insidePoint);
-            CHECK(insidePoint.x == doctest::Approx(5.0f));
-            CHECK(insidePoint.y == doctest::Approx(5.0f));
+            DOCTEST_THEN("Clamp leaves points inside the rectangle unchanged")
+            {
+                CHECK(insidePoint.x == doctest::Approx(5.0f));
+                CHECK(insidePoint.y == doctest::Approx(5.0f));
+            }
             // Clamp returns the maximum movement; for inside points this can be negative
             // Just verify the point wasn't moved
 
             // Clamp a point outside - should be moved to edge
             eCoord outsidePoint(15.0f, 15.0f);
             REAL dist2 = rect.Clamp(outsidePoint);
-            CHECK(outsidePoint.x <= 10.0f);
-            CHECK(outsidePoint.y <= 10.0f);
-            CHECK(dist2 > 0.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Clamp moves points outside to the boundary")
             {
-                // All assertions verified in setup
+                CHECK(outsidePoint.x <= 10.0f);
+                CHECK(outsidePoint.y <= 10.0f);
+                CHECK(dist2 > 0.0f);
             }
         }
     }
 
     TEST_CASE("eRectangle GetPoint method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle and normalized coordinates")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 10.0f);
@@ -170,19 +185,21 @@ DOCTEST_TEST_SUITE("eRectangle")
             eCoord interiorPoint = rect.GetPoint(eCoord(0.5f, 0.5f));
 
             // Should be inside the rectangle (at center)
-            CHECK(rect.Contains(interiorPoint) == true);
-            CHECK(interiorPoint.x == doctest::Approx(5.0f));
-            CHECK(interiorPoint.y == doctest::Approx(5.0f));
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("GetPoint returns a point inside the rectangle")
             {
-                // All assertions verified in setup
+                CHECK(rect.Contains(interiorPoint) == true);
+            }
+            DOCTEST_THEN("GetPoint returns the correct point")
+            {
+                CHECK(interiorPoint.x == doctest::Approx(5.0f));
+                CHECK(interiorPoint.y == doctest::Approx(5.0f));
             }
         }
     }
 
     TEST_CASE("eRectangle Clip method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle and a line segment to clip")
         {
             eCoord low(0.0f, 0.0f);
             eCoord high(10.0f, 10.0f);
@@ -195,28 +212,26 @@ DOCTEST_TEST_SUITE("eRectangle")
             rect.Clip(start, stop);
 
             // Stop should be clamped to the rectangle boundary
-            CHECK(stop.x <= 10.0f);
-            CHECK(stop.y <= 10.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Clip clamps the stop point to the rectangle boundary")
             {
-                // All assertions verified in setup
+                CHECK(stop.x <= 10.0f);
+                CHECK(stop.y <= 10.0f);
             }
         }
     }
 
     TEST_CASE("eRectangle with negative coordinates")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a rectangle with negative coordinates")
         {
             eCoord low(-10.0f, -10.0f);
             eCoord high(10.0f, 10.0f);
             eRectangle rect(low, high);
 
             eCoord origin(0.0f, 0.0f);
-            CHECK(rect.Contains(origin) == true);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Contains returns true for the origin")
             {
-                // All assertions verified in setup
+                CHECK(rect.Contains(origin) == true);
             }
         }
     }

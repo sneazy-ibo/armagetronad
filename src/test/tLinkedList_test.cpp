@@ -20,69 +20,78 @@ DOCTEST_TEST_SUITE("tLinkedList")
 {
     TEST_CASE("tListItem default construction")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a MockLinkedListItem")
         {
             MockLinkedListItem item;
-            CHECK(item.Next() == nullptr);
-            CHECK(item.IsInList() == false);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Next returns nullptr")
             {
-                // All assertions verified in setup
+                CHECK(item.Next() == nullptr);
+            }
+            DOCTEST_THEN("IsInList returns false")
+            {
+                CHECK(item.IsInList() == false);
             }
         }
     }
 
     TEST_CASE("tListItem Insert and Remove")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("items for insertion and removal")
         {
             MockLinkedListItem* anchor = nullptr;
 
             MockLinkedListItem item1(1);
             item1.Insert(anchor);
-            CHECK(anchor == &item1);
-            CHECK(item1.IsInList() == true);
-            CHECK(item1.Next() == nullptr);
+            DOCTEST_THEN("after first Insert, anchor points to item1")
+            {
+                CHECK(anchor == &item1);
+                CHECK(item1.IsInList() == true);
+                CHECK(item1.Next() == nullptr);
+            }
 
             MockLinkedListItem item2(2);
             item2.Insert(anchor);
-            CHECK(anchor == &item2);
-            CHECK(item2.Next() == &item1);
-            CHECK(item1.IsInList() == true);
+            DOCTEST_THEN("after second Insert, anchor points to item2 and item2 points to item1")
+            {
+                CHECK(anchor == &item2);
+                CHECK(item2.Next() == &item1);
+                CHECK(item1.IsInList() == true);
+            }
 
             item2.Remove();
-            CHECK(anchor == &item1);
-            CHECK(item2.IsInList() == false);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("after Remove, anchor points back to item1 and item2 is not in list")
             {
-                // All assertions verified in setup
+                CHECK(anchor == &item1);
+                CHECK(item2.IsInList() == false);
             }
         }
     }
 
     TEST_CASE("tListItem Len static method")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("items for length calculation")
         {
             MockLinkedListItem* anchor = nullptr;
 
             MockLinkedListItem item1(1);
             item1.Insert(anchor);
-            CHECK(MockLinkedListItem::Len(anchor) == 1);
+            DOCTEST_THEN("Len returns 1 for one item")
+            {
+                CHECK(MockLinkedListItem::Len(anchor) == 1);
+            }
 
             MockLinkedListItem item2(2);
             item2.Insert(anchor);
-            CHECK(MockLinkedListItem::Len(anchor) == 2);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Len returns 2 for two items")
             {
-                // All assertions verified in setup
+                CHECK(MockLinkedListItem::Len(anchor) == 2);
             }
         }
     }
 
     TEST_CASE("tListItem InsertAfter")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("items for InsertAfter")
         {
             MockLinkedListItem* anchor = nullptr;
 
@@ -91,18 +100,20 @@ DOCTEST_TEST_SUITE("tLinkedList")
 
             MockLinkedListItem item2(2);
             item2.InsertAfter(item1);
-            CHECK(item1.Next() == &item2);
-            CHECK(MockLinkedListItem::Len(anchor) == 2);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("item1 Next points to item2")
             {
-                // All assertions verified in setup
+                CHECK(item1.Next() == &item2);
+            }
+            DOCTEST_THEN("the list length is 2")
+            {
+                CHECK(MockLinkedListItem::Len(anchor) == 2);
             }
         }
     }
 
     TEST_CASE("tListItem SwapLists")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("two lists for swapping")
         {
             MockLinkedListItem* list1 = nullptr;
             MockLinkedListItem* list2 = nullptr;
@@ -114,11 +125,10 @@ DOCTEST_TEST_SUITE("tLinkedList")
             item2.Insert(list2);
 
             MockLinkedListItem::SwapLists(list1, list2);
-            CHECK(list1 == &item2);
-            CHECK(list2 == &item1);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("SwapLists exchanges the list anchors")
             {
-                // All assertions verified in setup
+                CHECK(list1 == &item2);
+                CHECK(list2 == &item1);
             }
         }
     }

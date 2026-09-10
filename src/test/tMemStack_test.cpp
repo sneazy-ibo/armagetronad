@@ -8,31 +8,35 @@ DOCTEST_TEST_SUITE("tMemStack")
 {
     TEST_CASE("tMemStack construction and destruction")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tMemStack for testing")
         {
             tMemStack stack;
-            CHECK(stack.GetMem() != nullptr);
-            CHECK(stack.GetSize() >= 10);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("GetMem returns non-null pointer")
             {
-                // All assertions verified in setup
+                CHECK(stack.GetMem() != nullptr);
+            }
+            DOCTEST_THEN("GetSize returns a reasonable size")
+            {
+                CHECK(stack.GetSize() >= 10);
             }
         }
     }
 
     TEST_CASE("tMemStack IncreaseMem")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tMemStack for memory increase testing")
         {
             tMemStack stack;
             int originalSize = stack.GetSize();
 
             stack.IncreaseMem();
-            CHECK(stack.GetSize() > originalSize);
-            CHECK(stack.GetMem() != nullptr);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("GetSize returns a larger size after IncreaseMem")
             {
-                // All assertions verified in setup
+                CHECK(stack.GetSize() > originalSize);
+            }
+            DOCTEST_THEN("GetMem still returns non-null pointer")
+            {
+                CHECK(stack.GetMem() != nullptr);
             }
         }
     }
