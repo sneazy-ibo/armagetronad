@@ -5,50 +5,73 @@ Unit and integration tests for Armagetron Advanced components.
 
 ## Details
 
-The test directory contains test programs and utilities for verifying the correctness of Armagetron Advanced components. Tests are primarily focused on verifying parsing logic, data structure integrity, and other critical functionality.
+The test directory contains test programs for verifying the correctness of Armagetron Advanced components. Tests cover parsing logic, data structures, geometry, memory management, and other critical functionality.
 
-The current test suite includes a test for chat prefix parsing from XML, which verifies the game's ability to correctly extract and handle chat prefixes from server messages. This is important for proper display of player communications in the game's UI.
-
-Tests are compiled as separate programs that link against the relevant project libraries. They can be run independently or as part of a test suite during development and CI/CD pipelines.
+Tests are compiled as separate programs that link against the relevant project libraries. The main test executable `unit_tests` combines most tests using the doctest framework, while `chat_prefix_test` is a legacy standalone test. Tests can be run independently or as part of the test suite during development and CI/CD pipelines.
 
 ## Directory Structure
 
 ```
 .
-├── Makefile.am          # Test build configuration
-├── chat_prefix_test.cpp # Chat prefix parsing tests
-└── chat_prefix_test     # Compiled test binary (generated)
+├── unit_tests_main.cpp     # Main test harness entry point
+├── chat_prefix_test.cpp    # Legacy chat prefix parsing tests
+├── eAxis_test.cpp          # Axis class tests
+├── eCoord_test.cpp         # Coordinate system tests
+├── eRectangle_test.cpp     # Rectangle geometry tests
+├── tArray_test.cpp         # Dynamic array tests
+├── tCallbackString_test.cpp # String callback tests
+├── tCallback_test.cpp      # Callback system tests
+├── tColor_test.cpp         # Color handling tests
+├── tException_test.cpp     # Exception system tests
+├── tHeap_test.cpp          # Heap memory tests
+├── tLinkedList_test.cpp    # Linked list tests
+├── tList_test.cpp          # List container tests
+├── tMemStack_test.cpp      # Memory stack tests
+├── tRandomizer_test.cpp    # Randomization tests
+├── tRing_test.cpp          # Ring buffer tests
+└── tString_test.cpp        # String class tests
 ```
 
 ## Technologies
 
-- **Language**: C++
-- **Build System**: Autotools (integrated with main build)
-- **Dependencies**: libxml2, project libraries (libtools, libnetwork, etc.)
+- **Language**: C++ (C++11/14/17 features)
+- **Build System**: Autotools (integrated with main src/Makefile.am)
+- **Test Framework**: doctest (primary), custom harness (legacy)
+- **Dependencies**: project libraries (libtools, libnetwork, libengine, libui, librender, libtron)
 
 ## Coding Conventions
 
-- **Test Style**: Custom test harness using main() function
-- **Assertions**: Uses project's assertion macros (tASSERT, etc.)
+- **Test Style**: doctest framework for most tests, custom main() for legacy
+- **Assertions**: doctest assertions and project's assertion macros (tASSERT, etc.)
 - **Integration**: Tests link against actual project libraries
+- **File Naming**: Test files follow `_test.cpp` naming convention
 
 ## Key Patterns
 
-- Simple test harness pattern
-- Direct library testing
-- XML parsing verification
+- Unit testing with doctest framework
+- Direct library testing against production code
+- Geometry and data structure verification
+- Memory management testing
+- Exception safety testing
 
 ## Build System
 
-- Tests built as separate executables
-- Integrated with main Makefile.am via `check_PROGRAMS` or similar
-- `chat_prefix_test_SOURCES = chat_prefix_test.cpp`
-- Links against: libtools.a, libnetwork.a, librender.a, libui.a, libengine.a, libtron.a
-- Uses libxml2 for XML parsing
+- Tests built as separate executables via src/Makefile.am
+- Primary executable: `unit_tests` combining all doctest-based tests
+- Legacy executable: `chat_prefix_test` for XML parsing
+- `unit_tests_SOURCES`: Includes all test files with doctest
+- `chat_prefix_test_SOURCES`: chat_prefix_test.cpp
+- Links against: libtron.a, libengine.a, libnetwork.a, libui.a, librender.a, libtools.a
 
 ## Automated Tests
 
-- `chat_prefix_test`: Verifies chat prefix extraction from XML
+- `unit_tests`: Main test suite with doctest
+  - Tests coordinate systems (eCoord, eAxis, eRectangle)
+  - Tests data structures (tArray, tList, tLinkedList, tRing)
+  - Tests memory management (tHeap, tMemStack)
+  - Tests utilities (tString, tColor, tCallback, tRandomizer)
+  - Tests exception handling
+- `chat_prefix_test`: Legacy test for XML parsing
   - Tests parsing of player chat messages
   - Validates prefix formatting
   - Ensures proper handling of special characters

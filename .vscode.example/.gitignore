@@ -1,6 +1,7 @@
 # exclude everything not explicitly included so we do not accidentally commit some extension configuration
 *
 !.gitignore
+!AGENTS.md
 !c_cpp_properties.json
 !extensions.json
 !launch.json

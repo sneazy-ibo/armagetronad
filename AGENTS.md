@@ -55,6 +55,7 @@ The game features:
 ├── scripts/                     # Utility scripts
 ├── sound/                       # Sound effect files
 ├── textures/                    # Texture files
+├── .vscode.example/            # VS Code sample configuration (symlinked from .vscode)
 └── src/                         # Main source code
     ├── doc/                    # Documentation
     ├── dummy/                 # Stub implementations
@@ -303,13 +304,32 @@ Each subdirectory has its own `Makefile.am` defining:
 **Test Location:** `src/test/`
 
 **Current Tests:**
-- `chat_prefix_test.cpp` - Tests XML parsing for chat prefixes
+- `unit_tests` - Main test suite using doctest framework
+  - `eAxis_test.cpp` - Axis class geometry tests
+  - `eCoord_test.cpp` - Coordinate system tests
+  - `eRectangle_test.cpp` - Rectangle geometry tests
+  - `tArray_test.cpp` - Dynamic array tests
+  - `tCallback_test.cpp` - Callback system tests
+  - `tCallbackString_test.cpp` - String callback tests
+  - `tColor_test.cpp` - Color handling tests
+  - `tException_test.cpp` - Exception system tests
+  - `tHeap_test.cpp` - Heap memory tests
+  - `tLinkedList_test.cpp` - Linked list tests
+  - `tList_test.cpp` - List container tests
+  - `tMemStack_test.cpp` - Memory stack tests
+  - `tRandomizer_test.cpp` - Randomization tests
+  - `tRing_test.cpp` - Ring buffer tests
+  - `tString_test.cpp` - String class tests
+  - `unit_tests_main.cpp` - Test harness entry point
+- `chat_prefix_test` - Legacy standalone test
+  - `chat_prefix_test.cpp` - Tests XML parsing for chat prefixes
 
 **Test Framework:**
-- Custom test harness using main() function
-- Links against project libraries
-- Uses assertion macros (tASSERT, etc.)
-- Integrated with build system via Makefile.am
+- **Primary**: doctest framework for most tests
+- **Legacy**: Custom test harness for chat_prefix_test
+- Links against project libraries (libtron, libengine, libnetwork, libui, librender, libtools)
+- Uses assertion macros (tASSERT, etc.) and doctest assertions
+- Integrated with build system via src/Makefile.am
 
 **Running Tests:**
 ```bash

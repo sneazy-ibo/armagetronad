@@ -84,10 +84,11 @@ The directory contains extensive platform-specific code (win32, win32_ded, macos
 
 ## Automated Tests
 
-- Unit tests located in `src/test/` directory
-- Custom test harness using project libraries
-- `chat_prefix_test.cpp`: Tests XML parsing for chat prefixes
-- Tests integrated with build system via Makefile.am
+- Unit tests located in `src/test/` directory (see `src/test/AGENTS.md` for details)
+- Test executables: `unit_tests` (doctest-based) and `chat_prefix_test` (legacy)
+- Tests cover: geometry (eAxis, eCoord, eRectangle), data structures (tArray, tList, tLinkedList, tRing), memory management (tHeap, tMemStack), utilities (tString, tColor, tCallback, tRandomizer), exception handling, and XML parsing
+- Tests integrated with build system via src/Makefile.am
+- Uses doctest framework for most tests, custom harness for legacy chat_prefix_test
 
 ## Cross-Platform Support
 
