@@ -34,7 +34,7 @@ Tests are compiled as separate programs that link against the relevant project l
 
 ## Technologies
 
-- **Language**: C++ (C++11/14/17 features)
+- **Language**: C++ (C++11 features)
 - **Build System**: Autotools (integrated with main src/Makefile.am)
 - **Test Framework**: doctest (primary), custom harness (legacy)
 - **Dependencies**: project libraries (libtools, libnetwork, libengine, libui, librender, libtron)

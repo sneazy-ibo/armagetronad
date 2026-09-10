@@ -38,7 +38,7 @@ The directory contains extensive platform-specific code (win32, win32_ded, macos
 
 ## Technologies
 
-- **Language**: C++ (C++98/03 with C++11/14/17 features where available)
+- **Language**: C++ (C++98/03 with C++11 features where available)
 - **Build System**: GNU Autotools (autoconf 2.50+, automake, libtool)
 - **Windowing**: SDL 1.2
 - **Graphics**: OpenGL 1.x

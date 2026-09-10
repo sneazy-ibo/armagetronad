@@ -76,7 +76,7 @@ The game features:
 ## Technologies
 
 ### Languages
-- **Primary**: C++ (C++98/03 baseline with C++11/14/17 features where available)
+- **Primary**: C++ (C++98/03 baseline with C++11 features where available)
 - **Secondary**: C (for compatibility layers), Objective-C (macOS), Python (build scripts), Shell scripts
 
 ### Build System
@@ -382,7 +382,7 @@ make check-TESTS   # Run specific test
 - **MSVC**: Not directly supported (use MinGW/Cygwin)
 
 **C++ Standard:**
-- C++11/14/17 preferred (with fallback to C++0x)
+- C++11 preferred (with fallback to C++0x)
 - Features detected and enabled automatically
 - Minimum baseline: C++98/03
 
