@@ -26,3 +26,14 @@ git updates will then also update your configuration. Any customizations you do
 will go into git if you are not careful, though, but maybe that is what you want.
 
 This is the configuration Z-Man currently is using for development on macOS and Linux.
+
+## What it Provides
+
+The configuration makes include directories known to the language server, so you
+get meaningful code completion and instant linting.
+
+You get tasks for building various configurations (client/server, debug/release).
+
+You get debug configurations that run the debug client/server in either record or playback mode.
+
+The idea there is, since debugging a running game or even a client/server session is hard, that you just record the session without debugger, then play it back with the debugger.

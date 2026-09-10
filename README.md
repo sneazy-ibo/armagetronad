@@ -1,5 +1,15 @@
 # Armagetron Advanced
 
+## Easy Installation Instructions
+
+You may have just stumbled here into this git repository by accident and just want to play the game. 
+If that is the case, you do not need to bother with the source code here. 
+The easiest ways to get the game running are over 
+[Steam, it is called Retrocycles there](https://store.steampowered.com/app/1306180/Retrocycles/) and 
+[Itch.io](https://armagetronad.itch.io/armagetronad). Grab current release downloads from [the project website](https://www.armagetronad.org/downloads.php).
+
+There are more installation paths; check them out on [the download archive](https://download.armagetronad.org/docs/install/).
+
 ## User Documentation
 
 All the documentation for Armagetron is now in the src/doc/ directory and in HTML.
@@ -29,6 +39,14 @@ Read more on dependencies you may need [Wiki](https://wiki.armagetronad.org/inde
 ### Windows
 
 Too much for this readme, check the [Wiki](https://wiki.armagetronad.org/index.php?title=Windows_Development).
+
+### IDEs
+
+You don't need any specific IDE for development, builds can be done from the command line and you can use whatever editor you like (Exception: Windows, see above). We do have some support to make setup easier:
+
+#### Visual Studio Code/Codium
+
+Check the sample configuration in `.vscode.example`, the `README.md` in there explains how to activate it.
 
 ## Contributing
 
