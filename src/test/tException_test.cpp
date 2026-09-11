@@ -8,15 +8,8 @@ DOCTEST_TEST_SUITE("tException")
 {
     TEST_CASE("tException base class methods")
     {
-        DOCTEST_GIVEN("the tException base class interface")
-        {
-            // tException is abstract, test through derived classes
-            // This verifies the base interface works
-            DOCTEST_THEN("the interface is accessible")
-            {
-                // All assertions verified in setup
-            }
-        }
+        // tException is abstract, test through derived classes
+        // This verifies the base interface works
     }
 
     TEST_CASE("tGenericException construction and methods")
