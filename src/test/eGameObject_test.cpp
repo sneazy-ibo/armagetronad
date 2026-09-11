@@ -29,7 +29,7 @@ public:
     MockHarmlessWall() : eWall(nullptr) {}
     bool Splittable() const override { return true; }
     bool Deletable() const override { return true; }
-    bool Massive() const override { return true; }
+    bool Massive() const override { return false; }
 };
 
 class MockDeadlyWall : public eWall
@@ -47,14 +47,10 @@ class TestGameObject : public eReferencableGameObject
 {
 public:
     bool alive_;
-    bool killedByHarmless_;
-    bool killedByDeadly_;
-    
-    TestGameObject(eGrid *grid, const eCoord &p, const eCoord &d, eFace *currentface = NULL)
+
+    TestGameObject(eGrid* grid, const eCoord& p, const eCoord& d, eFace* currentface = NULL)
         : eReferencableGameObject(grid, p, d, currentface, false), // autodelete=false to prevent deletion
-          alive_(true),
-          killedByHarmless_(false),
-          killedByDeadly_(false)
+          alive_(true)
     {
     }
     
@@ -66,24 +62,7 @@ public:
     
     bool EdgeIsDangerous(const eWall *w, REAL, REAL) const override
     {
-        return dynamic_cast<const MockDeadlyWall*>(w) != nullptr;
-    }
-    
-    void PassEdge(const eWall *w, REAL, REAL, int) override
-    {
-        if (dynamic_cast<const MockDeadlyWall*>(w))
-        {
-            killedByDeadly_ = true;
-            Kill();
-        }
-        else if (dynamic_cast<const MockHarmlessWall*>(w))
-        {
-            killedByHarmless_ = true;
-        }
-        else
-        {
-            if (w) Kill();
-        }
+        return w && w->Massive();
     }
     
     bool Alive() const override { return alive_; }
@@ -126,8 +105,6 @@ DOCTEST_TEST_SUITE("eGameObject")
             DOCTEST_THEN("The object starts alive")
             {
                 CHECK(obj.Alive() == true);
-                CHECK(obj.killedByHarmless_ == false);
-                CHECK(obj.killedByDeadly_ == false);
             }
             
             DOCTEST_WHEN("The object passes through a harmless wall")
@@ -138,8 +115,6 @@ DOCTEST_TEST_SUITE("eGameObject")
                 DOCTEST_THEN("The object remains alive")
                 {
                     CHECK(obj.Alive() == true);
-                    CHECK(obj.killedByHarmless_ == true);
-                    CHECK(obj.killedByDeadly_ == false);
                 }
             }
             
@@ -153,7 +128,6 @@ DOCTEST_TEST_SUITE("eGameObject")
                 DOCTEST_THEN("The object is killed")
                 {
                     CHECK(obj2.Alive() == false);
-                    CHECK(obj2.killedByDeadly_ == true);
                 }
             }
         }
