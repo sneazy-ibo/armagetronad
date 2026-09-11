@@ -16,12 +16,12 @@ DOCTEST_TEST_SUITE("tList")
 {
     TEST_CASE("tList default construction")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a default tList")
         {
             tList<MockListMember> list;
             CHECK(list.Len() == 0);
             // Size may not be 0 due to uninitialized offset - don't check it
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("list length is zero")
             {
                 // All assertions verified in setup
             }
@@ -30,7 +30,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Add with list member")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with one item added")
         {
             tList<MockListMember> list;
             MockListMember item1(42);
@@ -41,7 +41,7 @@ DOCTEST_TEST_SUITE("tList")
             CHECK(list[0] == &item1);
             // The item's ListID should be valid
             CHECK(item1.ListID() >= 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("list contains the item with valid ListID")
             {
                 // All assertions verified in setup
             }
@@ -50,7 +50,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Add multiple items")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with three items added")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -78,7 +78,7 @@ DOCTEST_TEST_SUITE("tList")
             CHECK(found1);
             CHECK(found2);
             CHECK(found3);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("all items are in the list")
             {
                 // All assertions verified in setup
             }
@@ -87,7 +87,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Remove with list member")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with one item then removed")
         {
             tList<MockListMember> list;
             MockListMember item(42);
@@ -100,7 +100,7 @@ DOCTEST_TEST_SUITE("tList")
             CHECK(list.Len() == 0);
             // After removal, ListID should be -1
             CHECK(item.ListID() == -1);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("list is empty and item ListID is -1")
             {
                 // All assertions verified in setup
             }
@@ -109,7 +109,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Remove multiple items")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with three items, one removed")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -138,7 +138,7 @@ DOCTEST_TEST_SUITE("tList")
 
             CHECK(found1);
             CHECK(found3);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("remaining items are still in the list")
             {
                 // All assertions verified in setup
             }
@@ -147,7 +147,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Clear via SetLen")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with two items cleared via SetLen")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -161,7 +161,7 @@ DOCTEST_TEST_SUITE("tList")
             // So we use SetLen instead
             list.SetLen(0);
             CHECK(list.Len() == 0);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("list is empty")
             {
                 // All assertions verified in setup
             }
@@ -170,7 +170,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Swap")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("two tLists with one item each, swapped")
         {
             tList<MockListMember> list1;
             tList<MockListMember> list2;
@@ -190,7 +190,7 @@ DOCTEST_TEST_SUITE("tList")
             CHECK(list2.Len() == 1);
             CHECK(list1[0] == &item2);
             CHECK(list2[0] == &item1);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("list contents are exchanged")
             {
                 // All assertions verified in setup
             }
@@ -199,7 +199,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList inherited from tArray")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tList with two items")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -214,7 +214,7 @@ DOCTEST_TEST_SUITE("tList")
             // operator[] from tArray
             CHECK(list[0] != nullptr);
             CHECK(list[1] != nullptr);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("tArray methods work correctly")
             {
                 // All assertions verified in setup
             }

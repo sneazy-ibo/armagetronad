@@ -8,18 +8,18 @@ DOCTEST_TEST_SUITE("tRandomizer")
 {
     TEST_CASE("tRandomizer Get() returns value in range")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tRandomizer instance")
         {
             tRandomizer rand;
 
-            // Get multiple random values and verify they're in [0, 1)
+            // Get multiple random values and verify they're in [0, 1]
             for (int i = 0; i < 100; i++)
             {
             REAL val = rand.Get();
             CHECK(val >= 0.0f);
             CHECK(val < 1.0f);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Get() returns values in range [0, 1]")
             {
                 // All assertions verified in setup
             }
@@ -28,7 +28,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tRandomizer Get(int max) returns value in range")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tRandomizer with various max values")
         {
             tRandomizer rand;
 
@@ -55,7 +55,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             bool valid = (val == 0) || (val == 1);
             CHECK(valid);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Get(max) returns values in range [0, max]")
             {
                 // All assertions verified in setup
             }
@@ -64,7 +64,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tRandomizer singleton access")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("the tRandomizer singleton instance")
         {
             // Get the standard randomizer instance
             tRandomizer& rand = tRandomizer::GetInstance();
@@ -73,7 +73,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             REAL val = rand.Get();
             CHECK(val >= 0.0f);
             CHECK(val < 1.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("singleton Get() returns values in range [0, 1]")
             {
                 // All assertions verified in setup
             }
@@ -82,18 +82,18 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tReproducibleRandomizer Get() returns value in range")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tReproducibleRandomizer instance")
         {
             tReproducibleRandomizer rand;
 
-            // Get multiple random values and verify they're in [0, 1)
+            // Get multiple random values and verify they're in [0, 1]
             for (int i = 0; i < 100; i++)
             {
             REAL val = rand.Get();
             CHECK(val >= 0.0f);
             CHECK(val < 1.0f);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Get() returns values in range [0, 1]")
             {
                 // All assertions verified in setup
             }
@@ -102,7 +102,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tReproducibleRandomizer Get(int max) returns value in range")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("a tReproducibleRandomizer with max=50")
         {
             tReproducibleRandomizer rand;
 
@@ -113,7 +113,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             CHECK(val >= 0);
             CHECK(val <= 50);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("Get(50) returns values in range [0, 50]")
             {
                 // All assertions verified in setup
             }
@@ -122,7 +122,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tReproducibleRandomizer singleton access")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("the tReproducibleRandomizer singleton instance")
         {
             // Get the standard reproducible randomizer instance
             tReproducibleRandomizer& rand = tReproducibleRandomizer::GetInstance();
@@ -131,7 +131,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             REAL val = rand.Get();
             CHECK(val >= 0.0f);
             CHECK(val < 1.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("singleton Get() returns values in range [0, 1]")
             {
                 // All assertions verified in setup
             }
@@ -140,7 +140,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("tReproducibleRandomizer reproducibility")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("two tReproducibleRandomizer instances")
         {
             // Create two identical randomizers
             tReproducibleRandomizer rand1;
@@ -156,7 +156,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             CHECK(val1 < 1.0f);
             CHECK(val2 >= 0.0f);
             CHECK(val2 < 1.0f);
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("both instances generate valid values")
             {
                 // All assertions verified in setup
             }
@@ -165,7 +165,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
 
     TEST_CASE("Randomizer distribution test")
     {
-        DOCTEST_GIVEN("Setup")
+        DOCTEST_GIVEN("1000 random samples from tRandomizer")
         {
             tRandomizer rand;
 
@@ -189,7 +189,7 @@ DOCTEST_TEST_SUITE("tRandomizer")
             {
             CHECK(buckets[i] > 0);
             }
-            DOCTEST_THEN("Verification")
+            DOCTEST_THEN("samples are distributed across all buckets")
             {
                 // All assertions verified in setup
             }
