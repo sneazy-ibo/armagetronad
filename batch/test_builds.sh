@@ -60,6 +60,12 @@ if [ ! -z "$CXX" ] && [ ! "$CXX" = "c++" ]; then
     CXX_KEY=_${CXX};
 fi
 
+WORKSPACE_KEY=""
+if [[ $ROOT == /work* ]]; then
+    # looks like we are in a devcontainer
+    WORKSPACE_KEY="_devcnt"
+fi
+
 # Common configure flags for all test builds
 COMMON_FLAGS="${PEDANTIC_FLAGS} --prefix=/tmp/armagetronad_test --disable-sysinstall --disable-desktop --disable-etc --disable-useradd --enable-curl"
 
@@ -128,6 +134,7 @@ elif [ "$1" = "debug" ]; then
     # two configurations, no special directory tag so tools know where to find them
     SELECTED_CONFIGS=("${DEBUG_CONFIGURATIONS[@]}")
     CXX_KEY=""
+    WORKSPACE_KEY=""
 else
     SELECTED_CONFIGS=()
     for arg in "$@"; do
@@ -173,12 +180,6 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # flags should be self explanatory
     # the root directory is in there to force rebuild on container/host switches
     BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
-
-    WORKSPACE_KEY=""
-    if [[ $ROOT == /work* ]]; then
-        # looks like we are in a devcontainer
-        WORKSPACE_KEY="_devcnt"
-    fi
 
     BUILD_DIR="$ROOT/build/test_${NAME}${WORKSPACE_KEY}${CXX_KEY}"
     
