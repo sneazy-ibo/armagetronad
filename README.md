@@ -24,7 +24,7 @@ Better documentation is on our [Wiki](https://wiki.armagetronad.org/index.php?ti
 
 - Most of the activity nowadays is on Discord, use [this invite](https://discord.gg/dcpaauj).
 - Much slower: [The Forums](https://forums3.armagetronad.net/).
-- In IRC, some of the old guard are in the channel `#armagetron` on trhe OFTC network. Have patience there, responses can take a while.
+- In IRC, some of the old guard are in the channel `#armagetron` on the OFTC network. Have patience there, responses can take awhile.
 
 ## Developer Documentation
 
