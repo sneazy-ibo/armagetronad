@@ -174,7 +174,13 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # the root directory is in there to force rebuild on container/host switches
     BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
 
-    BUILD_DIR="$ROOT/build/test_${NAME}${CXX_KEY}"
+    WORKSPACE_KEY=""
+    if [[ $ROOT == /work* ]]; then
+        # looks like we are in a devcontainer
+        WORKSPACE_KEY="_devcnt"
+    fi
+
+    BUILD_DIR="$ROOT/build/test_${NAME}${WORKSPACE_KEY}${CXX_KEY}"
     
     echo ""
     echo "============================================================"
