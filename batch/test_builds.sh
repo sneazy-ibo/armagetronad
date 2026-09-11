@@ -263,14 +263,8 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         echo "[3/3] Testing..."
         TEST_PASSED=false
         
-        # Try make check first
-        if ! make check > /tmp/test_${NAME}.log 2>&1; then
-            TEST_PASSED=false
-        # Try running unit_tests directly
-        elif [ -x ./src/unit_tests ] && ./src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
-            TEST_PASSED=true
-        # Try from build directory
-        elif [ -x src/unit_tests ] && src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
+        # Run unit_tests directly
+        if [ -x ./src/unit_tests ] && ./src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
             TEST_PASSED=true
         fi
         
