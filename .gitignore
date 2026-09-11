@@ -1,7 +1,8 @@
 *.DS_Store
 Armagetron Advanced Dedicated
 Armagetron Advanced.app
-desktop/os-x/Info.plist
+/desktop/os-x/Info.plist
+/desktop/armagetronad.appdata.xml
 .gdbinit
 .cache
 .lock.*
