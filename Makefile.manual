@@ -201,8 +201,11 @@ distclean-local: debugdistclean
 # CI #
 ######
 
-check:
+# target to run in CI pipelines. Builds all and runs unit tests.
+ci: all
 	$(MAKE) unit_tests
 
-# target to run in CI pipelines. Builds all and runs unit tests.
-ci: all check
+# why not "ci: all unit_tests"? That causes parallel builds that do not work.
+
+# this appears to be a standard target
+check: ci
