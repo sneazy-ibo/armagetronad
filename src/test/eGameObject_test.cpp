@@ -72,14 +72,15 @@ public:
 class TestGridHelper
 {
 public:
-    eGrid *grid;
+    // reference counting pointer
+    tJUST_CONTROLLED_PTR<eGrid> grid;
+
     TestGridHelper() {
         grid = new eGrid();
         grid->Create();
     }
     ~TestGridHelper() {
         grid->Clear();
-        // Don't delete - destructor is protected
     }
     eFace* GetFace() {
         eCoord startPos(20, 100);
