@@ -217,6 +217,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     # Configure
     if [ ! -f Makefile ] || [ "$FORCE_RECONFIGURE" = "1" ]; then
+        if [ -r $ROOT/Makefile ]; then
+            echo "[0.5/$STEPS] Cleaning up..."
+            make -C $ROOT distclean
+        fi
         echo "[1/$STEPS] Configuring..."
         if [ "$VERBOSE" = "1" ]; then
             echo "../../configure $SPECIFIC_FLAGS $COMMON_FLAGS"
