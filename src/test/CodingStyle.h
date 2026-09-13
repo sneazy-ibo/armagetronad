@@ -92,7 +92,11 @@ public:
 
     // FYI Rule of Three: Implement destructor, copy constructor and assignment operator together
     virtual ~cReferenceCounted() noexcept { CHECK(s_numberOfObjects_.TryCountDown()); } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
-    cReferenceCounted(cReferenceCounted const&) noexcept { s_numberOfObjects_.CountUp(); }
+    cReferenceCounted(cReferenceCounted const& that) noexcept
+        : tReferencable<cReferenceCounted>(that)
+    {
+        s_numberOfObjects_.CountUp();
+    }
     cReferenceCounted& operator=(cReferenceCounted const&) noexcept = default;
 
     // FYI though in this case, the assignment operator needs no special implementation, the default constructor does

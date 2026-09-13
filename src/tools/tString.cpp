@@ -461,33 +461,40 @@ void tString::Clear( void )
 //!
 // *******************************************************************************************
 
-void tString::SetPos(int l, bool cut){
-    int i;
-    if ( l < Len() )
+// *******************************************************************************************
+// *
+// *   SetPos
+// *
+// *******************************************************************************************
+//!
+//!        @param  len the target length
+//!        @param  cut if set, the string may be cut back if its current length is bigger than length
+//!
+// *******************************************************************************************
+
+void tString::SetPos(int l, bool cut) noexcept
+{
+    if (l < 0)
+        l = 0;
+    l += 1; // compensate; incoming l is length without trailing 0, Len() is length with trailing zero.
+
+    if (cut && l < Len())
     {
-        if ( cut )
-        {
-            if ( l > 0 )
-            {
-                SetSize( l-1 );
-                operator+=(' ');
-            }
-            else
-            {
-                Clear();
-            }
-        }
-        else
-        {
+        // shrink
+        SetLen(l);
+        operator[](l - 1) = '\0';
+    }
+    else
+    {
+        // pad to length
+        for (int i = Len(); i < l; i++)
             operator+=(' ');
-        }
     }
-    if( l == Len() && !cut)
-    {
-        operator+=(' ');
-    }
-    for(i=Len();i<l;i++)
-        operator+=(' ');
+
+    // ensure trailing space by cutting
+    int const lastRealChar = Len() - 2;
+    if (lastRealChar >= 0 && !isspace(operator[](lastRealChar)))
+        operator[](lastRealChar) = ' ';
 }
 
 //added by me (Tank Program)
