@@ -205,12 +205,77 @@ TEST_SUITE("tString")
 
     TEST_CASE("tString SetPos")
     {
-        tString s("Hello");
-        s.SetPos(10, false);
-        CHECK(s.Len() == 10);
+        GIVEN("A string")
+        {
+            tString s("Hello");
 
-        s.SetPos(5, true);
-        CHECK(s.Len() == 5);
+// test strings
+#define expandedTo10 "Hello     "
+            CHECK(strlen(expandedTo10) == 10);
+#define shrunkTo3 "He "
+            CHECK(strlen(shrunkTo3) == 3);
+#define shrunkTo6 "Hello "
+            CHECK(strlen(shrunkTo6) == 6);
+
+            WHEN("String is expanded with SetPos")
+            {
+                s.SetPos(10, false);
+                THEN("It is expanded to that length with spaces")
+                {
+                    CHECK(s == expandedTo10);
+
+                    WHEN("It is then shrunk to 3")
+                    {
+                        s.SetPos(3, true);
+
+                        THEN("It is cut to that length with an extra trailing space")
+                        {
+                            CHECK(s == shrunkTo3);
+                        }
+                    }
+
+                    WHEN("It is then shrunk to 6")
+                    {
+                        s.SetPos(6, true);
+
+                        THEN("It is cut to that length, no extra space required")
+                        {
+                            CHECK(s == shrunkTo6);
+                        }
+                    }
+
+                    WHEN("It is then shrunk, but with cut == false")
+                    {
+                        s.SetPos(3, false);
+
+                        THEN("Nothing changes")
+                        {
+                            CHECK(s == expandedTo10);
+                        }
+                    }
+
+                    WHEN("It is expanded again with the same call")
+                    {
+                        s.SetPos(10, false);
+
+                        THEN("Nothing changes")
+                        {
+                            CHECK(s == expandedTo10);
+                        }
+                    }
+
+                    WHEN("It is then shrunk to 0")
+                    {
+                        s.SetPos(0, true);
+
+                        THEN("It vanishes")
+                        {
+                            CHECK(s == "");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     TEST_CASE("tString StartsWith")
