@@ -271,9 +271,9 @@ TEST_SUITE("tString")
         GIVEN("a tString for toInt")
         {
             tString s("42");
-            THEN("toInt converts string to integer correctly")
+            THEN("ToInt converts string to integer correctly")
             {
-                CHECK(s.toInt() == 42);
+                CHECK(s.ToInt() == 42);
             }
         }
     }
