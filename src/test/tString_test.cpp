@@ -216,6 +216,8 @@ TEST_SUITE("tString")
             CHECK(strlen(shrunkTo3) == 3);
 #define shrunkTo6 "Hello "
             CHECK(strlen(shrunkTo6) == 6);
+#define shrunkTo5 "Hell "
+            CHECK(strlen(shrunkTo5) == 5);
 
             WHEN("String is expanded with SetPos")
             {
@@ -273,6 +275,16 @@ TEST_SUITE("tString")
                             CHECK(s == "");
                         }
                     }
+                }
+            }
+
+            WHEN("It is then set to 5, its current length")
+            {
+                s.SetPos(5, false);
+
+                THEN("The last character is replaced with a space")
+                {
+                    CHECK(s == shrunkTo5);
                 }
             }
         }
