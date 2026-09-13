@@ -135,7 +135,7 @@ devcheck: beautify myinstallcheck
 fullcheck: beautify devcheck distcheck
 
 # run all that don't require a full rebuild
-test: installcheck
+test: installcheck unit_tests
 
 ###############
 # Fingerprint #
@@ -198,3 +198,16 @@ debugdistclean:
 clean-local: debugclean
 
 distclean-local: debugdistclean
+
+######
+# CI #
+######
+
+# target to run in CI pipelines. Builds all and runs unit tests.
+ci: all
+	$(MAKE) unit_tests
+
+# why not "ci: all unit_tests"? That causes parallel builds that do not work.
+
+# this appears to be a standard target
+check: ci

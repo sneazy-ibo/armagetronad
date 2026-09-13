@@ -13,7 +13,7 @@ musicdir=${armadatadir}
 include $(top_srcdir)/Makefile.manual
 
 # what goes into the distribution
-EXTRA_DIST = README-DEVELOPER README-Subversion README-SDL \
+EXTRA_DIST = README.md README-DEVELOPER README-Subversion README-SDL \
 armagetron.kdevelop armagetron.kdevelop.pcs armagetron.kdevses tron.ico \
 models sound textures bootstrap.sh music \
 acinclude.d/accustomdir.m4 acinclude.d/ax_boost_base.m4 acinclude.d/ax_boost_system.m4 acinclude.d/ax_boost_thread.m4\
@@ -251,3 +251,19 @@ distcheck-clean:
 	chmod 755 -R @progname@-$(VERSION)*
 	rm -rf @progname@-$(VERSION)*
 
+##############
+# Unit Tests #
+##############
+
+unit_tests:
+if BUILDTESTS
+	$(MAKE) -C src unit_tests
+	src/unit_tests -ni
+endif
+
+##########
+# README #
+##########
+
+README: Makefile
+	echo "Check README.md instead" > $@

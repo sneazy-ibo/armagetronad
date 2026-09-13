@@ -103,13 +103,13 @@ libnetwork_a_SOURCES=network/nAuthentication.cpp\
 	network/nSocket.h network/nSpamProtection.cpp network/nSpamProtection.h
 
 if BUILDMAIN
-libenginecore_a_SOURCES=engine/eGameObject.cpp engine/eGameObject.h \
-	engine/eGrid.cpp engine/eGrid.h
 
 libengine_a_SOURCES=engine/eAdvWall.cpp engine/eAdvWall.h engine/eAuthentication.cpp\
-	engine/eAuthentication.h engine/eAxis.cpp	engine/eAxis.h engine/eCamera.cpp engine/eCamera.h\
+	engine/eAuthentication.h engine/eAxis.cpp engine/eAxis.h engine/eCamera.cpp engine/eCamera.h\
 	engine/eCoord.h engine/eDebugLine.cpp engine/eDebugLine.h engine/eDisplay.cpp engine/eFloor.cpp\
 	engine/eFloor.h \
+	engine/eGameObject.cpp engine/eGameObject.h \
+	engine/eGrid.cpp engine/eGrid.h \
 	engine/eKrawall.cpp engine/eKrawall.h engine/eNetGameObject.cpp engine/eNetGameObject.h\
 	engine/ePath.cpp engine/ePath.h engine/ePlayer.cpp engine/ePlayer.h engine/eSensor.cpp\
 	engine/eSensor.h engine/eSpawn.cpp engine/eSpawn.h engine/eTeam.cpp engine/eTeam.h engine/eTess2.h\
@@ -144,7 +144,7 @@ librender_a_SOURCES=${render_extra} render/rConsole.cpp render/rConsoleGraph.cpp
 	render/rTextureRenderTarget.cpp render/rTextureRenderTarget.h render/rGLuintObject.cpp render/rGLuintObject.h
 
 libtron_a_SOURCES=tron/gAIBase.cpp tron/gAIBase.h tron/gAICharacter.cpp tron/gAICharacter.h tron/gArena.cpp tron/gArena.h\
-	tron/gArmagetron.cpp tron/gCamera.cpp tron/gCamera.h tron/gCycle.cpp tron/gCycle.h tron/gCycleMovement.cpp\
+	tron/gCamera.cpp tron/gCamera.h tron/gCycle.cpp tron/gCycle.h tron/gCycleMovement.cpp\
 	tron/gJoystick.h tron/gJoystick.cpp\
 	tron/gCycleMovement.h tron/gExplosion.cpp tron/gExplosion.h tron/gGame.cpp tron/gGame.h\
 	tron/gTutorial.h tron/gTutorial.cpp\
@@ -226,14 +226,6 @@ libengine_a_OBJCXXFLAGS =$(libengine_a_CXXFLAGS)
 libtron_a_OBJCXXFLAGS   =$(libtron_a_CXXFLAGS)
 endif
 
-# core engine files can get compiled with optimization turned on for more painless debugging
-# on weak computers
-if ENGINECOREDEBUG
-libenginecore_a_CXXFLAGS =$(libengine_a_CXXFLAGS)
-else
-libenginecore_a_CXXFLAGS =$(libengine_a_CXXFLAGS) -O2
-endif
-
 if BUILDMASTER
 buildthemaster = armagetronad_main_master$(EXEEXT)
 else
@@ -260,6 +252,10 @@ endif
 #librubywrap_a_SOURCES    = 
 #endif
 
+if BUILDTESTS
+noinst_PROGRAMS = unit_tests chat_prefix_test
+endif
+
 if BUILDFAKERELEASE
 BUILDFAKE=echo -e "\#!/bin/sh\necho Running FAKE \"\$$0\" \"\$$@\"\ntest \"\$$1\" = "--doc" || test \"\$$1\" = "--help" || sleep 5" > $@; chmod 755 $@
 armagetronad_main$(EXEEXT): Makefile
@@ -269,7 +265,7 @@ armagetronad_main_master$(EXEEXT): Makefile
 	${BUILDFAKE}
 else
 if BUILDMAIN
-noinst_LIBRARIES = libtools.a libnetwork.a libenginecore.a libengine.a librender.a  libtron.a libui.a
+noinst_LIBRARIES = libtools.a libnetwork.a libengine.a librender.a  libtron.a libui.a
 # librubywrap.a
 else
 noinst_LIBRARIES = libtools.a libnetwork.a
@@ -285,11 +281,11 @@ endif
 endif
 
 armagetronad_main_SOURCES = \
-	tron/gFloor.cpp \
+	tron/gFloor.cpp tron/gArmagetron.cpp \
 	tron/cockpit/cCockpit.cpp tron/cockpit/cMap.cpp tron/cockpit/cCamview.cpp \
 	$(INCLUDED_MODULE_SOURCES)
 armagetronad_main_CXXFLAGS =$(libtron_a_CXXFLAGS)
-armagetronad_main_LDADD= libtron.a libenginecore.a libengine.a libnetwork.a libui.a librender.a libtools.a protobuf/libprotobuf.a thirdparty/mathexpr/libmathexpr.a ${extralibs}
+armagetronad_main_LDADD= libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a protobuf/libprotobuf.a thirdparty/mathexpr/libmathexpr.a ${extralibs}
 #  librubywrap.a
 
 armagetronad_main_master_SOURCES = network/master.cpp
@@ -301,7 +297,26 @@ armagetronad_serverquery_SOURCES = serverquery/serverquery.cpp serverquery/jsonc
 armagetronad_serverquery_CXXFLAGS = $(AM_CXXFLAGS) -iquote @srcdir@ -iquote @srcdir@/serverquery -iquote @srcdir@/tools -iquote @srcdir@/network
 armagetronad_serverquery_LDADD = libnetwork.a libtools.a protobuf/libprotobuf.a
 endif
-endif
+
+if BUILDTESTS
+unit_tests_SOURCES = thirdparty/doctest/doctest.h \
+	test/eCoord_test.cpp test/eGameObject_test.cpp test/tArray_test.cpp \
+	test/tList_test.cpp test/tString_test.cpp test/tLinkedList_test.cpp \
+	test/tRing_test.cpp test/tHeap_test.cpp test/tMemStack_test.cpp \
+	test/tColor_test.cpp test/tException_test.cpp test/tCallback_test.cpp \
+	test/tCallbackString_test.cpp test/tRandomizer_test.cpp \
+	test/eRectangle_test.cpp test/eAxis_test.cpp \
+	test/CodingStyle.h test/CodingStyle.cpp test/CodingStyle_test.cpp \
+	test/unit_tests_main.cpp
+unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
+unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a
+
+chat_prefix_test_SOURCES = test/chat_prefix_test.cpp
+chat_prefix_test_CXXFLAGS = $(libengine_a_CXXFLAGS)
+chat_prefix_test_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a
+endif # BUILDTESTS
+
+endif # BUILDFAKERELEASE
 
 ## Note: tron/gFloor.cpp is not referenced from the outside, but required anyway. So it can't be put into
 ## a library. Adding it to armagetronad_SOURCES has the additional advantage of telling automake that

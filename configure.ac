@@ -145,6 +145,17 @@ dnl [  --enable-glout          enable graphical output; otherwise, compile
 dnl                          a dedicated server (default=enabled)],,
 dnl enable_glout=yes)
 
+AC_ARG_ENABLE(tests,
+     AC_HELP_STRING([--disable-tests],
+		[disables building and executing unit tests; to be used on systems where they cannot possibly work]),
+     [case "${enableval}" in
+       yes) tests=true ;;
+       no)  tests=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-master) ;;
+     esac],[tests=true])
+
+AM_CONDITIONAL(BUILDTESTS, test x$tests = xtrue)
+
 AC_ARG_ENABLE(master,
      AC_HELP_STRING([--enable-master],
 		[Build the master server]),
@@ -460,17 +471,6 @@ AC_ARG_ENABLE(games,
 	AC_HELP_STRING([--enable-games],
 		[decorates all installation paths with "games" (default=enabled)]),,
 enable_games=yes)
-
-AC_ARG_ENABLE(enginecoredebug,
-     AC_HELP_STRING([--enable-enginecoredebug],
-		[Apply debugging options to engine core (for DEBUGLEVEL>0, defaults to enabled)]),
-     [case "${enableval}" in
-       yes) enginecoredebug=true ;;
-       no)  enginecoredebug=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-enginecoredebug) ;;
-     esac],[enginecoredebug=true])
-	 
-AM_CONDITIONAL(ENGINECOREDEBUG, test x$enginecoredebug = xtrue)
 
 if test x$enable_respawn = xyes; then
 AC_DEFINE(RESPAWN_HACK,,enables hacky support for deathmatch mode)
@@ -918,6 +918,8 @@ if test x$use_curl = xtrue; then
     AC_MSG_ERROR([libcurl not found. Either provide it or disable it (with `configure --disable-curl`)])
     )
 fi
+
+AC_LANG([C++])
 
 dnl *************************************************
 dnl         Threading
@@ -1596,6 +1598,7 @@ echo "Options selected are:"
 echo "     Build Regular Game Client: $build_regular"
 echo "     Build Dedicated Server: $build_dedicated"
 echo "     Build Master Server: $armamaster"
+echo "     Build Unit Tests: $tests"
 echo ""
 echo "Installation options:"
 echo "     Prefix: $prefix"

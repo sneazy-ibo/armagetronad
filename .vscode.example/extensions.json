@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "ms-vscode.cpptools",
+    "MermaidChart.vscode-mermaid-chart",
+    "matepek.vscode-catch2-test-adapter"
+  ]
+}

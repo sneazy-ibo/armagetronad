@@ -386,7 +386,6 @@ public:
     }
 };
 
-
 template<class T> bool operator==(const T *x, const tJUST_CONTROLLED_PTR<T> &y)
 {
     return (x == static_cast<const T*>(y));
@@ -406,6 +405,10 @@ template<class T> bool operator==(T *x, tJUST_CONTROLLED_PTR<T> &y)
 {
     return (x == static_cast<const T*>(y));
 }
+
+// this should be your go-to smart pointer
+template <typename T>
+using tRefPtr = tJUST_CONTROLLED_PTR<T>;
 
 template< class T > class tStackObject: public T
 {

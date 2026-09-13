@@ -1,7 +1,8 @@
 *.DS_Store
 Armagetron Advanced Dedicated
 Armagetron Advanced.app
-desktop/os-x/Info.plist
+/desktop/os-x/Info.plist
+/desktop/armagetronad.appdata.xml
 .gdbinit
 .cache
 .lock.*
@@ -25,7 +26,6 @@ Makefile.in
 /config.h.in
 /config.sub
 /configure
-/builds
 /depcomp
 /install-sh
 /ylwrap
@@ -70,7 +70,6 @@ aa_config.h.in
 *.layout
 *.depend
 .objs
-/build
 .objs_release
 desktop/armagetronad.protocol
 src/vParser.cpp
@@ -102,8 +101,6 @@ src/.cproject
 src/.project
 src/.settings
 autogen.sh
-.vscode
-autogen.sh
 *.o
 *.a
 *.dmg
@@ -118,3 +115,18 @@ src/nTrueVersion.h
 .changetag
 fingerprint
 wget-log*
+
+# possible test build locations
+/build
+/builds
+
+# AI work and config directories
+/.vibe
+/.claude
+/.flow
+/ai_docs # put your personal markdown files in here
+/.memory # project specific memory markdown files for AIs, some agents will use this automatically
+
+# visual studio code things
+/.vscode
+/.devcontainer
