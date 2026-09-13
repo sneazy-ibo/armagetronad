@@ -340,26 +340,18 @@ void tString::SetPos(int l, bool cut) noexcept
         // shrink
         SetLen(l);
         operator[](l - 1) = '\0';
-
-        // ensure trailing space by cutting further
-        int const lastRealChar = l - 2;
-        if (lastRealChar >= 0 && !isspace(operator[](lastRealChar)))
-            operator[](lastRealChar) = ' ';
-
-        // done here
-        return;
+    }
+    else
+    {
+        // pad to length
+        for (int i = Len(); i < l; i++)
+            operator+=(' ');
     }
 
-    // pad to length
-    for (int i = Len(); i < l; i++)
-        operator+=(' ');
-
+    // ensure trailing space by cutting
     int const lastRealChar = Len() - 2;
     if (lastRealChar >= 0 && !isspace(operator[](lastRealChar)))
-    {
-        // cannot shrink, must add trailing space
-        operator+=(' ');
-    }
+        operator[](lastRealChar) = ' ';
 }
 
 //removed in favor of searching whole string...
