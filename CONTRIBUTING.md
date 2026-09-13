@@ -73,7 +73,7 @@ Do not use AI generators to:
 ### Code Generation and Modification
 
 We do allow AI tools for coding tasks, with these rules:
- - No vibe coding. You are ultimately responsible for the code you write. Read the output, understand it, fix it where it is lacking (or tell the AI to fix it). Only then can you be sure other humans can understand it, too.
+ - No pure vibe coding. You are ultimately responsible for the code you write. Read the output, understand it, fix it where it is lacking (or tell the AI to fix it). Only then can you be sure other humans can understand it, too.
  - We have unit tests, make use of them. AI generated or modified code should be covered by tests whenever possible.
  - If the systems you want to work on do not yet have tests, your first job,
  before doing anything else, is to create tests that document the status quo. That way, you can check that your changes break nothing, or at least break only the things they are meant to break.
