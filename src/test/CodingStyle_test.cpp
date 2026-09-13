@@ -73,7 +73,7 @@ TEST_SUITE("CodingStyle")
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
 
-                cShallowCopy holder{new cReferenceCounted};
+                cShallowCopy holder{new cReferenceCountedDerived};
 
                 CHECK(1 == cReferenceCounted::GetNumberOfObjects());
 
@@ -127,7 +127,7 @@ TEST_SUITE("CodingStyle")
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
 
-                cDeepCopy holder{new cReferenceCounted};
+                cDeepCopy holder{new cReferenceCountedDerived};
 
                 CHECK(1 == cReferenceCounted::GetNumberOfObjects());
 
@@ -143,9 +143,10 @@ TEST_SUITE("CodingStyle")
                 {
                     cDeepCopy copy{holder};
 
-                    THEN("We have two objects")
+                    THEN("We have two derived objects")
                     {
                         CHECK(2 == cReferenceCounted::GetNumberOfObjects());
+                        CHECK(dynamic_cast<cReferenceCountedDerived*>(copy.GetTarget()));
                     }
                     AND_WHEN("Resetting the original")
                     {

@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // what is going on HERE, they are not meant as templates to include in actual code.
 
 // FYI Code should be CLEAN and DRY if appropriate.
+// FYI Everything here is functional code, it is included in our automated tests; it is completely useless, of course.
 
 // FYI include guards
 #ifndef ArmageTron_CODING_STYLE_H
@@ -91,15 +92,36 @@ public:
 
     // FYI Rule of Three: Implement destructor, copy constructor and assignment operator together
     virtual ~cReferenceCounted() noexcept { CHECK(s_numberOfObjects_.TryCountDown()); } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
-    cReferenceCounted(cReferenceCounted&) noexcept { s_numberOfObjects_.CountUp(); }
-    cReferenceCounted& operator=(cReferenceCounted&) noexcept = default;
+    cReferenceCounted(cReferenceCounted const&) noexcept { s_numberOfObjects_.CountUp(); }
+    cReferenceCounted& operator=(cReferenceCounted const&) noexcept = default;
 
     // FYI though in this case, the assignment operator needs no special implementation, the default constructor does
     cReferenceCounted() noexcept { s_numberOfObjects_.CountUp(); }
 
+    /* FYI virtual function pattern safe under modification: Have a public wrapper function that calls the virtual function.
+    The virtual function itself is private or public and starts with `Do` for actions and `On` for reactions (event handlers).
+    Rationale: If we change the function signature later, we don't have to adapt all implementations and call sites together, at once.
+    */
+    // make a copy of this
+    cReferenceCounted* Clone() const noexcept { return DoClone(); }
+
+private:
+    virtual cReferenceCounted* DoClone() const noexcept { return new cReferenceCounted{*this}; }
+
 private:
     // FYI static variables get an s_ prefix. Global variables defined in cpp files get st_, se_, etc.
     static cCounter s_numberOfObjects_;
+};
+
+// a derived class
+class cReferenceCountedDerived : public cReferenceCounted
+{
+public:
+    // FYI always use `override` on overridden virtual functions, that way we notice when the base definition changes
+    ~cReferenceCountedDerived() noexcept override = default;
+
+private:
+    cReferenceCounted* DoClone() const noexcept override { return new cReferenceCountedDerived{*this}; }
 };
 
 // class that holds a refernce to cReferenceCounted, doing shallow copies
@@ -137,8 +159,8 @@ public:
 
     // FYI rule of five: default would be shallow copy, avoid that
     ~cDeepCopy() noexcept = default; // FYI except the destructor, the default is fine
-    cDeepCopy(cDeepCopy& that) : target_(CloneFrom(that)) {}
-    cDeepCopy& operator=(cDeepCopy& that)
+    cDeepCopy(cDeepCopy const& that) : target_(CloneFrom(that)) {}
+    cDeepCopy& operator=(cDeepCopy const& that)
     {
         SetTarget(CloneFrom(that));
         return *this;
@@ -151,10 +173,10 @@ public:
 
 private:
     // helper function: Clone from other
-    static cReferenceCounted* CloneFrom(cDeepCopy& that)
+    static cReferenceCounted* CloneFrom(cDeepCopy const& that)
     {
         if (auto const target = that.GetTarget())
-            return new cReferenceCounted(*target);
+            return target->Clone();
         else
             return nullptr; // FYI prefer nullptr over NULL
     }
