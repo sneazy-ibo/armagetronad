@@ -43,13 +43,13 @@ public:
 
 // Test game object that can distinguish between wall types
 // We need to use a grid, but we can create a minimal one
-class TestGameObject : public eReferencableGameObject
+class TestGameObject : public eStackGameObject
 {
 public:
     bool alive_;
 
     TestGameObject(eGrid* grid, const eCoord& p, const eCoord& d, eFace* currentface = NULL)
-        : eReferencableGameObject(grid, p, d, currentface, false), // autodelete=false to prevent deletion
+        : eStackGameObject(grid, p, d, currentface),
           alive_(true)
     {
     }
