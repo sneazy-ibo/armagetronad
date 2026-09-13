@@ -67,6 +67,7 @@ public:
     void SetLen(int i){len=i;}
     int Len()const {return len;}
     int  Size() const {return size;}
+    size_t capacity() const { return size; } // future compatibility
 };
 
 
