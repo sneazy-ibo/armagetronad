@@ -1491,7 +1491,7 @@ void tString::SetLen( int len )
     while ( len > Len() )
         *this += ' ';
     if ( len < Len() )
-        *this = SubStr( 0, len );
+        *this = SubStr( 0, len-1 );
 
     tASSERT( Len() == len );
 }
