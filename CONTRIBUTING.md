@@ -41,7 +41,8 @@ Ten crashfixes in one submission are fine. Fixing all translation errors you can
 
 Don't worry too much about formatting. We have `.editorconfig` and `.clang-format` files that a decent code editor will respect. 
 
-The coding style is provided as verbosely commented samples in `src/test/CodingStyle*`. If it's not in there, it's not terribly important.
+The coding style is provided as verbosely commented samples in `src/test/CodingStyle*`. 
+If it's not in there, it's not terribly important. Not everythin IN there is terribly important.
 
 ## Submitting
 
