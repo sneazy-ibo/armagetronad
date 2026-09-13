@@ -4,18 +4,18 @@
 // Tests for tArray class
 // Purpose: Document the status quo behavior and detect regressions
 
-DOCTEST_TEST_SUITE("tArray")
+TEST_SUITE("tArray")
 {
     TEST_CASE("tArray default construction and basic properties")
     {
-        DOCTEST_GIVEN("a default tArray")
+        GIVEN("a default tArray")
         {
             tArray<int> arr;
-            DOCTEST_THEN("Len returns 0 for a default array")
+            THEN("Len returns 0 for a default array")
             {
                 CHECK(arr.Len() == 0);
             }
-            DOCTEST_THEN("Size is non-negative")
+            THEN("Size is non-negative")
             {
                 // Size may be non-zero due to allocation strategy
                 CHECK(arr.Size() >= 0);
@@ -56,7 +56,7 @@ DOCTEST_TEST_SUITE("tArray")
     // This is a known codebase issue
     TEST_CASE("tArray assignment operator with empty target")
     {
-        DOCTEST_GIVEN("a tArray for assignment with empty target")
+        GIVEN("a tArray for assignment with empty target")
         {
             tArray<int> original(3);
             original[0] = 1;
@@ -67,7 +67,7 @@ DOCTEST_TEST_SUITE("tArray")
             assigned = original;
             // Due to bug in assignment operator, this may not work as expected
             // Just verify it doesn't crash
-            DOCTEST_THEN("the results are as expected")
+            THEN("the results are as expected")
             {
                 CHECK(assigned.Len() >= 0);
             }
@@ -90,7 +90,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray operator() const access")
     {
-        DOCTEST_GIVEN("a tArray for operator() const access")
+        GIVEN("a tArray for operator() const access")
         {
             tArray<int> arr(3);
             arr[0] = 10;
@@ -98,7 +98,7 @@ DOCTEST_TEST_SUITE("tArray")
             arr[2] = 30;
 
             // operator() does bounds checking with assertion
-            DOCTEST_THEN("the results are as expected")
+            THEN("the results are as expected")
             {
                 CHECK(arr(0) == 10);
                 CHECK(arr(1) == 20);
@@ -109,14 +109,14 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray operator+ pointer access")
     {
-        DOCTEST_GIVEN("a tArray for operator+ pointer access")
+        GIVEN("a tArray for operator+ pointer access")
         {
             tArray<int> arr(3);
             arr[0] = 10;
             arr[1] = 20;
             arr[2] = 30;
 
-            DOCTEST_THEN("the results are as expected")
+            THEN("the results are as expected")
             {
                 CHECK(*(arr + 0) == 10);
                 CHECK(*(arr + 1) == 20);
@@ -199,10 +199,10 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray boundary conditions - empty array")
     {
-        DOCTEST_GIVEN("an empty tArray")
+        GIVEN("an empty tArray")
         {
             tArray<int> arr;
-            DOCTEST_THEN("the results are as expected")
+            THEN("the results are as expected")
             {
                 CHECK(arr.Len() == 0);
                 // Size may be non-zero
@@ -224,7 +224,7 @@ DOCTEST_TEST_SUITE("tArray")
 
     TEST_CASE("tArray with custom type")
     {
-        DOCTEST_GIVEN("a tArray with custom type")
+        GIVEN("a tArray with custom type")
         {
             struct CustomType
             {
@@ -236,7 +236,7 @@ DOCTEST_TEST_SUITE("tArray")
 
             tArray<CustomType> arr;
             arr.Insert(CustomType(42));
-            DOCTEST_THEN("the results are as expected")
+            THEN("the results are as expected")
             {
                 CHECK(arr.Len() == 1);
                 CHECK(arr[0].value == 42);

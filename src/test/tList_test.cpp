@@ -12,15 +12,15 @@ public:
 // Tests for tList class
 // Purpose: Document the status quo behavior and detect regressions
 
-DOCTEST_TEST_SUITE("tList")
+TEST_SUITE("tList")
 {
     TEST_CASE("tList default construction")
     {
-        DOCTEST_GIVEN("a default tList")
+        GIVEN("a default tList")
         {
             tList<MockListMember> list;
             // Size may not be 0 due to uninitialized offset - don't check it
-            DOCTEST_THEN("list length is zero")
+            THEN("list length is zero")
             {
                 CHECK(list.Len() == 0);
             }
@@ -29,13 +29,13 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Add with list member")
     {
-        DOCTEST_GIVEN("a tList with one item added")
+        GIVEN("a tList with one item added")
         {
             tList<MockListMember> list;
             MockListMember item1(42);
 
             list.Add(&item1);
-            DOCTEST_THEN("list contains the item with valid ListID")
+            THEN("list contains the item with valid ListID")
             {
                 CHECK(list.Len() == 1);
                 // The item should be in the list
@@ -48,7 +48,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList Add multiple items")
     {
-        DOCTEST_GIVEN("a tList with three items added")
+        GIVEN("a tList with three items added")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -72,7 +72,7 @@ DOCTEST_TEST_SUITE("tList")
             found3 = true;
             }
 
-            DOCTEST_THEN("all items are in the list")
+            THEN("all items are in the list")
             {
                 CHECK(list.Len() == 3);
                 CHECK(found1);
@@ -168,7 +168,7 @@ DOCTEST_TEST_SUITE("tList")
 
     TEST_CASE("tList inherited from tArray")
     {
-        DOCTEST_GIVEN("a tList with two items")
+        GIVEN("a tList with two items")
         {
             tList<MockListMember> list;
             MockListMember item1(1);
@@ -179,7 +179,7 @@ DOCTEST_TEST_SUITE("tList")
 
             // Test that we can use tArray methods
             // operator[] from tArray
-            DOCTEST_THEN("tArray methods work correctly")
+            THEN("tArray methods work correctly")
             {
                 CHECK(list.Len() == 2);
                 CHECK(list[0] != nullptr);

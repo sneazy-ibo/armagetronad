@@ -9,11 +9,11 @@ tString stringFunc1() { return tString("test1"); }
 tString stringFunc2() { return tString("test2"); }
 tString emptyStringFunc() { return tString(""); }
 
-DOCTEST_TEST_SUITE("tCallbackString")
+TEST_SUITE("tCallbackString")
 {
     TEST_CASE("tCallbackString construction and execution")
     {
-        DOCTEST_GIVEN("a tCallbackString for execution")
+        GIVEN("a tCallbackString for execution")
         {
             tCallbackString* anchor = NULL;
 
@@ -24,7 +24,7 @@ DOCTEST_TEST_SUITE("tCallbackString")
             tString result = tCallbackString::Exec(anchor);
 
             // Should return the string from our function
-            DOCTEST_THEN("Exec returns the callback result")
+            THEN("Exec returns the callback result")
             {
                 CHECK(result == "test1");
             }
@@ -33,7 +33,7 @@ DOCTEST_TEST_SUITE("tCallbackString")
 
     TEST_CASE("tCallbackString multiple callbacks")
     {
-        DOCTEST_GIVEN("multiple tCallbackStrings")
+        GIVEN("multiple tCallbackStrings")
         {
             tCallbackString* anchor = NULL;
 
@@ -45,7 +45,7 @@ DOCTEST_TEST_SUITE("tCallbackString")
             tString result = tCallbackString::Exec(anchor);
 
             // Check that we got a result
-            DOCTEST_THEN("Exec returns a non-empty result")
+            THEN("Exec returns a non-empty result")
             {
                 CHECK(result.Len() > 0);
             }
@@ -54,14 +54,14 @@ DOCTEST_TEST_SUITE("tCallbackString")
 
     TEST_CASE("tCallbackString empty string")
     {
-        DOCTEST_GIVEN("a tCallbackString with empty string function")
+        GIVEN("a tCallbackString with empty string function")
         {
             tCallbackString* anchor = NULL;
 
             tCallbackString cb(anchor, emptyStringFunc);
 
             tString result = tCallbackString::Exec(anchor);
-            DOCTEST_THEN("Exec returns empty string")
+            THEN("Exec returns empty string")
             {
                 CHECK(result == "");
             }

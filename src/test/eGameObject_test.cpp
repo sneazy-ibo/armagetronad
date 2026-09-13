@@ -88,11 +88,11 @@ public:
     }
 };
 
-DOCTEST_TEST_SUITE("eGameObject")
+TEST_SUITE("eGameObject")
 {
     TEST_CASE("Game object interaction with harmless and deadly walls")
     {
-        DOCTEST_GIVEN("A test game object with a minimal grid")
+        GIVEN("A test game object with a minimal grid")
         {
             TestGridHelper gridHelper;
             eFace *face = gridHelper.GetFace();
@@ -103,37 +103,37 @@ DOCTEST_TEST_SUITE("eGameObject")
             
             TestGameObject obj(gridHelper.grid, startPos, direction, face);
             
-            DOCTEST_THEN("The object starts alive")
+            THEN("The object starts alive")
             {
                 CHECK(obj.Alive() == true);
             }
             
-            DOCTEST_WHEN("The object passes through a harmless wall")
+            WHEN("The object passes through a harmless wall")
             {
                 MockHarmlessWall harmlessWall;
                 obj.PassEdge(&harmlessWall, 1.0, 0.5, 1);
                 
-                DOCTEST_THEN("The object remains alive")
+                THEN("The object remains alive")
                 {
                     CHECK(obj.Alive() == true);
                 }
             }
             
-            DOCTEST_WHEN("The object passes through a deadly wall")
+            WHEN("The object passes through a deadly wall")
             {
                 TestGameObject obj2(gridHelper.grid, startPos, direction, face);
                 
                 MockDeadlyWall deadlyWall;
                 obj2.PassEdge(&deadlyWall, 1.0, 0.5, 1);
                 
-                DOCTEST_THEN("The object is killed")
+                THEN("The object is killed")
                 {
                     CHECK(obj2.Alive() == false);
                 }
             }
         }
         
-        DOCTEST_GIVEN("A test game object with EdgeIsDangerous checking")
+        GIVEN("A test game object with EdgeIsDangerous checking")
         {
             TestGridHelper gridHelper;
             eFace *face = gridHelper.GetFace();
@@ -144,22 +144,22 @@ DOCTEST_TEST_SUITE("eGameObject")
             
             TestGameObject obj(gridHelper.grid, startPos, direction, face);
             
-            DOCTEST_WHEN("Checking if walls are dangerous")
+            WHEN("Checking if walls are dangerous")
             {
                 MockHarmlessWall harmlessWall;
                 MockDeadlyWall deadlyWall;
                 
-                DOCTEST_THEN("Harmless wall is not dangerous")
+                THEN("Harmless wall is not dangerous")
                 {
                     CHECK(obj.EdgeIsDangerous(&harmlessWall, 1.0, 0.5) == false);
                 }
                 
-                DOCTEST_THEN("Deadly wall is dangerous")
+                THEN("Deadly wall is dangerous")
                 {
                     CHECK(obj.EdgeIsDangerous(&deadlyWall, 1.0, 0.5) == true);
                 }
                 
-                DOCTEST_THEN("NULL wall is not dangerous")
+                THEN("NULL wall is not dangerous")
                 {
                     CHECK(obj.EdgeIsDangerous(nullptr, 1.0, 0.5) == false);
                 }
@@ -169,7 +169,7 @@ DOCTEST_TEST_SUITE("eGameObject")
     
     TEST_CASE("Game object default behavior with walls")
     {
-        DOCTEST_GIVEN("A standard eReferencableGameObject (using default EdgeIsDangerous)")
+        GIVEN("A standard eReferencableGameObject (using default EdgeIsDangerous)")
         {
             TestGridHelper gridHelper;
             eFace *face = gridHelper.GetFace();
@@ -180,16 +180,16 @@ DOCTEST_TEST_SUITE("eGameObject")
             
             eReferencableGameObject obj(gridHelper.grid, startPos, direction, face, false);
             
-            DOCTEST_WHEN("Checking default EdgeIsDangerous behavior")
+            WHEN("Checking default EdgeIsDangerous behavior")
             {
                 MockDeadlyWall deadlyWall;
                 
-                DOCTEST_THEN("Default EdgeIsDangerous returns true for non-null walls")
+                THEN("Default EdgeIsDangerous returns true for non-null walls")
                 {
                     CHECK(obj.EdgeIsDangerous(&deadlyWall, 1.0, 0.5) == true);
                 }
                 
-                DOCTEST_THEN("Default EdgeIsDangerous returns false for null walls")
+                THEN("Default EdgeIsDangerous returns false for null walls")
                 {
                     CHECK(obj.EdgeIsDangerous(nullptr, 1.0, 0.5) == false);
                 }

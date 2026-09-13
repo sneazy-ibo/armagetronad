@@ -14,11 +14,11 @@ bool boolFunc1() { return true; }
 bool boolFunc2() { return false; }
 bool boolFunc3() { return true; }
 
-DOCTEST_TEST_SUITE("tCallback")
+TEST_SUITE("tCallback")
 {
     TEST_CASE("tCallback construction and execution")
     {
-        DOCTEST_GIVEN("a callback and a function to call")
+        GIVEN("a callback and a function to call")
         {
             tCallback* anchor = NULL;
             testFlag = false;
@@ -30,7 +30,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallback::Exec(anchor);
 
             // Verify our function was called
-            DOCTEST_THEN("Exec calls the registered function")
+            THEN("Exec calls the registered function")
             {
                 CHECK(testFlag == true);
             }
@@ -42,7 +42,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackAnd construction and execution - all true")
     {
-        DOCTEST_GIVEN("tCallbackAnd with functions returning true")
+        GIVEN("tCallbackAnd with functions returning true")
         {
             tCallbackAnd* anchor = NULL;
 
@@ -52,7 +52,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
             // Execute and check result (should be true AND true = true)
             bool result = tCallbackAnd::Exec(anchor);
-            DOCTEST_THEN("Exec returns true when all callbacks return true")
+            THEN("Exec returns true when all callbacks return true")
             {
                 CHECK(result == true);
             }
@@ -61,7 +61,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackAnd construction and execution - one false")
     {
-        DOCTEST_GIVEN("tCallbackAnd with one false function")
+        GIVEN("tCallbackAnd with one false function")
         {
             tCallbackAnd* anchor = NULL;
 
@@ -70,7 +70,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallbackAnd cb2(anchor, boolFunc2);
 
             bool result = tCallbackAnd::Exec(anchor);
-            DOCTEST_THEN("Exec returns false when any callback returns false")
+            THEN("Exec returns false when any callback returns false")
             {
                 CHECK(result == false);
             }
@@ -79,7 +79,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackAnd construction and execution - all false")
     {
-        DOCTEST_GIVEN("tCallbackAnd with functions returning false")
+        GIVEN("tCallbackAnd with functions returning false")
         {
             tCallbackAnd* anchor = NULL;
 
@@ -88,7 +88,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallbackAnd cb2(anchor, boolFunc2);
 
             bool result = tCallbackAnd::Exec(anchor);
-            DOCTEST_THEN("Exec returns false when all callbacks return false")
+            THEN("Exec returns false when all callbacks return false")
             {
                 CHECK(result == false);
             }
@@ -97,7 +97,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackOr construction and execution - all true")
     {
-        DOCTEST_GIVEN("tCallbackOr with functions returning true")
+        GIVEN("tCallbackOr with functions returning true")
         {
             tCallbackOr* anchor = NULL;
 
@@ -106,7 +106,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallbackOr cb2(anchor, boolFunc1);
 
             bool result = tCallbackOr::Exec(anchor);
-            DOCTEST_THEN("Exec returns true when all callbacks return true")
+            THEN("Exec returns true when all callbacks return true")
             {
                 CHECK(result == true);
             }
@@ -115,7 +115,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackOr construction and execution - one true")
     {
-        DOCTEST_GIVEN("tCallbackOr with one true function")
+        GIVEN("tCallbackOr with one true function")
         {
             tCallbackOr* anchor = NULL;
 
@@ -124,7 +124,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallbackOr cb2(anchor, boolFunc2);
 
             bool result = tCallbackOr::Exec(anchor);
-            DOCTEST_THEN("Exec returns true when any callback returns true")
+            THEN("Exec returns true when any callback returns true")
             {
                 CHECK(result == true);
             }
@@ -133,7 +133,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallbackOr construction and execution - all false")
     {
-        DOCTEST_GIVEN("tCallbackOr with functions returning false")
+        GIVEN("tCallbackOr with functions returning false")
         {
             tCallbackOr* anchor = NULL;
 
@@ -142,7 +142,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallbackOr cb2(anchor, boolFunc2);
 
             bool result = tCallbackOr::Exec(anchor);
-            DOCTEST_THEN("Exec returns false when all callbacks return false")
+            THEN("Exec returns false when all callbacks return false")
             {
                 CHECK(result == false);
             }
@@ -151,7 +151,7 @@ DOCTEST_TEST_SUITE("tCallback")
 
     TEST_CASE("tCallback multiple callbacks")
     {
-        DOCTEST_GIVEN("multiple callbacks registered")
+        GIVEN("multiple callbacks registered")
         {
             tCallback* anchor = NULL;
             testFlag = false;
@@ -164,7 +164,7 @@ DOCTEST_TEST_SUITE("tCallback")
             tCallback::Exec(anchor);
 
             // Both should have been called
-            DOCTEST_THEN("Exec calls all registered functions")
+            THEN("Exec calls all registered functions")
             {
                 CHECK(testFlag == true);
             }

@@ -26,7 +26,7 @@ Included via `-I${top_srcdir}/src/thirdparty/doctest` in test compilation. No se
 Tests include `doctest.h` and use doctest macros (`TEST_CASE`, `SUBCASE`, `CHECK`, etc.).
 
 ```cpp
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#define CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 TEST_CASE("example") { CHECK(1 == 1); }
 ```

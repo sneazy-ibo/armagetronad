@@ -4,7 +4,7 @@
 // Tests for tException class hierarchy
 // Purpose: Verify exception handling and message retrieval
 
-DOCTEST_TEST_SUITE("tException")
+TEST_SUITE("tException")
 {
     TEST_CASE("tException base class methods")
     {
@@ -14,20 +14,20 @@ DOCTEST_TEST_SUITE("tException")
 
     TEST_CASE("tGenericException construction and methods")
     {
-        DOCTEST_GIVEN("a tGenericException with name and description")
+        GIVEN("a tGenericException with name and description")
         {
             tGenericException exc("Test error message", "TestError");
 
             // Test GetName
             tString name = exc.GetName();
-            DOCTEST_THEN("GetName returns the exception name")
+            THEN("GetName returns the exception name")
             {
                 CHECK(name == "TestError");
             }
 
             // Test GetDescription
             tString description = exc.GetDescription();
-            DOCTEST_THEN("GetDescription returns the error message")
+            THEN("GetDescription returns the error message")
             {
                 CHECK(description == "Test error message");
             }
@@ -36,20 +36,20 @@ DOCTEST_TEST_SUITE("tException")
 
     TEST_CASE("tGenericException with NULL name")
     {
-        DOCTEST_GIVEN("a tGenericException with NULL name")
+        GIVEN("a tGenericException with NULL name")
         {
             tGenericException exc("Test message only");
 
             tString name = exc.GetName();
             // When name is NULL, it should return empty or description
             // Check that it doesn't crash
-            DOCTEST_THEN("GetName returns a valid string")
+            THEN("GetName returns a valid string")
             {
                 CHECK(name.Len() >= 0);
             }
 
             tString description = exc.GetDescription();
-            DOCTEST_THEN("GetDescription returns the message")
+            THEN("GetDescription returns the message")
             {
                 CHECK(description == "Test message only");
             }
@@ -58,21 +58,21 @@ DOCTEST_TEST_SUITE("tException")
 
     TEST_CASE("tCleanQuit exception")
     {
-        DOCTEST_GIVEN("a tCleanQuit exception")
+        GIVEN("a tCleanQuit exception")
         {
             tCleanQuit quit;
 
             // Test GetName
             tString name = quit.GetName();
             // Should return "CleanQuit" or similar
-            DOCTEST_THEN("GetName returns a non-empty string")
+            THEN("GetName returns a non-empty string")
             {
                 CHECK(name.Len() > 0);
             }
 
             // Test GetDescription
             tString description = quit.GetDescription();
-            DOCTEST_THEN("GetDescription returns a valid string")
+            THEN("GetDescription returns a valid string")
             {
                 CHECK(description.Len() >= 0);
             }
@@ -81,20 +81,20 @@ DOCTEST_TEST_SUITE("tException")
 
     TEST_CASE("Exception polymorphism")
     {
-        DOCTEST_GIVEN("a tGenericException and a tException pointer")
+        GIVEN("a tGenericException and a tException pointer")
         {
             // Test that tGenericException can be treated as tException
             tGenericException* ge = new tGenericException("Polymorphic test", "PolyError");
             tException* exc = ge;
 
             tString name = exc->GetName();
-            DOCTEST_THEN("GetName returns the exception name through base pointer")
+            THEN("GetName returns the exception name through base pointer")
             {
                 CHECK(name == "PolyError");
             }
 
             tString description = exc->GetDescription();
-            DOCTEST_THEN("GetDescription returns the message through base pointer")
+            THEN("GetDescription returns the message through base pointer")
             {
                 CHECK(description == "Polymorphic test");
             }

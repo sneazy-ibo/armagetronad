@@ -4,7 +4,7 @@
 // Tests for tRandomizer and tReproducibleRandomizer classes
 // Purpose: Verify random number generation
 
-DOCTEST_TEST_SUITE("tRandomizer")
+TEST_SUITE("tRandomizer")
 {
     TEST_CASE("tRandomizer Get() returns value in range")
     {
