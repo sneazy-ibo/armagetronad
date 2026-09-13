@@ -160,7 +160,7 @@ AUTO_JOBS=$(nproc 2>/dev/null || echo 1)
 MEM=$(sysctl -n hw.memsize  2>/dev/null || awk '/MemTotal/ {print $2*1000}' /proc/meminfo 2>/dev/null || echo 16000000000)
 # echo MEM=$MEM
 # compilation eats memory like nothing, assume 2G (trunk) or 1G (legacy)
-MEM_PER_JOB=$((1 * 1000000000))
+MEM_PER_JOB=$((2 * 1000000000))
 # leave 8G free for the system
 JOBS_LIMIT=$(( ($MEM - 8 * 1000000000 ) / $MEM_PER_JOB ))
 # but surely, every system can handle 4 jobs?
