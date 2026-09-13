@@ -309,11 +309,11 @@ unit_tests_SOURCES = thirdparty/doctest/doctest.h \
 	test/CodingStyle.h test/CodingStyle.cpp test/CodingStyle_test.cpp \
 	test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
-unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a
+unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a protobuf/libprotobuf.a thirdparty/mathexpr/libmathexpr.a ${extralibs}
 
 chat_prefix_test_SOURCES = test/chat_prefix_test.cpp
 chat_prefix_test_CXXFLAGS = $(libengine_a_CXXFLAGS)
-chat_prefix_test_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a
+chat_prefix_test_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a protobuf/libprotobuf.a thirdparty/mathexpr/libmathexpr.a ${extralibs}
 endif # BUILDTESTS
 
 endif # BUILDFAKERELEASE
