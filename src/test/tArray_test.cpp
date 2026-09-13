@@ -15,19 +15,19 @@ TEST_SUITE("tArray")
             {
                 CHECK(arr.Len() == 0);
             }
-            THEN("Size is non-negative")
+            THEN("capacity is non-negative")
             {
-                // Size may be non-zero due to allocation strategy
-                CHECK(arr.Size() >= 0);
+                // capacity may be non-zero due to allocation strategy
+                CHECK(arr.capacity() >= 0);
             }
         }
     }
 
-    TEST_CASE("tArray with an initial size")
+    TEST_CASE("tArray with an initial capacity")
     {
         tArray<int> arr(10);
         CHECK(arr.Len() == 10);
-        CHECK(arr.Size() >= 10);
+        CHECK(arr.capacity() >= 10);
 
         // Elements should be default-initialized
         for (int i = 0; i < 10; i++)
@@ -74,7 +74,7 @@ TEST_SUITE("tArray")
         }
     }
 
-    TEST_CASE("tArray operator[] with auto-resize")
+    TEST_CASE("tArray operator[] with auto-recapacity")
     {
         tArray<int> arr;
         CHECK(arr.Len() == 0);
@@ -130,12 +130,12 @@ TEST_SUITE("tArray")
         tArray<int> arr;
         arr.SetLen(5);
         CHECK(arr.Len() == 5);
-        CHECK(arr.Size() >= 5);
+        CHECK(arr.capacity() >= 5);
 
-        // Resize larger
+        // Recapacity larger
         arr.SetLen(10);
         CHECK(arr.Len() == 10);
-        CHECK(arr.Size() >= 10);
+        CHECK(arr.capacity() >= 10);
     }
 
     TEST_CASE("tArray Insert")
@@ -205,8 +205,8 @@ TEST_SUITE("tArray")
             THEN("the results are as expected")
             {
                 CHECK(arr.Len() == 0);
-                // Size may be non-zero
-                CHECK(arr.Size() >= 0);
+                // capacity may be non-zero
+                CHECK(arr.capacity() >= 0);
             }
         }
     }
