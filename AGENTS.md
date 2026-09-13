@@ -138,7 +138,7 @@ Debug channels: flow, dump, etc.
 
 ### Smart Pointers
 ```cpp
-tJUST_CONTROLLED_PTR<T>   // Non-owning reference counted pointer
+tRefPtr<T> or its alias tJUST_CONTROLLED_PTR<T>    // Non-owning reference counted pointer
 tCONTROLLED_PTR<T>         // Owning reference counted pointer
 tSafePTR<T>               // Safe pointer with reference counting
 tCHECKED_PTR<T>           // Checked pointer with validation
@@ -652,6 +652,6 @@ consider this branch legacy.
 ### Coding Style
 
 - Use the top level `.clang-format` file for whitespace decisions. Most existing code was formatted with a different tool, if at all; only format code you touch. If available, just use `git clang-format`. 
-- New member variables are marked by an uderscore at the end.
 - Boolean parameters to methods are only allowed if the function name clearly indicates what 'true' or 'false' means, like `EnableHeadlights(true)`. Otherwise, define a custom enum so code reads like `SetLights(gEnableHeadlights | gEnableTaillights)` instead of `SetLights(true, true, false)`.
 - The name of methods reporting success or failure in a `bool` or `optional<T>` return begin with `Try`.
+- Check the `src/test/CodingStyle*` files for detailed samples of what we are aiming at.

@@ -41,18 +41,16 @@ Ten crashfixes in one submission are fine. Fixing all translation errors you can
 
 Don't worry too much about formatting. We have `.editorconfig` and `.clang-format` files that a decent code editor will respect. 
 
-Coding Style instructions TBD, there will be sample files in the unit tests folder.
+The coding style is provided as verbosely commented samples in `src/test/CodingStyle*`. If it's not in there, it's not terribly important.
 
 ## Submitting
 
 Work is best done by forking our git repository on GitLab, working on a branch on your fork, then submitting a Merge Request.
 Pull Requests on GitHub are also fine.
 
-Old school contributions via patch files also work, but it's harder to discuss, so they are discouraged.
+Old school contributions via patch files also work, but they are harder to discuss, so they are discouraged.
 
-## On AI Tools
-
-(I really would like to call this the Pragmatic AI Manifesto...)
+## The Pragmatic AI Manifesto
 
 ### Introduction
 
@@ -73,6 +71,7 @@ Do not use AI generators to:
 ### Code Generation and Modification
 
 We do allow AI tools for coding tasks, with these rules:
+ - Disclose your use.
  - No pure vibe coding. You are ultimately responsible for the code you write. Read the output, understand it, fix it where it is lacking (or tell the AI to fix it). Only then can you be sure other humans can understand it, too.
  - We have unit tests, make use of them. AI generated or modified code should be covered by tests whenever possible.
  - If the systems you want to work on do not yet have tests, your first job,
