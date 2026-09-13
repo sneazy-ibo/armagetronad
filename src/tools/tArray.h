@@ -173,8 +173,8 @@ public:
 
     const tArray<T> &operator=(const tArray<T> &A){
 
-        SetLen(A.Len());
         Clear();
+        SetLen(A.Len());
         CopyFrom(A);
 
         return *this;

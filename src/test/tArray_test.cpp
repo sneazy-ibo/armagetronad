@@ -52,8 +52,6 @@ TEST_SUITE("tArray")
         }
     }
 
-    // Note: Assignment operator has issues with Clear() being called before CopyFrom
-    // This is a known codebase issue
     TEST_CASE("tArray assignment operator with empty target")
     {
         GIVEN("a tArray for assignment with empty target")
@@ -65,11 +63,12 @@ TEST_SUITE("tArray")
 
             tArray<int> assigned;
             assigned = original;
-            // Due to bug in assignment operator, this may not work as expected
-            // Just verify it doesn't crash
             THEN("the results are as expected")
             {
-                CHECK(assigned.Len() >= 0);
+                CHECK(assigned.Len() == 3);
+                CHECK(assigned[0] == 1);
+                CHECK(assigned[1] == 2);
+                CHECK(assigned[2] == 3);
             }
         }
     }
