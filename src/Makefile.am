@@ -177,6 +177,7 @@ unit_tests_SOURCES = thirdparty/doctest/doctest.h \
 	test/tColor_test.cpp test/tException_test.cpp test/tCallback_test.cpp \
 	test/tCallbackString_test.cpp test/tRandomizer_test.cpp \
 	test/eRectangle_test.cpp test/eAxis_test.cpp \
+	test/CodingStyle.h test/CodingStyle.cpp test/CodingStyle_test.cpp \
 	test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest
 unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a

@@ -1,0 +1,165 @@
+/*
+Armagetron Advanced -- a Tron clone in 3D
+Copyright (C) 2000  Manuel Moos (manuel@moosnet.de)
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+// FYI This file demonstrates the *ideal* coding style (hah!)
+// and, on the other end, demonstrates some idiosyncrasies of the code base.
+
+// FYI Comments starting with `FYI` in them are meant as comments just to describe
+// what is going on HERE, they are not meant as templates to include in actual code.
+
+// FYI Code should be CLEAN and DRY if appropriate.
+
+// FYI include guards
+#ifndef ArmageTron_CODING_STYLE_H
+#define ArmageTron_CODING_STYLE_H
+
+#include "defs.h"
+
+// FYI reference counted objects and their smart pointers
+#include "tSafePTR.h"
+
+// FYI classes get a single lowercase letter prefix indicating the library they are in: t for tools, e for enginge, n for network, g for game.
+// FYI we pick 'c' here for Coding Style.
+
+// A class that can count up
+class cCounter
+{
+    // FYI rule of zero: whenever possible, rely on auto-generated destructor and move/copy constructor/assignment.
+
+    // FYI public members come first, users reading a class should first learn what they can do with it
+public:
+    // FYI method names are CamelCase. Default to 'constexpr const noexcept', remove as needed.
+
+    // FYI trival functions where the function name is all the documentation one needs can stay comment-less
+    constexpr int GetCount() const noexcept { return count_; }
+    // FYI trivial implementations can also be single line.
+    void CountUp() noexcept { count_++; }
+
+    /* FYI slightly longer functions should be defined out-of-line later in the header;
+    that gives you room to put their documenting comment after the declaration.
+    consider putting "Try" at the start of a function name if the function can fail in
+    regular operation and communicates success in the return value.
+    */
+    bool TryCountDown() noexcept; // try to count down, but do not go below zero
+
+    // FYI private members come last
+private:
+    // FYI member variables are camelCase (lower case start letter),
+    // get an underscore at the end and, whenever possible, are initialized with brace initializers
+
+    // the counter
+    int count_{};
+};
+
+inline bool cCounter::TryCountDown() noexcept
+{
+    // FYI if one of the branches is nontritival, use braces for both.
+    if (count_ > 0)
+    {
+        --count_;
+        return true;
+    }
+    else // FYI for longer branches, consider adding a comment what the condition is now (here: "// count_ <= 0")
+    {
+        return false;
+    }
+}
+
+// FYI Reference counted objects are derived from tReferencable, which uses CRTP to cast itself to the correct leaf type
+
+// class of reference counted objects that counts how many of them are alive at every given time
+class cReferenceCounted : public tReferencable<cReferenceCounted>
+{
+public:
+    static int GetNumberOfObjects() noexcept { return s_numberOfObjects_.GetCount(); }
+
+    // FYI Rule of Three: Implement destructor, copy constructor and assignment operator together
+    virtual ~cReferenceCounted() noexcept { CHECK(s_numberOfObjects_.TryCountDown()); } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
+    cReferenceCounted(cReferenceCounted&) noexcept { s_numberOfObjects_.CountUp(); }
+    cReferenceCounted& operator=(cReferenceCounted&) noexcept = default;
+
+    // FYI though in this case, the assignment operator needs no special implementation, the default constructor does
+    cReferenceCounted() noexcept { s_numberOfObjects_.CountUp(); }
+
+private:
+    // FYI static variables get an s_ prefix. Global variables defined in cpp files get st_, se_, etc.
+    static cCounter s_numberOfObjects_;
+};
+
+// class that holds a refernce to cReferenceCounted, doing shallow copies
+class cShallowCopy final
+{
+public:
+    cReferenceCounted* GetTarget() const noexcept { return target_; }
+    void SetTarget(cReferenceCounted* target) noexcept { target_ = target; }
+
+    // FYI avoid accidentally creating implicit conversions
+    // FYI prefer direct member initialization instead of using SetTarget() here
+    explicit cShallowCopy(cReferenceCounted* target) noexcept : target_{target} {}
+
+    // FYI rule of zero: tRefPtr does shallow copies, none of the three special functions needs implementing
+private:
+    /*
+    FYI tRefPtr is the go-to reference counting pointer to use. You will find it in the code as tJUST_CONTROLLED_PTR,
+    a very poorly chosen name. In my defense, it was the last of the smart pointer to get one.
+    The others are (I suggest you do not use them):
+        tCheckedPTR<T> keeps track of all tCheckedPTR instances and throws an error if an object with a live pointer to it gets destroyed
+        tControlledPTR<T> reference counting pointer like tRefPtr, but uses a tCheckedPTR as a base for extra safety.
+    */
+
+    tRefPtr<cReferenceCounted> target_{};
+};
+
+// class that holds a refernce to cReferenceCounted and makes deep copies on copy
+class cDeepCopy final
+{
+public:
+    cReferenceCounted* GetTarget() const noexcept { return target_; }
+    void SetTarget(cReferenceCounted* target) noexcept { target_ = target; }
+
+    explicit cDeepCopy(cReferenceCounted* target) noexcept : target_{target} {}
+
+    // FYI rule of five: default would be shallow copy, avoid that
+    ~cDeepCopy() noexcept = default; // FYI except the destructor, the default is fine
+    cDeepCopy(cDeepCopy& that) : target_(CloneFrom(that)) {}
+    cDeepCopy& operator=(cDeepCopy& that)
+    {
+        SetTarget(CloneFrom(that));
+        return *this;
+    }
+
+    // FYI rule of five: moves need to explicitly move here; the default implementations do that,
+    // but we need to invoke them explicitly because the copy operations above disable them.
+    cDeepCopy(cDeepCopy&& that) = default;
+    cDeepCopy& operator=(cDeepCopy&& that) = default;
+
+private:
+    // helper function: Clone from other
+    static cReferenceCounted* CloneFrom(cDeepCopy& that)
+    {
+        if (auto const target = that.GetTarget())
+            return new cReferenceCounted(*target);
+        else
+            return nullptr; // FYI prefer nullptr over NULL
+    }
+
+    tRefPtr<cReferenceCounted> target_{};
+};
+
+#endif // ArmageTron_CODING_STYLE_H
