@@ -15,19 +15,19 @@ TEST_SUITE("tArray")
             {
                 CHECK(arr.Len() == 0);
             }
-            THEN("Size is non-negative")
+            THEN("capacity is non-negative")
             {
-                // Size may be non-zero due to allocation strategy
-                CHECK(arr.Size() >= 0);
+                // capacity may be non-zero due to allocation strategy
+                CHECK(arr.capacity() >= 0);
             }
         }
     }
 
-    TEST_CASE("tArray with an initial size")
+    TEST_CASE("tArray with an initial capacity")
     {
         tArray<int> arr(10);
         CHECK(arr.Len() == 10);
-        CHECK(arr.Size() >= 10);
+        CHECK(arr.capacity() >= 10);
 
         // Elements should be default-initialized
         for (int i = 0; i < 10; i++)
@@ -52,8 +52,6 @@ TEST_SUITE("tArray")
         }
     }
 
-    // Note: Assignment operator has issues with Clear() being called before CopyFrom
-    // This is a known codebase issue
     TEST_CASE("tArray assignment operator with empty target")
     {
         GIVEN("a tArray for assignment with empty target")
@@ -65,16 +63,17 @@ TEST_SUITE("tArray")
 
             tArray<int> assigned;
             assigned = original;
-            // Due to bug in assignment operator, this may not work as expected
-            // Just verify it doesn't crash
             THEN("the results are as expected")
             {
-                CHECK(assigned.Len() >= 0);
+                CHECK(assigned.Len() == 3);
+                CHECK(assigned[0] == 1);
+                CHECK(assigned[1] == 2);
+                CHECK(assigned[2] == 3);
             }
         }
     }
 
-    TEST_CASE("tArray operator[] with auto-resize")
+    TEST_CASE("tArray operator[] with auto-recapacity")
     {
         tArray<int> arr;
         CHECK(arr.Len() == 0);
@@ -130,12 +129,12 @@ TEST_SUITE("tArray")
         tArray<int> arr;
         arr.SetLen(5);
         CHECK(arr.Len() == 5);
-        CHECK(arr.Size() >= 5);
+        CHECK(arr.capacity() >= 5);
 
-        // Resize larger
+        // Recapacity larger
         arr.SetLen(10);
         CHECK(arr.Len() == 10);
-        CHECK(arr.Size() >= 10);
+        CHECK(arr.capacity() >= 10);
     }
 
     TEST_CASE("tArray Insert")
@@ -205,8 +204,8 @@ TEST_SUITE("tArray")
             THEN("the results are as expected")
             {
                 CHECK(arr.Len() == 0);
-                // Size may be non-zero
-                CHECK(arr.Size() >= 0);
+                // capacity may be non-zero
+                CHECK(arr.capacity() >= 0);
             }
         }
     }
