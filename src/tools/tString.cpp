@@ -329,35 +329,38 @@ static tQuoteTester tester;
 //!
 // *******************************************************************************************
 
-void tString::SetPos(int l, bool cut){
-    int i;
-    if ( l < Len() )
-    {
-        if ( cut )
-        {
-            if ( l > 0 )
-            {
-                SetLen( l - 1 );
-                operator+=(' ');
-            }
-            else
-            {
-                SetLen( 0 );
-            }
-        }
-        else
-        {
-            operator+=(' ');
-        }
-    }
-    if( l == Len() && !cut)
-    {
-        operator+=(' ');
-    }
-    for(i=Len();i<l;i++)
-        operator+=(' ');
-}
+void tString::SetPos(int l, bool cut) noexcept
+{
+    if (l < 0)
+        l = 0;
+    l += 1; // compensate; incoming l is length without trailing 0, Len() is length with trailing zero.
 
+    if (cut && l < Len())
+    {
+        // shrink
+        SetLen(l);
+        operator[](l - 1) = '\0';
+
+        // ensure trailing space by cutting further
+        int const lastRealChar = l - 2;
+        if (lastRealChar >= 0 && !isspace(operator[](lastRealChar)))
+            operator[](lastRealChar) = ' ';
+
+        // done here
+        return;
+    }
+
+    // pad to length
+    for (int i = Len(); i < l; i++)
+        operator+=(' ');
+
+    int const lastRealChar = Len() - 2;
+    if (lastRealChar >= 0 && !isspace(operator[](lastRealChar)))
+    {
+        // cannot shrink, must add trailing space
+        operator+=(' ');
+    }
+}
 
 //removed in favor of searching whole string...
 /*void tString::RemoveStartColor(){
