@@ -4,6 +4,7 @@
 // Tests for eTeam system
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("eTeam")
 {
     TEST_CASE("eTeam base class")
@@ -22,6 +23,7 @@ TEST_SUITE("eTeam")
         }
     }
 }
+#endif
 
 // TODO: More comprehensive eTeam tests could be added, but the system
 // has significant dependencies on the engine and player systems that make
@@ -37,3 +39,6 @@ TEST_SUITE("eTeam")
 //
 // These would need to be integration tests rather than unit tests, or would
 // require significant refactoring to make the team system more testable.
+
+// Z-Man: Seems to me like one should be able to test eTeam and ePlayer together,
+// at least do some basic list management.

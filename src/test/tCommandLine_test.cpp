@@ -1,5 +1,6 @@
 #include "doctest.h"
 #include "tCommandLine.h"
+#include "nNetwork.h"
 #include <cstring>
 
 // Tests for tCommandLine system
@@ -12,7 +13,7 @@ TEST_SUITE("tCommandLine")
         GIVEN("a default tCommandLineData")
         {
             tCommandLineData cmdData;
-            
+
             THEN("it has expected default values")
             {
                 CHECK(cmdData.programVersion_ == nullptr);
@@ -27,7 +28,8 @@ TEST_SUITE("tCommandLine")
         GIVEN("tCommandLineData with empty arguments")
         {
             tCommandLineData cmdData;
-            
+            cmdData.programVersion_  = &sn_programVersion;
+
             WHEN("Analyse is called with minimal arguments")
             {
                 // Create minimal argv
@@ -134,22 +136,6 @@ TEST_SUITE("tCommandLine")
                 CHECK(parser.GetSwitch("-f") == true);
             }
             
-            // Note: AND_THEN tests share the same parser instance, which makes it
-            // difficult to test sequential GetSwitch calls. For now, we'll test
-            // GetSwitch with separate parser instances in different THEN blocks.
-            
-            THEN("GetSwitch can detect long switches")
-            {
-                // This is a separate test with its own parser
-                CHECK(true); // Placeholder - tested separately below
-            }
-            
-            THEN("GetSwitch can detect switches with short alternatives")
-            {
-                // This is a separate test with its own parser
-                CHECK(true); // Placeholder - tested separately below
-            }
-            
             AND_THEN("GetSwitch returns false for non-matching switches")
             {
                 CHECK(parser.GetSwitch("-x") == false);
@@ -216,11 +202,11 @@ TEST_SUITE("tCommandLine")
                 // Note: The parser starts at index 0 (program name), need to advance
                 parser.Advance(); // Skip program name
                 
-                THEN("parser can be constructed and used")
+                THEN("GetOption works")
                 {
-                    // Test that we can at least check the current position
-                    CHECK(parser.Current() != nullptr);
-                    CHECK(strcmp(parser.Current(), "--config") == 0);
+                    tString optionValue;
+                    CHECK(parser.GetOption(optionValue, "-cfg", "--config"));
+                    CHECK(optionValue == "config.cfg");
                 }
             }
         }
