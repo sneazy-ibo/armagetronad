@@ -48,12 +48,12 @@ TEST_SUITE("ePath")
         }
     }
 
+// Note: RenderLast requires DEBUG to be defined           
+#ifdef DEBUG    
     TEST_CASE("ePath static methods")
     {
         GIVEN("ePath static methods")
         {
-            // Note: RenderLast requires DEBUG to be defined
-            
             THEN("static methods exist")
             {
                 (void)&ePath::RenderLast;
@@ -61,6 +61,7 @@ TEST_SUITE("ePath")
             }
         }
     }
+#endif // DEBUG
 }
 
 // TODO: More comprehensive ePath tests could be added, but the system
