@@ -139,7 +139,7 @@ public:
     // FYI prefer direct member initialization instead of using SetTarget() here
     explicit cShallowCopy(cReferenceCounted* target) noexcept : target_{target} {}
 
-    // FYI rule of zero: tRefPtr does shallow copies, none of the three special functions needs implementing
+    // FYI Rule of Zero: tRefPtr does shallow copies, none of the three special functions needs implementing
 private:
     /*
     FYI tRefPtr is the go-to reference counting pointer to use. You will find it in the code as tJUST_CONTROLLED_PTR,
@@ -161,7 +161,7 @@ public:
 
     explicit cDeepCopy(cReferenceCounted* target) noexcept : target_{target} {}
 
-    // FYI rule of five: default would be shallow copy, avoid that
+    // FYI Rule of Five: default would be shallow copy, avoid that
     ~cDeepCopy() noexcept = default; // FYI except the destructor, the default is fine
     cDeepCopy(cDeepCopy const& that) : target_(CloneFrom(that)) {}
     cDeepCopy& operator=(cDeepCopy const& that)
@@ -174,6 +174,8 @@ public:
     // but we need to invoke them explicitly because the copy operations above disable them.
     cDeepCopy(cDeepCopy&& that) = default;
     cDeepCopy& operator=(cDeepCopy&& that) = default;
+    // FYI It is of course also allowed to declare a class move-only or non-copyable
+    // by making copy (and optionally move) operations explicitly deleted.
 
 private:
     // helper function: Clone from other
