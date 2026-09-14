@@ -5,9 +5,14 @@ Things that are definitely wrong and should be fixed:
 
 ## Oddities
 Things that smell kind of bad, maybe have a look:
- - tString::Len() includes the trailing \0, so is one more than one would expect.
- - Worse, in the 0.2.9 branch Size() is the allocated capacity, on trunk it is the length without trailing \0.
-    (We eliminated all uses of Size() in 0.2.9)
+- tString::Len() includes the trailing \0, so is one more than one would expect.
+- Worse, in the 0.2.9 branch Size() is the allocated capacity, on trunk it is the length without trailing \0. (We eliminated all uses of Size() in 0.2.9)
 
 ## TODOs
 Tests we would like to have written, but could not yet:
+- **tCommandLine**: The system uses global state and has complex dependencies that make isolated unit testing difficult. The parser functionality can be tested, but full command line execution requires initialization of other subsystems.
+- **tEventQueue**: The queue system doesn't expose a public interface for adding events, making it difficult to test event management functionality in isolation. Only basic construction and Timestep with empty queues can be tested.
+- **eTimer**: Tightly coupled with the network system through nNetObject inheritance, requiring network subsystem initialization for proper testing.
+- **eGrid**: Complex system with dependencies on coordinate systems, walls, faces, and potentially rendering. Not easily testable in isolation.
+- **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
+
