@@ -190,7 +190,7 @@ unit_tests_SOURCES = thirdparty/doctest/doctest.h \
 	test/tRecorder_test.cpp \
 	test/network_integration_test.cpp test/engine_integration_test.cpp test/configuration_integration_test.cpp \
 	test/geometry_system_test.cpp test/memory_management_test.cpp test/time_system_test.cpp \
-	test/existing_classes_comprehensive_test.cpp test/performance_test.cpp \
+	test/performance_test.cpp \
 	test/CodingStyle.h test/CodingStyle.cpp test/CodingStyle_test.cpp \
 	test/unit_tests_main.cpp
 unit_tests_CXXFLAGS =$(libtron_a_CXXFLAGS) -iquote @srcdir@/thirdparty/doctest

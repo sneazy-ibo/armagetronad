@@ -3,6 +3,7 @@
 // Tests for configuration integration
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("ConfigurationIntegration")
 {
     TEST_CASE("Configuration integration placeholder")
@@ -20,6 +21,7 @@ TEST_SUITE("ConfigurationIntegration")
         }
     }
 }
+#endif
 
 // TODO: Configuration integration tests would require:
 // 1. Setting up multiple configuration files

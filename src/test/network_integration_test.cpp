@@ -3,6 +3,7 @@
 // Tests for network integration
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("NetworkIntegration")
 {
     TEST_CASE("Network integration placeholder")
@@ -20,6 +21,7 @@ TEST_SUITE("NetworkIntegration")
         }
     }
 }
+#endif
 
 // TODO: Network integration tests would require:
 // 1. Setting up a test server

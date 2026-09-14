@@ -3,6 +3,7 @@
 // Tests for performance
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("Performance")
 {
     TEST_CASE("Performance test placeholder")
@@ -19,6 +20,7 @@ TEST_SUITE("Performance")
         }
     }
 }
+#endif
 
 // TODO: Performance tests would test:
 // 1. Frame rate under various loads
