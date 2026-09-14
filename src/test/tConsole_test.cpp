@@ -15,7 +15,7 @@ public:
         RegisterBetterConsole(this);
     }
 
-    constexpr tString const& GetLastPrinted() const noexcept
+    tString const& GetLastPrinted() const noexcept
     {
         return lastPrinted_;
     }
