@@ -212,7 +212,7 @@ TEST_SUITE("eCoord")
     {
         GIVEN("three eCoords for V function")
         {
-            // V(a, b, c) gives coordinate of b when a is at 0 and c is at 1
+            // V(a, b, c) gives X coordinate of b in an orthogonal coordinate system when a is at (0,0) and c is at (1,0)
             eCoord a(0.0f, 0.0f);
             eCoord b(1.0f, 0.0f);
             eCoord c(2.0f, 0.0f);
@@ -257,23 +257,36 @@ TEST_SUITE("eCoord")
             REAL range = se_EstimatedRangeOfMult(a, b);
             THEN("se_EstimatedRangeOfMult returns a positive value")
             {
-                // Just document that it returns a positive value
-                CHECK(range > 0);
+                // Just document that it returns a sensible positive value, exact value does not matter much
+                CHECK(range >= 3);
+                CHECK(range <= 30);
             }
         }
     }
 
     TEST_CASE("eCoord st_GetDifference")
     {
-        GIVEN("two eCoords for st_GetDifference")
+        GIVEN("two distinct eCoords for st_GetDifference")
+        {
+            eCoord a(1.0f, 2.0f);
+            eCoord b(2.0f, 2.0f);
+
+            REAL diff = st_GetDifference(a, b);
+            THEN("st_GetDifference returns a non-negative value")
+            {
+                CHECK(diff > 0);
+            }
+        }
+
+        GIVEN("two equal eCoords for st_GetDifference")
         {
             eCoord a(1.0f, 2.0f);
             eCoord b(1.0f, 2.0f);
 
             REAL diff = st_GetDifference(a, b);
-            THEN("st_GetDifference returns a non-negative value")
+            THEN("st_GetDifference returns null")
             {
-                CHECK(diff >= 0);
+                CHECK(diff == doctest::Approx(0.0));
             }
         }
     }
