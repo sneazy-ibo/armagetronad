@@ -216,8 +216,8 @@ TEST_SUITE("eAxis")
             eCoord dir3 = axis6.GetDirection(3);
 
             // Verify they are valid directions (unit vectors)
-            REAL len0 = sqrt(dir0.x * dir0.x + dir0.y * dir0.y);
-            REAL len3 = sqrt(dir3.x * dir3.x + dir3.y * dir3.y);
+            REAL len0 = dir0.NormSquared();
+            REAL len3 = dir3.NormSquared();
             THEN("GetDirection returns unit vectors")
             {
                 CHECK(len0 == doctest::Approx(1.0f));
