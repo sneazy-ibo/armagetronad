@@ -69,12 +69,27 @@ Tests are compiled as separate programs that link against the relevant project l
   - Tests coordinate systems (eCoord, eAxis, eRectangle)
   - Tests data structures (tArray, tList, tLinkedList, tRing)
   - Tests memory management (tHeap, tMemStack)
-  - Tests utilities (tString, tColor, tCallback, tRandomizer)
+  - Tests utilities (tString, tColor, tCallback, tRandomizer, tMath, tSysTime)
   - Tests exception handling
+  - Tests command line parsing (tCommandLine)
+  - Tests event queue system (tEventQueue)
+  - Tests directory management (tDirectories)
+  - Tests cryptographic utilities (MD5)
+  - Tests engine components (eTimer, eGrid - limited due to dependencies)
+  - Tests network components (nSocket - limited due to dependencies)
+  - Tests cryptography (tCrypt - limited due to dependencies)
 - `chat_prefix_test`: Legacy test for XML parsing
   - Tests parsing of player chat messages
   - Validates prefix formatting
   - Ensures proper handling of special characters
+
+## Bugs Found During Test Development
+
+- **tCommandLine**: The system uses global state and has complex dependencies that make isolated unit testing difficult. The parser functionality can be tested, but full command line execution requires initialization of other subsystems.
+- **tEventQueue**: The queue system doesn't expose a public interface for adding events, making it difficult to test event management functionality in isolation. Only basic construction and Timestep with empty queues can be tested.
+- **eTimer**: Tightly coupled with the network system through nNetObject inheritance, requiring network subsystem initialization for proper testing.
+- **eGrid**: Complex system with dependencies on coordinate systems, walls, faces, and potentially rendering. Not easily testable in isolation.
+- **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
 
 ## Notes from Humans
 ### GUARDRAIL: The AI Agents keep out of this section.
