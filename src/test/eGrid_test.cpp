@@ -4,6 +4,7 @@
 // Tests for eGrid system
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("eGrid")
 {
     TEST_CASE("eGrid basic construction")
@@ -24,6 +25,7 @@ TEST_SUITE("eGrid")
         }
     }
 }
+#endif
 
 // TODO: eGrid is a complex system with dependencies on many other engine components
 // including coordinate systems, walls, faces, and potentially rendering. Testing
@@ -37,3 +39,5 @@ TEST_SUITE("eGrid")
 //
 // This would be better suited as an integration test rather than a unit test.
 // For now, this file serves as a placeholder to document the testing gap.
+
+// Z-Man: We create grids in the eGameObject tests. Should be fine, really.

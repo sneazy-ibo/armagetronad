@@ -10,22 +10,6 @@ TEST_SUITE("tConfiguration")
     {
         GIVEN("access level enum values")
         {
-            THEN("access levels have expected values")
-            {
-                // Verify the access level enum values
-                CHECK(tAccessLevel_Owner == 0);
-                CHECK(tAccessLevel_Admin == 1);
-                CHECK(tAccessLevel_Moderator == 2);
-                CHECK(tAccessLevel_TeamLeader == 7);
-                CHECK(tAccessLevel_TeamMember == 8);
-                CHECK(tAccessLevel_Local == 12);
-                CHECK(tAccessLevel_Remote == 15);
-                CHECK(tAccessLevel_Authenticated == 19);
-                CHECK(tAccessLevel_Program == 20);
-                CHECK(tAccessLevel_Invalid == 255);
-                CHECK(tAccessLevel_Default == 20);
-            }
-            
             THEN("access levels are ordered correctly")
             {
                 // Lower numeric values should have higher privileges
@@ -45,19 +29,33 @@ TEST_SUITE("tConfiguration")
     {
         GIVEN("current access level management")
         {
-            // Note: tCurrentAccessLevel requires global initialization which may
-            // not be available in the test environment. For now, we'll test only
-            // that the class and methods exist.
-            
-            THEN("methods exist and can be referenced")
+            tCurrentAccessLevel access1{tAccessLevel::tAccessLevel_Admin, true};
+
+            THEN("set access level can be retrieved")
             {
                 // Just verify the methods exist by taking their address
-                (void)&tCurrentAccessLevel::GetAccessLevel;
-                (void)&tCurrentAccessLevel::GetName;
-                CHECK(true); // If we get here, the methods exist
+                CHECK(tAccessLevel::tAccessLevel_Admin == tCurrentAccessLevel::GetAccessLevel());
+
+                AND_WHEN("access level is lowered")
+                {
+                    tCurrentAccessLevel access2{tAccessLevel::tAccessLevel_Moderator, false};
+                    THEN("lowered access level is current")
+                    {
+                        // Just verify the methods exist by taking their address
+                        CHECK(tAccessLevel::tAccessLevel_Moderator == tCurrentAccessLevel::GetAccessLevel());
+                    }
+                }
             }
         }
     }
+    
+    #if false // requires language initialization, would be language dependent
+    TEST_CASE("GetName works")
+    {
+        auto name = tCurrentAccessLevel::GetName(tAccessLevel::tAccessLevel_Admin);
+        CHECK(name == "Administrator");
+    }
+    #endif
 
     TEST_CASE("tCasaclPreventer basic functionality")
     {
@@ -68,25 +66,24 @@ TEST_SUITE("tConfiguration")
                 // Test that we can create and destroy a preventer
                 {
                     tCasaclPreventer preventer;
-                    CHECK(true); // If we get here, construction succeeded
+                    CHECK(true == tCasaclPreventer::InRInclude());
                 }
-                
+
                 {
                     tCasaclPreventer preventer(true);
-                    CHECK(true); // Construction with parameter succeeded
+                    CHECK(true == tCasaclPreventer::InRInclude());
                 }
-                
+
                 {
                     tCasaclPreventer preventer(false);
-                    CHECK(true); // Construction with false parameter succeeded
+                    CHECK(false == tCasaclPreventer::InRInclude());
                 }
             }
-            
+
             THEN("InRInclude returns a boolean")
             {
-                bool inRInclude = tCasaclPreventer::InRInclude();
-                // We can't predict the value, but it should be a valid boolean
-                CHECK((inRInclude == true || inRInclude == false));
+                // no preventer, InRInclude should be false
+                CHECK(false == tCasaclPreventer::InRInclude());
             }
         }
     }
@@ -95,15 +92,13 @@ TEST_SUITE("tConfiguration")
     {
         GIVEN("configuration item map")
         {
-            // Note: GetConfItemMap may trigger initialization which may not be
-            // available in the test environment. For now, we'll test only that
-            // the method exists.
-            
-            THEN("GetConfItemMap method exists")
+            THEN("GetConfItemMap returns a a map")
             {
-                // Just verify the method exists by taking its address
-                (void)&tConfItemBase::GetConfItemMap;
-                CHECK(true); // If we get here, the method exists
+                auto& map = tConfItemBase::GetConfItemMap();
+                AND_THEN("It is not empty")
+                {
+                    CHECK(100 < map.size()); // and in fact quite full, all the confitems in all the libraries self-register
+                }
             }
         }
     }

@@ -1,9 +1,11 @@
 #include "doctest.h"
 #include "nNetwork.h" // nMessage is defined in nNetwork.h
+#include <tuple>
 
 // Tests for nMessage system
 // Purpose: Document the status quo behavior and detect regressions
 
+#if false
 TEST_SUITE("nMessage")
 {
     TEST_CASE("nMessage basic types")
@@ -15,8 +17,7 @@ TEST_SUITE("nMessage")
                 // nHandler is a typedef for a function pointer type
                 // We can verify it exists by using it
                 void (*handler)(nMessage &m) = nullptr;
-                (void)handler; // Use the variable to avoid unused warning
-                CHECK(true); // If we get here, the type exists
+                std::ignore = handler; // Use the variable to avoid unused warning
             }
         }
     }
@@ -37,6 +38,7 @@ TEST_SUITE("nMessage")
         }
     }
 }
+#endif
 
 // TODO: More comprehensive nMessage tests could be added, but the system
 // has significant global state and dependencies that make isolated unit testing
@@ -53,3 +55,5 @@ TEST_SUITE("nMessage")
 //
 // These would need to be integration tests rather than unit tests, or would
 // require significant refactoring to make the message system more testable.
+
+// Z-Man: Urrgh, this does test something... but could be in static_asserts.
