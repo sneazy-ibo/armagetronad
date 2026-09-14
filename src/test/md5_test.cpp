@@ -165,3 +165,6 @@ TEST_SUITE("MD5")
 // 3. Testing the incremental append functionality
 // 4. Testing with Unicode/UTF-8 strings
 // The current tests focus on basic functionality and known test vectors.
+
+// Z-Man says: Nah, it is fine this way. The implementation was copy/pasted from a good source, it should be all right,
+// and we should not be using MD5 going forward anyway.
