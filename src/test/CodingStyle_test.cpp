@@ -29,35 +29,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // FYI tests use BDD patterns whenever appropriate
 TEST_SUITE("CodingStyle")
 {
-    TEST_CASE("Counting works")
+    // FYI TEST_SUITE and TEST_CASE use Title Case
+    TEST_CASE("Counting Works")
     {
-        GIVEN("A counter")
+       // FYI The BDD macros use regular sentence case, starting with lower case
+        GIVEN("a counter")
         {
             // FYI local varaibles are camelCase.
             cCounter counter; // the counter
 
-            WHEN("Left at default")
+            WHEN("left at default")
             {
-                THEN("It starts at zero")
+                THEN("it starts at zero")
                 {
                     CHECK(0 == counter.GetCount());
                 }
-                AND_THEN("It cannot count down")
+                AND_THEN("it cannot count down")
                 {
                     CHECK(!counter.TryCountDown());
                     CHECK(0 == counter.GetCount());
                 }
             }
 
-            WHEN("Counting up")
+            WHEN("counting up")
             {
                 counter.CountUp();
 
-                THEN("It goes to one")
+                THEN("it goes to one")
                 {
                     CHECK(1 == counter.GetCount());
                 }
-                AND_THEN("It can count down")
+                AND_THEN("it can count down")
                 {
                     CHECK(counter.TryCountDown());
                     CHECK(0 == counter.GetCount());
@@ -68,7 +70,7 @@ TEST_SUITE("CodingStyle")
 
     TEST_CASE("Shallow Copy")
     {
-        GIVEN("A filled shallow copy holder")
+        GIVEN("a filled shallow copy holder")
         {
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
@@ -77,35 +79,35 @@ TEST_SUITE("CodingStyle")
 
                 CHECK(1 == cReferenceCounted::GetNumberOfObjects());
 
-                WHEN("Doing nothing")
+                WHEN("doing nothing")
                 {
-                    THEN("We have one object")
+                    THEN("we have one object")
                     {
                         CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                     }
                 }
 
-                WHEN("Making a copy")
+                WHEN("making a copy")
                 {
                     cShallowCopy copy{holder};
 
-                    THEN("We still have one object")
+                    THEN("we still have one object")
                     {
                         CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                     }
-                    AND_WHEN("Resetting the original")
+                    AND_WHEN("resetting the original")
                     {
                         holder.SetTarget(nullptr);
 
-                        THEN("We still have one object")
+                        THEN("we still have one object")
                         {
                             CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                         }
-                        AND_WHEN("We also reset the copy")
+                        AND_WHEN("we also reset the copy")
                         {
                             copy.SetTarget(nullptr);
 
-                            THEN("We have no objects left")
+                            THEN("we have no objects left")
                             {
                                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
                             }
@@ -113,7 +115,8 @@ TEST_SUITE("CodingStyle")
                     }
                 }
             }
-            THEN("In the end, no object remains")
+
+            THEN("in the end, no object remains")
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
             }
@@ -122,7 +125,7 @@ TEST_SUITE("CodingStyle")
 
     TEST_CASE("Deep Copy")
     {
-        GIVEN("A filled deep copy holder")
+        GIVEN("a filled deep copy holder")
         {
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
@@ -131,36 +134,36 @@ TEST_SUITE("CodingStyle")
 
                 CHECK(1 == cReferenceCounted::GetNumberOfObjects());
 
-                WHEN("Doing nothing")
+                WHEN("doing nothing")
                 {
-                    THEN("We have one object")
+                    THEN("we have one object")
                     {
                         CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                     }
                 }
 
-                WHEN("Making a copy")
+                WHEN("making a copy")
                 {
                     cDeepCopy copy{holder};
 
-                    THEN("We have two derived objects")
+                    THEN("we have two derived objects")
                     {
                         CHECK(2 == cReferenceCounted::GetNumberOfObjects());
                         CHECK(dynamic_cast<cReferenceCountedDerived*>(copy.GetTarget()));
                     }
-                    AND_WHEN("Resetting the original")
+                    AND_WHEN("resetting the original")
                     {
                         holder.SetTarget(nullptr);
 
-                        THEN("We have one object left")
+                        THEN("we have one object left")
                         {
                             CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                         }
-                        AND_WHEN("We also reset the copy")
+                        AND_WHEN("we also reset the copy")
                         {
                             copy.SetTarget(nullptr);
 
-                            THEN("We have no objects left")
+                            THEN("we have no objects left")
                             {
                                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
                             }
@@ -168,29 +171,29 @@ TEST_SUITE("CodingStyle")
                     }
                 }
 
-                WHEN("Moving the holder")
+                WHEN("moving the holder")
                 {
                     cDeepCopy copy{std::move(holder)};
 
-                    THEN("We still have one object")
+                    THEN("we still have one object")
                     {
                         CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                     }
-                    AND_WHEN("Resetting the original")
+                    AND_WHEN("resetting the original")
                     {
                         holder.SetTarget(nullptr);
 
                         // FYI it is an implementation detail what would happen if we reset the copy instead.
 
-                        THEN("We still have the same object")
+                        THEN("we still have the same object")
                         {
                             CHECK(1 == cReferenceCounted::GetNumberOfObjects());
                         }
-                        AND_WHEN("We also reset the copy")
+                        AND_WHEN("we also reset the copy")
                         {
                             copy.SetTarget(nullptr);
 
-                            THEN("We have no objects left")
+                            THEN("we have no objects left")
                             {
                                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
                             }
@@ -198,7 +201,8 @@ TEST_SUITE("CodingStyle")
                     }
                 }
             }
-            THEN("In the end, no object remains")
+
+            THEN("in the end, no object remains")
             {
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
             }
