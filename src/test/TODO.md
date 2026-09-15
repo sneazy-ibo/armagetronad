@@ -15,4 +15,4 @@ Tests we would like to have written, but could not yet:
 - **eTimer**: Tightly coupled with the network system through nNetObject inheritance, requiring network subsystem initialization for proper testing.
 - **eGrid**: Complex system with dependencies on coordinate systems, walls, faces, and potentially rendering. Not easily testable in isolation.
 - **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
-
+- **tDirectories**: More tests are possible.

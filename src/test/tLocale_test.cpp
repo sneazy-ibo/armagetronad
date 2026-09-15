@@ -1,6 +1,8 @@
 #include "doctest.h"
 #include "tLocale.h"
 
+#include "Statics.h"
+
 // Tests for tLocale system
 // Purpose: Document the status quo behavior and detect regressions
 
@@ -8,32 +10,43 @@ TEST_SUITE("tLocale")
 {
     TEST_CASE("tLanguage basic functionality")
     {
+        InitStatics(); // we need tLocale initialized
+
         GIVEN("tLanguage class")
         {
             THEN("FirstLanguage returns a language pointer")
             {
                 tLanguage* lang = tLanguage::FirstLanguage();
-                // We can't predict what it returns, but it should not crash
-                (void)lang; // Use the variable to avoid unused warning
-                CHECK(true); // If we get here, FirstLanguage worked
-            }
-            
-            THEN("Find method exists")
-            {
-                (void)&tLanguage::Find;
-                CHECK(true); // If we get here, the method exists
+                CHECK(lang);
             }
             
             THEN("FindStrict method exists")
             {
-                (void)&tLanguage::FindStrict;
-                CHECK(true); // If we get here, the method exists
-            }
+                auto *english = tLanguage::FindStrict(tString("British English"));
+                CHECK(english);
+
+#if false // this would log an error to console
+                auto *nope = tLanguage::FindStrict(tString("nope1"));
+                CHECK(!nope); // should be missing
+#endif                
+            }           
             
             THEN("FindSloppy method exists")
             {
-                (void)&tLanguage::FindSloppy;
-                CHECK(true); // If we get here, the method exists
+                auto *english = tLanguage::FindSloppy(tString("American English"));
+                CHECK(english);
+
+                auto *nope = tLanguage::FindSloppy(tString("nope3"));
+                CHECK(!nope); // should be missing
+            }
+
+            THEN("Find method exists")
+            {
+                auto *german = tLanguage::Find(tString("German"));
+                CHECK(german);
+
+                auto *nope = tLanguage::Find(tString("nope2"));
+                CHECK(nope); // should be created
             }
         }
     }
@@ -44,17 +57,14 @@ TEST_SUITE("tLocale")
         {
             THEN("tOutput can be constructed and destroyed")
             {
-                {
-                    tOutput output;
-                    CHECK(true); // If we get here, construction succeeded
-                }
+                tOutput output;
             }
             
             THEN("AddLiteral works")
             {
                 tOutput output;
                 output.AddLiteral("test");
-                CHECK(true); // If we get here, AddLiteral worked
+                CHECK(tString(output) == "test");
             }
             
             THEN("AddSpace works")
