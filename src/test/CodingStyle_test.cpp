@@ -22,9 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Comments starting with `FYI` in them are meant as comments just to describe
 // what is going on HERE, they are not meant as templates to include in actual code.
 
-#include "doctest.h"
-
+// FYI: own include comes first, so we know it works standalone
 #include "CodingStyle.h"
+
+#include "doctest.h"
+#include "tDefer.h"
 
 // FYI tests use BDD patterns whenever appropriate
 TEST_SUITE("CodingStyle")
@@ -73,7 +75,11 @@ TEST_SUITE("CodingStyle")
         GIVEN("a filled shallow copy holder")
         {
             {
+                // we start and end with zero objects
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                auto guard = tDefer([] {
+                    CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                });
 
                 cShallowCopy holder{new cReferenceCountedDerived};
 
@@ -115,11 +121,6 @@ TEST_SUITE("CodingStyle")
                     }
                 }
             }
-
-            THEN("in the end, no object remains")
-            {
-                CHECK(0 == cReferenceCounted::GetNumberOfObjects());
-            }
         }
     }
 
@@ -128,7 +129,11 @@ TEST_SUITE("CodingStyle")
         GIVEN("a filled deep copy holder")
         {
             {
+                // we start and end with zero objects
                 CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                auto guard = tDefer([] {
+                    CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                });
 
                 cDeepCopy holder{new cReferenceCountedDerived};
 
@@ -200,11 +205,6 @@ TEST_SUITE("CodingStyle")
                         }
                     }
                 }
-            }
-
-            THEN("in the end, no object remains")
-            {
-                CHECK(0 == cReferenceCounted::GetNumberOfObjects());
             }
         }
     }

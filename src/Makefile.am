@@ -47,7 +47,7 @@ endif
 
 libtools_a_SOURCES=	${tools_extra} tools/tArray.cpp tools/tArray.h tools/tCallback.cpp tools/tCallback.h tools/tCallbackString.h tools/tColor.cpp tools/tColor.h\
 	tools/tConfiguration.cpp tools/tConfiguration.h tools/tConsole.cpp tools/tConsole.h tools/tCrypt.cpp tools/tCrypt.h\
-	tools/tDirectories.cpp tools/tDirectories.h tools/tError.cpp tools/tError.h tools/tEventQueue.cpp\
+	tools/tDefer.h tools/tDirectories.cpp tools/tDirectories.h tools/tError.cpp tools/tError.h tools/tEventQueue.cpp\
 	tools/tEventQueue.h tools/tHeap.cpp tools/tHeap.h tools/tInitExit.h tools/tLinkedList.cpp tools/tLinkedList.h\
 	tools/tList.h tools/tLocale.cpp tools/tLocale.h tools/tMath.h \
 	tools/tMemStack.cpp tools/tMemStack.h tools/tReferenceHolder.h \
@@ -171,6 +171,7 @@ armagetronad_main_master_LDADD=libnetwork.a libtools.a
 
 if BUILDTESTS
 unit_tests_SOURCES = thirdparty/doctest/doctest.h \
+	test/MockConsole.h \
 	test/eCoord_test.cpp test/eGameObject_test.cpp test/tArray_test.cpp \
 	test/tList_test.cpp test/tString_test.cpp test/tLinkedList_test.cpp \
 	test/tRing_test.cpp test/tHeap_test.cpp test/tMemStack_test.cpp \

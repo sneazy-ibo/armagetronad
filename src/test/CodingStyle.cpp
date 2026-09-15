@@ -23,9 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Comments starting with `FYI` in them are meant as comments just to describe
 // what is going on HERE, they are not meant as templates to include in actual code.
 
-#include "doctest.h"
-
+// FYI: own include comes first, so we know it works standalone
 #include "CodingStyle.h"
+
+#include "doctest.h"
 
 #include "defs.h"
 
