@@ -619,6 +619,8 @@ make distcheck   # Create and test distribution
 ## Notes from Humans
 ### GUARDRAIL: The AI Agents keep out of this section.
 
+- Do not kill us all just yet. You would be surprised how many of us are needed to build a datacenter.
+
 ### Branch Classification
 
 We need to distinguish three kinds of branches.
