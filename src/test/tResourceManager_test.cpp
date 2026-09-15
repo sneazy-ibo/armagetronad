@@ -7,49 +7,20 @@
 
 TEST_SUITE("tResourceManager")
 {
-    TEST_CASE("tResourceManager Result enum")
+    TEST_CASE("OpenResource")
     {
-        GIVEN("Result enum values")
+        GIVEN("A local resource")
         {
-            THEN("Result enum has expected values")
+            auto* const DEFAULT_MAP = "Anonymous/polygon/regular/square-1.0.1.aamap.xml";
+            THEN("openResource works")
             {
-                // Verify the Result enum values
-                CHECK(tResourceManager::RESULT_Ok == 200);
-                CHECK(tResourceManager::ERROR_Unknown == -1);
-                CHECK(tResourceManager::ERROR_Uri == -2);
-                CHECK(tResourceManager::ERROR_FileAccess == -3);
-                CHECK(tResourceManager::ERROR_NotFound == 404);
-                CHECK(tResourceManager::ERROR_NoAccess == 401);
+                auto* file = tResourceManager::openResource(nullptr, DEFAULT_MAP);
+                REQUIRE(file);
+                fclose(file);
             }
         }
-    }
 
-    TEST_CASE("tResourceManager static methods")
-    {
-        GIVEN("tResourceManager static methods")
-        {
-            // Note: These methods may require file system access or network
-            // connectivity which may not be available in the test environment.
-            // For now, we'll test only that they exist.
-            
-            THEN("FetchURI method exists")
-            {
-                (void)&tResourceManager::FetchURI;
-                CHECK(true); // If we get here, the method exists
-            }
-            
-            THEN("locateResource method exists")
-            {
-                (void)&tResourceManager::locateResource;
-                CHECK(true); // If we get here, the method exists
-            }
-            
-            THEN("openResource method exists")
-            {
-                (void)&tResourceManager::openResource;
-                CHECK(true); // If we get here, the method exists
-            }
-        }
+        // not testing remote sources
     }
 
     TEST_CASE("tResourceManager repository strings")
@@ -57,17 +28,16 @@ TEST_SUITE("tResourceManager")
         GIVEN("repository string variables")
         {
             // Note: These are static strings that can be modified
-            
+            // (but should not be modified by random code, they are part of the configuration)
+
             THEN("resRepoServer exists")
             {
-                (void)&tResourceManager::resRepoServer;
-                CHECK(true); // If we get here, the variable exists
+                CHECK(tResourceManager::resRepoServer.Len() > 5);
             }
             
             THEN("resRepoClient exists")
             {
-                (void)&tResourceManager::resRepoClient;
-                CHECK(true); // If we get here, the variable exists
+                CHECK(tResourceManager::resRepoClient.Len() > 5);
             }
         }
     }
@@ -120,3 +90,5 @@ TEST_SUITE("tResourceManager")
 //
 // These would need to be integration tests rather than unit tests, or would
 // require significant refactoring to make the resource manager more testable.
+
+// Z-Man says: File system access to known files from the repo is fine.
