@@ -14,6 +14,15 @@ Let's keep this short.
  5. We prefer honesty to politeness. If something is a fucking stupid idea, you may say so. But say "This is a fucking stupid idea", not "You are a fucking stupid idiot for bringing this up, do you have jelly betwen your ears or what?".
  6. Show no Racism, Sexism, Xenophobia, Homophobia, Transphobia, you know the stuff. It's what makes people think "Ouch, this place looks like a Nazi Bar, do I want to hang out there? I think not."
 
+## You Should Know
+
+Be aware that this project is under GPL, which means every change
+you publish anywhere automatically also is under GPL. This happens rarely, but:
+We can, if we so choose, simply grab your stuff and integrate it even if you do not submit it.
+Giving you proper credit, of course.
+
+We don't do code ownership. Everyone is entitled to improve your code, as you are entitled to improve ours.
+
 ## Before You Begin
 
 If you have a technical fix, there is nothing to do, just fix ahead.
