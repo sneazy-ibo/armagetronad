@@ -3,6 +3,8 @@
 #include "tString.h"
 #include "tArray.h"
 
+#include "MockConsole.h"
+
 // Tests for tDirectories system
 // Purpose: Document the status quo behavior and detect regressions
 
@@ -10,6 +12,8 @@ TEST_SUITE("tDirectories")
 {
     TEST_CASE("tPath basic functionality")
     {
+        MockConsole con;
+
         GIVEN("tPath objects")
         {
             // Note: Many tPath methods trigger console output which may
@@ -28,6 +32,8 @@ TEST_SUITE("tDirectories")
 
     TEST_CASE("tPathResource basic functionality")
     {
+        MockConsole con;
+
         GIVEN("a tPathResource")
         {
             tPathResource resource;

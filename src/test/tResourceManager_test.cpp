@@ -1,5 +1,8 @@
 #include "doctest.h"
 #include "tResourceManager.h"
+
+#include "MockConsole.h"
+
 #include <sstream>
 
 // Tests for tResourceManager system
@@ -9,6 +12,8 @@ TEST_SUITE("tResourceManager")
 {
     TEST_CASE("OpenResource")
     {
+        MockConsole con;
+
         GIVEN("A local resource")
         {
             auto* const DEFAULT_MAP = "Anonymous/polygon/regular/square-1.0.1.aamap.xml";
@@ -44,6 +49,8 @@ TEST_SUITE("tResourceManager")
 
     TEST_CASE("FetchURI with invalid URI")
     {
+        MockConsole con;
+
         GIVEN("an invalid URI")
         {
             WHEN("FetchURI is called with NULL URI")
