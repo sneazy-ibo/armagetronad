@@ -1,35 +1,13 @@
 #include "doctest.h"
 #include "tConsole.h"
 
+#include "MockConsole.h"
+
 // Tests for tConsole system
 // Purpose: Document the status quo behavior and detect regressions
 
 namespace
 {
-// registers itself, swallows log
-class MockConsole final : public tConsole
-{
-public:
-    MockConsole() noexcept : tConsole{}
-    {
-        RegisterBetterConsole(this);
-    }
-
-    tString const& GetLastPrinted() const noexcept
-    {
-        return lastPrinted_;
-    }
-
-private:
-    tConsole& DoPrint(const tString& s) noexcept override
-    {
-        lastPrinted_ = s;
-        return *this;
-    }
-
-    tString lastPrinted_;
-};
-
 // mock console filter
 class MockFilter final : public tConsoleFilter
 {
@@ -72,11 +50,7 @@ TEST_SUITE("tConsole")
             THEN("filter is applied")
             {
                 con << "FOO\n";
-#ifdef DEDICATED
-                CHECK(mockConsole.GetLastPrinted() == "[0] FOOBAR\n");
-#else
                 CHECK(mockConsole.GetLastPrinted() == "FOOBAR\n");
-#endif
             }
         }
     }
@@ -91,22 +65,14 @@ TEST_SUITE("tConsole")
             {
                 // Test that we can use the console for output
                 con << "Test message\n";
-#ifdef DEDICATED
-                CHECK(mockConsole.GetLastPrinted() == "[0] Test message\n");
-#else
                 CHECK(mockConsole.GetLastPrinted() == "Test message\n");
-#endif
             }
 
             THEN("Print method works")
             {
                 tString testString("Test string\n");
                 con.Print(testString);
-#ifdef DEDICATED
-                CHECK(mockConsole.GetLastPrinted() == "[0] Test string\n");
-#else
                 CHECK(mockConsole.GetLastPrinted() == "Test string\n");
-#endif
             }
         }
     }
