@@ -105,6 +105,7 @@ Tests are compiled as separate programs that link against the relevant project l
 ### Allowed Operations During Tests
 - All regular in-memory operations
 - File read access to known files from this repository
+- Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them)
 
 ### Avoid During Tests
 - Console output
