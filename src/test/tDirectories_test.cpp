@@ -16,16 +16,12 @@ TEST_SUITE("tDirectories")
 
         GIVEN("tPath objects")
         {
-            // Note: Many tPath methods trigger console output which may
-            // require language initialization. For now, we'll test only
-            // basic construction.
-            
             THEN("tPathResource can be constructed")
             {
                 tPathResource resource;
                 tString included = resource.GetIncluded();
-                // We can't predict the exact path, but it should be a valid tString
-                CHECK(included.Len() >= 1); // tString always has at least null terminator
+                // We can't predict the exact path, but it should be a valid non-empty tString
+                CHECK(included.Len() >= 5);
             }
         }
     }
@@ -37,17 +33,12 @@ TEST_SUITE("tDirectories")
         GIVEN("a tPathResource")
         {
             tPathResource resource;
-            
-            THEN("it can be constructed without crashing")
-            {
-                CHECK(true); // If we get here, construction succeeded
-            }
-            
+
             THEN("GetIncluded returns a path string")
             {
                 tString included = resource.GetIncluded();
-                // We can't predict the exact path, but it should be a valid tString
-                CHECK(included.Len() >= 1); // tString always has at least null terminator
+                // We can't predict the exact path, but it should be a valid non-empty tString
+                CHECK(included.Len() >= 5);
             }
         }
     }
@@ -56,20 +47,36 @@ TEST_SUITE("tDirectories")
     {
         GIVEN("tDirectories static methods")
         {
-            // Note: These methods may trigger initialization that requires
-            // global state (like language files) which may not be available in tests.
-            // For now, we'll skip these tests to avoid crashes.
-            
-            THEN("methods exist and can be referenced")
+            tArray<tString> pathElements;
+
+            auto const testPaths = [](tPath const& path) {
+                auto paths = path.GetPaths();
+                CHECK(paths.Len() >= 5);
+            };
+
+            THEN("data path exists")
             {
-                // Just verify the methods exist by taking their address
-                // without calling them
-                (void)&tDirectories::Data;
-                (void)&tDirectories::Config;
-                (void)&tDirectories::Var;
-                (void)&tDirectories::Screenshot;
-                (void)&tDirectories::Resource;
-                CHECK(true); // If we get here, the methods exist
+                testPaths(tDirectories::Data());
+            }
+
+            THEN("config path exists")
+            {
+                testPaths(tDirectories::Config());
+            }
+
+            THEN("var path exists")
+            {
+                testPaths(tDirectories::Var());
+            }
+
+            THEN("screenshot path exists")
+            {
+                testPaths(tDirectories::Screenshot());
+            }
+
+            THEN("resource path exists")
+            {
+                testPaths(tDirectories::Resource());
             }
         }
     }
@@ -77,6 +84,7 @@ TEST_SUITE("tDirectories")
     // Note: FileMatchesWildcard and GetFiles tests are skipped because they
     // may trigger initialization of global systems (like console/language) which
     // are not available in the test environment.
+    // Z-Man: NO, FileMatchesWildcard DOES NOT. GetFiles could be tested on a known data directory.
 }
 
 // TODO: More comprehensive tDirectories tests could be added, but many functions

@@ -6,12 +6,6 @@
 
 TEST_SUITE("tException")
 {
-    TEST_CASE("tException base class methods")
-    {
-        // tException is abstract, test through derived classes
-        // This verifies the base interface works
-    }
-
     TEST_CASE("tGenericException construction and methods")
     {
         GIVEN("a tGenericException with name and description")

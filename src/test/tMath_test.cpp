@@ -78,14 +78,3 @@ TEST_SUITE("tMath")
         }
     }
 }
-
-// Note: The current tMath.h only contains the good() function for checking
-// if a value is finite (not NaN, not infinity). The spec mentions other functions
-// like ApproxEqual and clamping, but these are not currently in tMath.h.
-// If they are added in the future, tests should be added here.
-//
-// The good() function is tested comprehensively above with:
-// - Regular finite values (positive, negative, zero)
-// - Special values (infinity, -infinity, NaN)
-// - Edge cases (min, max, negative zero)
-// - Both float and double precision
