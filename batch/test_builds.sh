@@ -9,8 +9,9 @@
 #   ./batch/test_builds.sh [config1] [config2] ... [configN]
 #   ./batch/test_builds.sh all
 #   TEST_ONLY=1 ./batch/test_builds.sh debug    # Skip build, just test existing build
-#   FORCE_RECONFIGURE=1 ./batch/test_builds.sh   # Force re-run of configure
+#   FORCE_RECONFIGURE=1 ./batch/test_builds.sh  # Force re-run of configure
 #   VERBOSE=1 ./batch/test_builds.sh            # Show full build output
+#   MAKEFLAGS                                   # Flags passed on to make
 #
 # Available configurations (use 'list' or 'help' to see more):
 #   client      - Explicit client build (no server)
@@ -263,7 +264,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     if [ "$TEST_ONLY" != "1" ]; then
         echo "[2/$STEPS] Building..."
         if [ "$VERBOSE" = "1" ]; then
-            make -k -j"$JOBS" debug || {
+            make $MAKEFLAGS -k -j"$JOBS" debug || {
                 echo "Build FAILED for $NAME"
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
@@ -271,10 +272,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                 continue
             }
         else
-            make -k -j"$JOBS" debug > /dev/null 2>&1 || {
+            make -j"$JOBS" debug > /dev/null 2>&1 || {
                 echo "Build FAILED for $NAME"
                 echo "Rerun with output:"
-                make -k -j"$JOBS" debug || true
+                make $MAKEFLAGS -k -j"$JOBS" debug || true
                 FAILURES=$((FAILURES + 1))
                 FAILED_CONFIGS+=("$NAME")
                 cd "$ROOT"

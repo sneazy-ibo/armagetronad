@@ -4,7 +4,7 @@
     {
       "type": "shell",
       "label": "Build and Test Debug",
-      "command": "${workspaceFolder}/batch/test_builds.sh debug",
+      "command": "MAKEFLAGS=--no-print-directory ${workspaceFolder}/batch/test_builds.sh debug",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -23,7 +23,7 @@
     {
       "type": "shell",
       "label": "Build Debug Client",
-      "command": "BUILD_ONLY=1 ${workspaceFolder}/batch/test_builds.sh client_debug",
+      "command": "MAKEFLAGS=--no-print-directory BUILD_ONLY=1 ${workspaceFolder}/batch/test_builds.sh client_debug",
       "options": {
         "cwd": "${workspaceFolder}"
       },
