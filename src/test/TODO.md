@@ -14,6 +14,8 @@ Tests we would like to have written, but could not yet:
 - **tEventQueue**: The queue system doesn't expose a public interface for adding events, making it difficult to test event management functionality in isolation. Only basic construction and Timestep with empty queues can be tested.
 - **eTimer**: Tightly coupled with the network system through nNetObject inheritance, requiring network subsystem initialization for proper testing.
 - **eGrid**: Complex system with dependencies on game objects and walls. Some functions can be tested in isolation (the constituents eFace and eEdge are needed). For others, we need mock walls and game objects. No biggie, we already have some in eGameObject_test.cpp.
+- **ePath**: Make a valid one through the grid.
 - **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
 - **tDirectories**: More tests are possible.
 - **nNetwork**: More tests of individual classes are possible.
+- **tRefPtr**: Should be movable. Not really a test issue.

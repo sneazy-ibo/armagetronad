@@ -6,6 +6,7 @@ class MockRingItem : public tRing {
 public:
     int value;
     MockRingItem(int v = 0) : value(v) {}
+    MockRingItem(MockRingItem& insert, int v = 0) : tRing(insert), value(v) {}
 };
 
 // Tests for tRing class
@@ -22,7 +23,6 @@ TEST_SUITE("tRing")
             // But we can't access private members, so just verify it doesn't crash
             THEN("the item is constructed successfully")
             {
-                CHECK(true);
             }
         }
     }
@@ -33,31 +33,15 @@ TEST_SUITE("tRing")
         {
             MockRingItem item1(1);
             // Create item2 inserted after item1
-            MockRingItem item2(2);
+            MockRingItem item2(item1, 2);
 
             // This inserts item2 after item1 in the ring
             // Just verify it doesn't crash
             THEN("the items are constructed successfully")
             {
-                CHECK(true);
-            }
-        }
-    }
-
-    TEST_CASE("tRing destructor")
-    {
-        GIVEN("a MockRingItem for destruction")
-        {
-            MockRingItem* item1 = new MockRingItem(1);
-            // Can't test the constructor that takes a pointer without a valid item
-            // MockRingItem* item2 = new MockRingItem(item1); // This would require friend access
-
-            delete item1;
-            // Just verify it doesn't crash
-            THEN("the item is deleted successfully")
-            {
-                CHECK(true);
             }
         }
     }
 }
+
+// Z-Man: This class is useless in its current form, no actual traversal possible, items can only be inserted on construction. Naturally, it is not used in practice.

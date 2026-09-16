@@ -10,21 +10,17 @@ TEST_SUITE("ePath")
     {
         GIVEN("ePath system")
         {
-            // Note: ePath has dependencies on eCoord and eHalfEdge which may
-            // require engine initialization. For now, we'll test only basic
-            // construction and simple methods.
+            // we can only properly fill ePath with data from an eGrid
             
             THEN("ePath can be constructed")
             {
                 ePath path;
-                CHECK(true); // If we get here, construction succeeded
             }
             
             THEN("ePath can be destroyed")
             {
                 ePath* path = new ePath();
                 delete path;
-                CHECK(true); // If we get here, destruction succeeded
             }
         }
     }
@@ -43,7 +39,6 @@ TEST_SUITE("ePath")
             THEN("Clear can be called")
             {
                 path.Clear();
-                CHECK(true); // If we get here, Clear worked
             }
         }
     }
@@ -64,19 +59,4 @@ TEST_SUITE("ePath")
 #endif // DEBUG
 }
 
-// TODO: More comprehensive ePath tests could be added, but the system
-// has significant dependencies on eCoord, eHalfEdge, and the grid system
-// which make isolated unit testing challenging. The current tests focus on:
-// 1. Basic construction and destruction
-// 2. Simple method calls
-// 3. Static method existence
-//
-// Additional tests that could be added:
-// 1. Path calculation on simple grids - requires grid setup
-// 2. Obstacle avoidance with various wall configurations - requires walls
-// 3. Path validation for impossible routes - requires path data
-// 4. Path following logic with waypoint generation - requires waypoints
-// 5. Various grid configurations (rectangular, circular, custom) - requires grid
-//
-// These would need to be integration tests rather than unit tests, or would
-// require significant refactoring to make the path finding system more testable.
+// Z-Man: TODO add full grid, make path, walk through it
