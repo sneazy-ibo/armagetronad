@@ -1501,8 +1501,8 @@ private:
 
                 if ( buildDirectory.Len() <= 1 )
                     buildDirectory = ".";
-#ifdef DEBUG
-                // con << "BuildDirectory = " << buildDirectory << "\n";
+#ifdef DEBUG_PATH
+                con << "BuildDirectory = " << buildDirectory << "\n";
 #endif
 
                 // last fallback for debugging (activated only if there is data in the assumed build directory)
