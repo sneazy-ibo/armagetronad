@@ -16,3 +16,4 @@ Tests we would like to have written, but could not yet:
 - **eGrid**: Complex system with dependencies on game objects and walls. Some functions can be tested in isolation (the constituents eFace and eEdge are needed). For others, we need mock walls and game objects. No biggie, we already have some in eGameObject_test.cpp.
 - **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
 - **tDirectories**: More tests are possible.
+- **nNetwork**: More tests of individual classes are possible.
