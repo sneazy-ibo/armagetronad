@@ -2,22 +2,20 @@
 #define ArmageTron_STATICS_H
 
 #include "defs.h"
-#include "ePlayer.h"
-#include "tLocale.h"
 
 #include <tuple>
+#include <unistd.h>
 
 inline bool InitStaticsCore()
 {
-    ePlayer::Init();
-    tLocale::Load("languages.txt");
-
     return true;
 }
 
 // call to make sure all static data is initialized
 inline void InitStatics()
 {
+    CHECK(false); // we do not need this right now, maybe later
+
     static bool done = InitStaticsCore();
     std::ignore = done;
 }

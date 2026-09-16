@@ -10,8 +10,6 @@ TEST_SUITE("tLocale")
 {
     TEST_CASE("tLanguage basic functionality")
     {
-        InitStatics(); // we need tLocale initialized
-
         GIVEN("tLanguage class")
         {
             THEN("FirstLanguage returns a language pointer")
