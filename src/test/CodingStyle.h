@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "defs.h"
 
+#include <tuple>
+
 // FYI reference counted objects and their smart pointers
 #include "tSafePTR.h"
 
@@ -95,6 +97,7 @@ public:
     {
         auto success = s_numberOfObjects_.TryCountDown();
         tASSERT(success);
+        std::ignore = success;
     } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
 
     cReferenceCounted(cReferenceCounted const& that) noexcept
