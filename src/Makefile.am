@@ -183,7 +183,8 @@ unit_tests_SOURCES = thirdparty/doctest/doctest.h \
 	test/eTimer_test.cpp test/eGrid_test.cpp \
 	test/ePath_test.cpp \
 	test/ePlayer_test.cpp test/eTeam_test.cpp \
-	test/nSocket_test.cpp test/nNetwork_test.cpp test/nMessage_test.cpp test/nObserver_test.cpp test/nServerInfo_test.cpp test/tCrypt_test.cpp \
+	test/nSocket_test.cpp test/nNetwork_test.cpp test/nMessage_test.cpp \
+	test/nNetObject_test.cpp test/nServerInfo_test.cpp test/tCrypt_test.cpp \
 	test/tConfiguration_test.cpp \
 	test/tConsole_test.cpp \
 	test/tLocale_test.cpp \
