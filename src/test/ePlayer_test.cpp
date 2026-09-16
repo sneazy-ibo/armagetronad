@@ -14,7 +14,7 @@ TEST_SUITE("ePlayer")
     {
         GIVEN("ePlayer exists")
         {
-            // fetch player 1
+            // fetch player 0
             ePlayer &player = *ePlayer::PlayerConfig(0);
 
             THEN("player has a name")
@@ -33,6 +33,27 @@ TEST_SUITE("ePlayer")
                 {
                     CHECK(ePlayer::PlayerConfig(i)->ID() == i);
                 }
+            }
+        }
+    }
+}
+
+TEST_SUITE("ePlayerNetID")
+{
+    TEST_CASE("ePlayerNetID basics")
+    {
+        GIVEN("ePlayerNetID exists")
+        {
+            // you can spawn players just by creating them,
+            // store the result in a smart pointer for later cleanup.
+            // This constructor creates a player bound to local player 0.
+            tRefPtr<ePlayerNetID> pPlayer = new ePlayerNetID{0};
+
+            THEN("player has a name")
+            {
+                tString name;
+                pPlayer->GetName(name);
+                CHECK(name.Len() > 2);
             }
         }
     }
