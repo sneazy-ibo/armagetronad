@@ -28,7 +28,7 @@ TEST_SUITE("tHeap")
     {
         GIVEN("a heap")
         {
-            // SO THIS INTERFACE IS TERRIBLE
+            // SO, THIS INTERFACE IS TERRIBLE
 
             MockHeapElement a, b; // construct first, so heap destructor doing the cleanup can come first
             tHeap<tHeapElement> heap;
