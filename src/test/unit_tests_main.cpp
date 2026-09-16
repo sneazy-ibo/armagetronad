@@ -40,15 +40,22 @@ int main(int argc, char** argv)
                     auto const res = chdir(buildDir);
                     std::ignore = res;
 
-                    // only give program name to command line, omit other arguments
-                    tString fakeLocalProgram{"./src/unit_tests"};
-                    char* fake_argv[2] = {&fakeLocalProgram[0], nullptr};
-                    commandLine.Analyse(1, fake_argv);
-
                     break;
                 }
             }
         }
+
+        if(levelsToGo > 0)
+        {
+            // must be in builddir/src, go one level up
+            auto const res = chdir("..");
+            std::ignore = res;
+        }
+
+        // only give program name to command line, omit other arguments
+        tString fakeLocalProgram{"./src/unit_tests"};
+        char* fake_argv[2] = {&fakeLocalProgram[0], nullptr};
+        commandLine.Analyse(1, fake_argv);
     }
 
     tLocale::Load("languages.txt");
