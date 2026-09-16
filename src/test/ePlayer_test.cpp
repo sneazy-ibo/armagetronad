@@ -4,26 +4,39 @@
 // Tests for ePlayer system
 // Purpose: Document the status quo behavior and detect regressions
 
-#if false
+// Note: ePlayer is the local player configuration class, handling display and input.
+// the real abstract player class, owning game objects and being network visible,
+// is ePlayerNetID.
+
 TEST_SUITE("ePlayer")
 {
-    TEST_CASE("ePlayer base class")
+    TEST_CASE("ePlayer basics")
     {
-        GIVEN("ePlayer base class")
+        GIVEN("ePlayer exists")
         {
-            // Note: ePlayer may have dependencies that make it difficult
-            // to test in isolation. For now, we'll test only that the class exists.
-            
-            THEN("ePlayer class exists")
+            // fetch player 1
+            ePlayer &player = *ePlayer::PlayerConfig(0);
+
+            THEN("player has a name")
             {
-                // We can't easily create a ePlayer without initialization,
-                // but we can verify the class exists
-                CHECK(sizeof(ePlayer) > 0);
+                CHECK(0 != strlen(player.Name()));
+            }
+
+            THEN("there are at least four players")
+            {
+                CHECK(uMAX_PLAYERS >= 4);
+            }
+
+            THEN("ids assigned")
+            {
+                for(int i = 0; i < uMAX_PLAYERS; ++i)
+                {
+                    CHECK(ePlayer::PlayerConfig(i)->ID() == i);
+                }
             }
         }
     }
 }
-#endif
 
 // TODO: More comprehensive ePlayer tests could be added, but the system
 // has significant dependencies on the engine and network systems that make
@@ -39,3 +52,6 @@ TEST_SUITE("ePlayer")
 //
 // These would need to be integration tests rather than unit tests, or would
 // require significant refactoring to make the player system more testable.
+
+// Z-Man: Difficulties for sure. We cannot test construction or destruction
+// of players, we only have the four.
