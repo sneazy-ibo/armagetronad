@@ -40,7 +40,7 @@ TEST_SUITE("tLocale")
 
             THEN("Find method exists")
             {
-                auto *german = tLanguage::Find(tString("German"));
+                auto* german = tLanguage::Find(tString("Deutsch"));
                 CHECK(german);
 
                 auto *nope = tLanguage::Find(tString("nope2"));
@@ -55,50 +55,83 @@ TEST_SUITE("tLocale")
         {
             THEN("tOutput can be constructed and destroyed")
             {
-                tOutput output;
+                tOutput output2;
             }
-            
+
+            tOutput output;
             THEN("AddLiteral works")
             {
-                tOutput output;
                 output.AddLiteral("test");
                 CHECK(tString(output) == "test");
             }
-            
+
             THEN("AddSpace works")
             {
-                tOutput output;
                 output.AddSpace();
-                CHECK(true); // If we get here, AddSpace worked
+                CHECK(tString(output) == " ");
             }
-            
+
             THEN("AddString works")
             {
-                tOutput output;
                 output.AddString("test string");
-                CHECK(true); // If we get here, AddString worked
+                CHECK(tString(output) == "test string");
+            }
+
+            THEN("Translations work")
+            {
+                output.AddString("$first_use_help");
+                CHECK(tString(output) != "$first_use_help");                 // may require adaption if item changes
+                CHECK(tString(output).StartsWith("Is this the first time")); // may require adaption if text changes
+            }
+
+            THEN("Parameters work")
+            {
+                output.SetTemplateParameter(1, "BLARG");
+                output.SetTemplateParameter(2, "BLE");
+                output.AddString("$player_teamkill");
+                CHECK(tString(output).StartsWith("BLARG ")); // may require adaption if text changes
             }
         }
     }
 
-    // Note: tLocaleItem is defined in tLocale.cpp and may require
-    // global initialization. For now, we'll skip testing it directly
-    // as it's not easily testable in isolation.
-}
+    TEST_CASE("Language change")
+    {
+        GIVEN("German and English")
+        {
+            auto* english = tLanguage::FindSloppy(tString("American English"));
+            CHECK(english);
 
-// TODO: More comprehensive tLocale tests could be added, but the system
-// has significant global state and dependencies that make isolated unit testing
-// challenging. The current tests focus on:
-// 1. Basic language class operations
-// 2. Basic output class operations
-// 3. Class existence verification
-//
-// Additional tests that could be added:
-// 1. Language file loading from language/ directory (requires file system)
-// 2. String translation with known language files (requires initialization)
-// 3. Fallback to base language when translations missing (requires setup)
-// 4. Runtime locale switching via tLocale::SetLanguage (requires global state)
-// 5. Placeholder substitution using %1, %2, etc. syntax (requires initialization)
-//
-// These would need to be integration tests rather than unit tests, or would
-// require significant refactoring to make the locale system more testable.
+            auto* german = tLanguage::Find(tString("Deutsch"));
+            CHECK(german);
+
+            tOutput output;
+            THEN("English translation works")
+            {
+                english->SetFirstLanguage();
+
+                output.SetTemplateParameter(1, "BLARG");
+                output.SetTemplateParameter(2, 17); // other template parameter types work, too
+                output.AddString("$player_teamkill");
+                CHECK(tString(output) == "BLARG core dumped teammate 17! Boo! No points for that!\n");
+            }
+
+            THEN("German translation works")
+            {
+                german->SetFirstLanguage();
+
+                // convenient constructor
+                output = tOutput("$player_teamkill", "BLARG", "BLE");
+                bool worked = tString(output).StartsWith("BLARG hat den Teampartner BLE beseitigt!");
+                CHECK(worked);
+                if (!worked)
+                {
+                    // print full string
+                    CHECK(tString(output) == "");
+                }
+
+                // restore default for other tests
+                english->SetFirstLanguage();
+            }
+        }
+    }
+}
