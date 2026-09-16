@@ -212,7 +212,3 @@ TEST_SUITE("tCommandLine")
         }
     }
 }
-
-// TODO: More comprehensive command line tests could be added, but many features
-// depend on global state and other subsystems that are not easily testable in isolation.
-// The current tests focus on the parser functionality which can be tested independently.

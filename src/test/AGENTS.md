@@ -101,11 +101,12 @@ Tests are compiled as separate programs that link against the relevant project l
 - Tests should test runtime behavior.
 - Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. `CHECK(true)` and `REQUIRE(true)` are **outlawed**.
   - If the only thing a test can check is "yep, this operation did not crash", just write a comment to that effect.
+- If a test you wrote **SHOULD** work, but does not because of some roadblock you currently have no control over, disable the test via `#if false`, describe the roadblock in a comment, and make a note in `TODO.md`.
 
 ### Allowed Operations During Tests
 - All regular in-memory operations
 - File read access to known files from this repository
-- Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them)
+- Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them, the main program should take care of the common ones)
 
 ### Avoid During Tests
 - Console output
