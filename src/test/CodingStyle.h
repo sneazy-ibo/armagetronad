@@ -146,6 +146,8 @@ public:
     // FYI avoid accidentally creating implicit conversions
     // FYI prefer direct member initialization instead of using SetTarget() here
     explicit cShallowCopy(cReferenceCounted* target) noexcept : target_{target} {}
+    template<typename T>
+    explicit cShallowCopy(tRefPtr<T>&& target) noexcept : target_{std::move(target)} {}
 
     // FYI Rule of Zero: tRefPtr does shallow copies, none of the three special functions needs implementing
 private:
@@ -168,6 +170,8 @@ public:
     void SetTarget(cReferenceCounted* target) noexcept { target_ = target; }
 
     explicit cDeepCopy(cReferenceCounted* target) noexcept : target_{target} {}
+    template<typename T>
+    explicit cDeepCopy(tRefPtr<T>&& target) noexcept : target_{std::move(target)} {}
 
     // FYI Rule of Five: default would be shallow copy, avoid that
     ~cDeepCopy() noexcept = default; // FYI except the destructor, the default is fine

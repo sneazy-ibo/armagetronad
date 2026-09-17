@@ -10,7 +10,7 @@ TEST_SUITE("eGrid")
     {
         GIVEN("eGrid system")
         {
-            tRefPtr<eGrid> grid = new eGrid();
+            auto grid = tRefPtr<eGrid>::Make();
 
             THEN("construction works")
             {

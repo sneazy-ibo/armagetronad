@@ -25,7 +25,7 @@ TEST_SUITE("nNetObject")
     {
         GIVEN("a mock network object")
         {
-            tRefPtr<nNetObject> p = new MockNetObject();
+            auto p = tRefPtr<MockNetObject>::Make();
 
             THEN("You can do absolutely nothing with it")
             {
@@ -37,7 +37,7 @@ TEST_SUITE("nNetObject")
     {
         GIVEN("a mock network object")
         {
-            tRefPtr<nNetObject> p = new MockNetObject();
+            auto p = tRefPtr<MockNetObject>::Make();
             THEN("we can observe it")
             {
                 // another weird interface choice

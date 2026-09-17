@@ -135,7 +135,16 @@ TEST_SUITE("CodingStyle")
                     CHECK(0 == cReferenceCounted::GetNumberOfObjects());
                 });
 
-                cDeepCopy holder{new cReferenceCountedDerived};
+                // FYI the Make(...) function is the equivalent to std::make_shared or std::make_unique
+                auto referenceCounted = tRefPtr<cReferenceCountedDerived>::Make();
+
+                cDeepCopy holder{std::move(referenceCounted)};
+
+                // FYI the moved-from pointer should be zero now, 
+                // but do not rely on that in production code, 
+                // it is not strictly guaranteed (moved-from must be destructible, that is all)
+                CHECK(!referenceCounted);
+                referenceCounted = nullptr;
 
                 CHECK(1 == cReferenceCounted::GetNumberOfObjects());
 
