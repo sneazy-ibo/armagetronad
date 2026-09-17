@@ -208,7 +208,7 @@ tResourceManager::Result tResourceManager::FetchURI(const char* URI, std::ostrea
             long http_code = 0;
             curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &http_code);
             // If the request failed, print an error message
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(result) << std::endl;
+            con << "curl_easy_perform() failed: " << curl_easy_strerror(result) << "\n";
             return Result::ERROR_Unknown;
         }
 
