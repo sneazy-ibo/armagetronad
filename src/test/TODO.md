@@ -18,4 +18,3 @@ Tests we would like to have written, but could not yet:
 - **nSocket**: Low-level networking component requiring network subsystem initialization, platform-specific setup, and potentially privileged execution context.
 - **tDirectories**: More tests are possible.
 - **nNetwork**: More tests of individual classes are possible.
-- **tRefPtr**: Should be movable. Not really a test issue.
