@@ -69,8 +69,15 @@ Tests are compiled as separate programs that link against the relevant project l
   - Tests coordinate systems (eCoord, eAxis, eRectangle)
   - Tests data structures (tArray, tList, tLinkedList, tRing)
   - Tests memory management (tHeap, tMemStack)
-  - Tests utilities (tString, tColor, tCallback, tRandomizer)
+  - Tests utilities (tString, tColor, tCallback, tRandomizer, tMath, tSysTime)
   - Tests exception handling
+  - Tests command line parsing (tCommandLine)
+  - Tests event queue system (tEventQueue)
+  - Tests directory management (tDirectories)
+  - Tests cryptographic utilities (MD5)
+  - Tests engine components (eTimer, eGrid - limited due to dependencies)
+  - Tests network components (nSocket - limited due to dependencies)
+  - Tests cryptography (tCrypt - limited due to dependencies)
 - `chat_prefix_test`: Legacy test for XML parsing
   - Tests parsing of player chat messages
   - Validates prefix formatting
@@ -81,7 +88,7 @@ Tests are compiled as separate programs that link against the relevant project l
 
 ### Guidelines
 
-- Code touched by AI agents must be covered by automated tests.
+- Code touched by AI agents must be largely covered by automated tests.
 - Employ Test Driven Development whenever appropriate.
 - Changes to the tested code are discoraged when writing tests, but sometimes required. All changes should be reported to the user and be noted in commit messages.
 - It is likely you will find classes that are not currently testable in isolation. Your choices then, before doing anything else:
@@ -90,6 +97,29 @@ Tests are compiled as separate programs that link against the relevant project l
 - If not in conflict with user preferences, do the adaptions that make code testable in separate commits.
 - **Test Framework**: Use doctest as the default test framework. Only write ad-hoc custom test programs when explicitly demanded by the user.
 - Test files end in `_test.cpp`.
+- If, during writing of tests, you find bugs or odd behavior, or cannot write a test because there is something blocking it, write them down in `TODO.md`.
+- Tests should test runtime behavior.
+- Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. `CHECK(true)` and `REQUIRE(true)` are **outlawed**.
+  - If the only thing a test can check is "yep, this operation did not crash", just write a comment to that effect.
+- If a test you wrote **SHOULD** work, but does not because of some roadblock you currently have no control over, disable the test via `#if false`, describe the roadblock in a comment, and make a note in `TODO.md`.
+
+### Allowed Operations During Tests
+- All regular in-memory operations
+- File read access to known files from this repository
+- Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them, the main program should take care of the common ones)
+
+### Avoid During Tests
+- Console output
+
+### **Forbidden** Operations During Tests
+- Network access
+- File write access
+
+### Do not Write These Nonsense Tests
+- Existence of functions or variables
+- "Correct" values for enums
+
+### 
 
 ### Remarks
 

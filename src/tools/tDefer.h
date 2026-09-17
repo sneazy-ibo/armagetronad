@@ -4,6 +4,7 @@
 
 ArmageTron -- Just another Tron Lightcycle Game in 3D.
 Copyright (C) 2000  Manuel Moos (manuel@moosnet.de)
+Copyright (C) 2004  Armagetron Advanced Team (http://sourceforge.net/projects/armagetronad/)
 
 **************************************************************************
 
@@ -19,35 +20,36 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-  
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 ***************************************************************************
 
 */
 
-#ifndef ArmageTron_tMemStack_H
-#define ArmageTron_tMemStack_H
+#ifndef ArmageTron_tDefer_H
+#define ArmageTron_tDefer_H
 
-// class for temporary memory allocation; use it as a safe and flexible replacement for
-// stacked char[...] arrays. tMemStack Objects need to be destructed in opposite
-// construction order.
+#include <utility>
 
-class tMemStackItem;
-
-class tMemStack
+// executes a function when it goes out of scope
+template <typename F>
+class tDeferrer
 {
 public:
-    tMemStack	(int minSize = 10);
-    ~tMemStack	();
-
-    void* 	GetMem()		const	;	// get the memory pointer
-    int	  	GetSize() 		const	;	// get the memory size
-    void  	IncreaseMem()			;	// recreate the buffer a bit larger (buffer contents will be gone)
+    tDeferrer(F&& f) : f_{std::forward<F>(f)}
+    {
+    }
+    ~tDeferrer() { std::move(f_)(); }
 
 private:
-    int    	index;
-
-    tMemStackItem& Item() const;
+    F f_;
 };
+
+template <typename F>
+// [[nodiscard]] // not yet
+tDeferrer<F> tDefer(F&& f)
+{
+    return tDeferrer<F>{std::forward<F>(f)};
+}
 
 #endif

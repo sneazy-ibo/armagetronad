@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "defs.h"
 
+#include <tuple>
+
 // FYI reference counted objects and their smart pointers
 #include "tSafePTR.h"
 
@@ -91,7 +93,13 @@ public:
     static int GetNumberOfObjects() noexcept { return s_numberOfObjects_.GetCount(); }
 
     // FYI Rule of Three: Implement destructor, copy constructor and assignment operator together
-    virtual ~cReferenceCounted() noexcept { CHECK(s_numberOfObjects_.TryCountDown()); } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
+    virtual ~cReferenceCounted() noexcept
+    {
+        auto success = s_numberOfObjects_.TryCountDown();
+        tASSERT(success);
+        std::ignore = success;
+    } // FYI if this is a leaf class, mark it with 'final', then you can make the destructor non-virtual
+
     cReferenceCounted(cReferenceCounted const& that) noexcept
         : tReferencable<cReferenceCounted>(that)
     {
@@ -138,8 +146,10 @@ public:
     // FYI avoid accidentally creating implicit conversions
     // FYI prefer direct member initialization instead of using SetTarget() here
     explicit cShallowCopy(cReferenceCounted* target) noexcept : target_{target} {}
+    template<typename T>
+    explicit cShallowCopy(tRefPtr<T>&& target) noexcept : target_{std::move(target)} {}
 
-    // FYI rule of zero: tRefPtr does shallow copies, none of the three special functions needs implementing
+    // FYI Rule of Zero: tRefPtr does shallow copies, none of the three special functions needs implementing
 private:
     /*
     FYI tRefPtr is the go-to reference counting pointer to use. You will find it in the code as tJUST_CONTROLLED_PTR,
@@ -160,8 +170,10 @@ public:
     void SetTarget(cReferenceCounted* target) noexcept { target_ = target; }
 
     explicit cDeepCopy(cReferenceCounted* target) noexcept : target_{target} {}
+    template<typename T>
+    explicit cDeepCopy(tRefPtr<T>&& target) noexcept : target_{std::move(target)} {}
 
-    // FYI rule of five: default would be shallow copy, avoid that
+    // FYI Rule of Five: default would be shallow copy, avoid that
     ~cDeepCopy() noexcept = default; // FYI except the destructor, the default is fine
     cDeepCopy(cDeepCopy const& that) : target_(CloneFrom(that)) {}
     cDeepCopy& operator=(cDeepCopy const& that)
@@ -174,6 +186,8 @@ public:
     // but we need to invoke them explicitly because the copy operations above disable them.
     cDeepCopy(cDeepCopy&& that) = default;
     cDeepCopy& operator=(cDeepCopy&& that) = default;
+    // FYI It is of course also allowed to declare a class move-only or non-copyable
+    // by making copy (and optionally move) operations explicitly deleted.
 
 private:
     // helper function: Clone from other
