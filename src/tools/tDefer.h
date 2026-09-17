@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef ArmageTron_tDefer_H
 #define ArmageTron_tDefer_H
 
+#include <utility>
+
 // executes a function when it goes out of scope
 template <typename F>
 class tDeferrer
