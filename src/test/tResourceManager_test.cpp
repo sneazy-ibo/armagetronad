@@ -37,12 +37,12 @@ TEST_SUITE("tResourceManager")
 
             THEN("resRepoServer exists")
             {
-                CHECK(tResourceManager::resRepoServer.Len() > 5);
+                CHECK(tResourceManager::AccessRepoServer().Len() > 5);
             }
             
             THEN("resRepoClient exists")
             {
-                CHECK(tResourceManager::resRepoClient.Len() > 5);
+                CHECK(tResourceManager::AccessRepoClient().Len() > 5);
             }
         }
     }

@@ -19,7 +19,7 @@ TEST_SUITE("tDirectories")
             THEN("tPathResource can be constructed")
             {
                 tPathResource resource;
-                tString included = resource.GetIncluded();
+                tString included = resource.GetDirPath();
                 // We can't predict the exact path, but it should be a valid non-empty tString
                 CHECK(included.Len() >= 5);
             }
@@ -36,7 +36,7 @@ TEST_SUITE("tDirectories")
 
             THEN("GetIncluded returns a path string")
             {
-                tString included = resource.GetIncluded();
+                tString included = resource.GetDirPath();
                 // We can't predict the exact path, but it should be a valid non-empty tString
                 CHECK(included.Len() >= 5);
             }

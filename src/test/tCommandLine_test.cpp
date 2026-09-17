@@ -1,5 +1,6 @@
 #include "doctest.h"
 #include "tCommandLine.h"
+#include "tVersion.h"
 #include "nNetwork.h"
 #include <cstring>
 
@@ -8,27 +9,11 @@
 
 TEST_SUITE("tCommandLine")
 {
-    TEST_CASE("tCommandLineData default construction")
-    {
-        GIVEN("a default tCommandLineData")
-        {
-            tCommandLineData cmdData;
-
-            THEN("it has expected default values")
-            {
-                CHECK(cmdData.programVersion_ == nullptr);
-                // name_ should be empty by default
-                CHECK(strcmp(cmdData.name_, "") == 0);
-            }
-        }
-    }
-
     TEST_CASE("tCommandLineData with empty arguments")
     {
         GIVEN("tCommandLineData with empty arguments")
         {
-            tCommandLineData cmdData;
-            cmdData.programVersion_  = &sn_programVersion;
+            tCommandLineData cmdData(st_programVersion);
 
             WHEN("Analyse is called with minimal arguments")
             {

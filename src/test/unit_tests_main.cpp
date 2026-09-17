@@ -4,6 +4,7 @@
 #include "ePlayer.h"
 #include "tLocale.h"
 #include "tCommandLine.h"
+#include "tVersion.h"
 
 #include <unistd.h>
 
@@ -11,8 +12,7 @@
 int main(int argc, char** argv)
 {
 
-    tCommandLineData commandLine;
-    commandLine.programVersion_ = &sn_programVersion;
+    tCommandLineData commandLine{st_programVersion};
 
     // analyse command line
     // tERR_MESSAGE( "Analyzing command line." );

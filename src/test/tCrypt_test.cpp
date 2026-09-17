@@ -1,5 +1,5 @@
 #include "doctest.h"
-#include "tCrypt.h"
+// #include "tCrypt.h"
 
 // Tests for tCrypt system
 // Purpose: Document the status quo behavior and detect regressions
@@ -39,3 +39,5 @@ TEST_SUITE("tCrypt")
 //
 // Each of these would need to be tested with known test vectors and edge cases.
 // The current test file serves as a placeholder to document the testing gap.
+
+// Z-Man: Removed completely from this branch

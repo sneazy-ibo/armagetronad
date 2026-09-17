@@ -1,8 +1,15 @@
 #include "doctest.h"
 #include "nNetObject.h"
+#include "nProtoBuf.h"
 
 // Tests for nNetObject system
 // Purpose: Document the status quo behavior and detect regressions
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include "nNetObject.pb.h"
+#include "nNetObjectPrivate.pb.h"
+#pragma GCC diagnostic pop
 
 namespace
 {
@@ -11,12 +18,13 @@ class MockNetObject : public nNetObject
 public:
     using nNetObject::nNetObject;
 
-    nDescriptor& CreatorDescriptor() const override;
+    nNetObjectDescriptorBase& DoGetDescriptor() const override;
 };
 
-static nNOInitialisator<MockNetObject> s_mockDescriptor(99, "MockNetObject");
+// static nNOInitialisator<MockNetObject> s_mockDescriptor(99, "MockNetObject");
+static nNetObjectDescriptor< MockNetObject, Network::NetObjectSync > s_mockDescriptor( 99 );
 
-nDescriptor& MockNetObject::CreatorDescriptor() const { return s_mockDescriptor; }
+nNetObjectDescriptorBase& MockNetObject::DoGetDescriptor() const { return s_mockDescriptor; }
 } // namespace
 
 TEST_SUITE("nNetObject")
