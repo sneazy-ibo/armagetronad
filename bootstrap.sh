@@ -43,8 +43,8 @@ echo "Running automake..."
 $AUTOMAKE -a -Wno-portability || { echo "Automake failed"; exit 1; }
 
 # check for unstable nixos links; use copies instead
-if ls install-sh -alt | grep /nix/store > /dev/null; then
-    automake -f -a -c -Wno-portability || exit 1
+if ls ylwrap install-sh -alt | grep /nix/store > /dev/null; then
+    $AUTOMAKE -f -a -c -Wno-portability || exit 1
 fi
 
 echo "Flagging scripts as executable..."
