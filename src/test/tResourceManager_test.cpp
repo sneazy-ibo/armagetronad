@@ -19,7 +19,7 @@ TEST_SUITE("tResourceManager")
             auto* const DEFAULT_MAP = "Anonymous/polygon/regular/square-1.0.1.aamap.xml";
             THEN("openResource works")
             {
-                auto* file = tResourceManager::openResource(nullptr, DEFAULT_MAP);
+                auto* file = tResourceManager::openResource(DEFAULT_MAP);
                 REQUIRE(file);
                 fclose(file);
             }
