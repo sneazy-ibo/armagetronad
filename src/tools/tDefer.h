@@ -52,4 +52,19 @@ tDeferrer<F> tDefer(F&& f)
     return tDeferrer<F>{std::forward<F>(f)};
 }
 
+#define MERGE_(a, b) a##b
+#define LABEL_(a) MERGE_(unique_name_, a)
+#define UNIQUE_LABEL LABEL_(__LINE__)
+
+// for tests: executes CODE once when the macro is used, and once again when the current scope ends
+// CODE needs to end with a semicolon
+#define INVARIANT(CODE) \
+    {                   \
+        CODE            \
+    }                   \
+    auto const UNIQUE_LABEL = tDefer([&]() { CODE });
+
+// for tests: check condition now and when the scope is exited
+#define INVARIANT_CHECK(CONDITION) INVARIANT(CHECK(CONDITION);)
+
 #endif
