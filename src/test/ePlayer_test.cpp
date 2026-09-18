@@ -145,13 +145,11 @@ TEST_SUITE("ePlayer")
             {
                 THEN("returns consistent results for all players")
                 {
-                    // In test context, players are likely not in game
-                    // Just verify it returns a valid boolean without crashing
+                    // In test context, only player 0 is in game
                     for(int i = 0; i < uMAX_PLAYERS; ++i)
                     {
                         bool inGame = ePlayer::PlayerIsInGame(i);
-                        // Simply use the value to ensure it's accessible
-                        CHECK(inGame == inGame);
+                        CHECK(inGame == (i == 0));
                     }
                 }
             }
@@ -233,47 +231,6 @@ TEST_SUITE("ePlayer")
     {
         GIVEN("player preference settings")
         {
-            // Save original values for restoration
-            bool origSpectate[4];
-            bool origStealth[4];
-            bool origAutoLogin[4];
-            bool origCenterIncamOnTurn[4];
-            bool origWobbleIncam[4];
-            bool origAutoSwitchIncam[4];
-            bool origNameTeamAfterMe[4];
-            int origFavoriteNumberOfPlayersPerTeam[4];
-
-            for(int i = 0; i < uMAX_PLAYERS; ++i)
-            {
-                ePlayer* player = ePlayer::PlayerConfig(i);
-                origSpectate[i] = player->spectate;
-                origStealth[i] = player->stealth;
-                origAutoLogin[i] = player->autoLogin;
-                origCenterIncamOnTurn[i] = player->centerIncamOnTurn;
-                origWobbleIncam[i] = player->wobbleIncam;
-                origAutoSwitchIncam[i] = player->autoSwitchIncam;
-                origNameTeamAfterMe[i] = player->nameTeamAfterMe;
-                origFavoriteNumberOfPlayersPerTeam[i] = player->favoriteNumberOfPlayersPerTeam;
-            }
-
-            WHEN("checking boolean preferences")
-            {
-                THEN("all boolean preferences are accessible")
-                {
-                    for(int i = 0; i < uMAX_PLAYERS; ++i)
-                    {
-                        ePlayer* player = ePlayer::PlayerConfig(i);
-                        CHECK(player->spectate == player->spectate);
-                        CHECK(player->stealth == player->stealth);
-                        CHECK(player->autoLogin == player->autoLogin);
-                        CHECK(player->centerIncamOnTurn == player->centerIncamOnTurn);
-                        CHECK(player->wobbleIncam == player->wobbleIncam);
-                        CHECK(player->autoSwitchIncam == player->autoSwitchIncam);
-                        CHECK(player->nameTeamAfterMe == player->nameTeamAfterMe);
-                    }
-                }
-            }
-
             WHEN("checking favoriteNumberOfPlayersPerTeam")
             {
                 THEN("all players have positive values")
@@ -284,20 +241,6 @@ TEST_SUITE("ePlayer")
                         CHECK(player->favoriteNumberOfPlayersPerTeam >= 1);
                     }
                 }
-            }
-
-            // Restore original values
-            for(int i = 0; i < uMAX_PLAYERS; ++i)
-            {
-                ePlayer* player = ePlayer::PlayerConfig(i);
-                player->spectate = origSpectate[i];
-                player->stealth = origStealth[i];
-                player->autoLogin = origAutoLogin[i];
-                player->centerIncamOnTurn = origCenterIncamOnTurn[i];
-                player->wobbleIncam = origWobbleIncam[i];
-                player->autoSwitchIncam = origAutoSwitchIncam[i];
-                player->nameTeamAfterMe = origNameTeamAfterMe[i];
-                player->favoriteNumberOfPlayersPerTeam = origFavoriteNumberOfPlayersPerTeam[i];
             }
         }
     }
