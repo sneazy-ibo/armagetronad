@@ -130,10 +130,7 @@ TEST_SUITE("CodingStyle")
         {
             {
                 // we start and end with zero objects
-                CHECK(0 == cReferenceCounted::GetNumberOfObjects());
-                auto guard = tDefer([] {
-                    CHECK(0 == cReferenceCounted::GetNumberOfObjects());
-                });
+                INVARIANT_CHECK(0 == cReferenceCounted::GetNumberOfObjects())
 
                 // FYI the Make(...) function is the equivalent to std::make_shared or std::make_unique
                 auto referenceCounted = tRefPtr<cReferenceCountedDerived>::Make();
