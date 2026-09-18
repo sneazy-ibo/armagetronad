@@ -99,7 +99,7 @@ Tests are compiled as separate programs that link against the relevant project l
 - Test files end in `_test.cpp`.
 - If, during writing of tests, you find bugs or odd behavior, or cannot write a test because there is something blocking it, write them down in `TODO.md`.
 - Tests should test runtime behavior.
-- Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. `CHECK(true)` and `REQUIRE(true)` are **outlawed**.
+- Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. Trivial checks like `CHECK(true)`, `CHECK(a == a)` and `REQUIRE(true)` are **outlawed**.
   - If the only thing a test can check is "yep, this operation did not crash", just write a comment to that effect.
 - If a test you wrote **SHOULD** work, but does not because of some roadblock you currently have no control over, disable the test via `#if false`, describe the roadblock in a comment, and make a note in `TODO.md`.
 
