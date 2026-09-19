@@ -64,10 +64,12 @@ Old school contributions via patch files also work, but they are harder to discu
 
 ### Introduction
 
-This is a Humans First project. Humans should always be able to read, understand, maintain and extend the source code.
+**This is a Humans First project**. Humans should always be able to read, understand, maintain and extend the source code.
 
 However, there is no denying that the various AI tools can be useful, and many of want to actively use them. We are not fundamentally anti-AI, only
-aware of the adverse effects they can have.
+aware of the adverse effects they can have. We are doing what we can to make work with these tools possible and safe.
+
+There have to be some rules, though, to avoid sloppification.
 
 ### Hard Passes
 
@@ -75,8 +77,8 @@ Do not use AI generators to:
  - Make Images, Sound, Music. Many reasons, but the easiest to point out is that there seems to be a general consensus among gamers: They hate that stuff.
  - Write texts to be read by humans, gamers and developers alike. Write your documentation yourself. Exceptions:
    - AI grammar and spell checkers are fine.
-   - Code comments written along with the code are fine.
-   - Translation tools are fine when communicating on forums and chats are fine. They're not fine for generating translation texts for the game, or translating documentation.
+   - Code comments and commit messages written along with the code are fine.
+   - Translation tools are fine when communicating on forums and chats. They're not fine for generating translation texts for the game, or translating documentation.
 
 ### Code Generation and Modification
 
