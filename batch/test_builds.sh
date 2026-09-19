@@ -132,10 +132,8 @@ elif [ "$1" = "full" ]; then
     ./batch/test_builds.sh all || exit $?
     exit 0
 elif [ "$1" = "debug" ]; then
-    # two configurations, no special directory tag so tools know where to find them
+    # two debug configurations
     SELECTED_CONFIGS=("${DEBUG_CONFIGURATIONS[@]}")
-    CXX_KEY=""
-    WORKSPACE_KEY=""
 else
     SELECTED_CONFIGS=()
     for arg in "$@"; do
@@ -202,6 +200,13 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # flags should be self explanatory
     # the root directory is in there to force rebuild on container/host switches
     BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
+
+	if echo $config | grep _debug > /dev/null; then
+		# debug configurations do not get decorations, the VS code debug configs are really
+		# unflexible and need fixed paths to the executables.
+		WORKSPACE_KEY=""
+		CXX_KEY=""
+	fi
 
     BUILD_DIR="$ROOT/build/test_${NAME}${WORKSPACE_KEY}${CXX_KEY}"
     
