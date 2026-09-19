@@ -110,6 +110,9 @@ public:
     bool LoadWithoutParsing(const char* filename, const char* uri="");
     bool LoadWithParsing(const char* filename, const char* uri="");
 
+    //! Forget the earlier document; LoadWithParsing skips the read while one is cached.
+    void Unload();
+
     // This is a generic parse.  If you're in DOM mode, it will call your ParseDom
     // method, if you're in SAX mode, it will start the sax parser.
     // If you need to parse with special parameters, you need to make your own method
