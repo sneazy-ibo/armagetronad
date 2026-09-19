@@ -1,0 +1,43 @@
+name: Linux build
+
+# Compile check on Linux for the code these branches share with upstream: the
+# macOS port has its own build (mac-build.yml), and this catches anything that
+# would only compile on macOS. It builds, it does not package or run anything.
+
+on:
+  push:
+    branches: [ trunk-mac, trunk-mac-modded ]
+  pull_request:
+    branches: [ trunk-mac, trunk-mac-modded ]
+  workflow_dispatch:
+
+concurrency:
+  group: linux-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake pkg-config bison \
+            libgl1-mesa-dev libglu1-mesa-dev libpng-dev zlib1g-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+            libboost-dev libboost-thread-dev libftgl-dev libglew-dev \
+            libprotobuf-dev protobuf-compiler libxml2-dev libcurl4-openssl-dev
+
+      - name: Build
+        run: |
+          ./bootstrap.sh
+          ./configure --enable-sdl2
+          make -j"$(nproc)"
