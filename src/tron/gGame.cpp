@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "tSysTime.h"
 #include "gGame.h"
 #include "rTexture.h"
+#include "tResourceManager.h"
 #include "gWall.h"
 #include "rConsole.h"
 #include "gCycle.h"
@@ -3027,6 +3028,13 @@ static eLadderLogWriter sg_newWarmupWriter( "NEW_WARMUP", true, "number_matches:
 static eLadderLogWriter sg_matchesLeftWriter( "MATCHES_LEFT", true, "number_matches:int" );
 
 void gGame::StateUpdate(){
+
+    // Reload what arrived in the background; the downloads themselves never block.
+    if ( tResourceManager::consumeFetchCompletions() > 0 )
+    {
+        rITexture::UnloadAll();
+        cCockpit::SetFile( cCockpit::GetFile() );
+    }
 
     //	if (state==GS_CREATED)
     //		stateNext=GS_CREATE_GRID;
