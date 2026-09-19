@@ -1,0 +1,120 @@
+name: Upstream sync
+
+# Keeps trunk-mac and trunk-mac-modded current with upstream trunk: merge first,
+# build the merged result, and only push if it builds, so neither branch is left
+# broken. Conflicts and failed builds are reported instead.
+#
+# Scheduled workflows only run from the repository's default branch, so this
+# file has to exist there.
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: macos-14
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trunk-mac
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: git remote add upstream https://gitlab.com/armagetronad/armagetronad.git
+
+      - name: Merge upstream trunk
+        id: merge
+        run: |
+          git config user.name  "upstream-sync"
+          git config user.email "upstream-sync@users.noreply.github.com"
+          git fetch --no-tags upstream trunk
+          echo "incoming=$(git log --oneline -1 upstream/trunk)" >> "$GITHUB_OUTPUT"
+
+          if ! git merge --no-edit upstream/trunk; then
+            git diff --name-only --diff-filter=U > conflict-files.txt || true
+            git merge --abort || true
+            echo "where=trunk-mac" >> "$GITHUB_OUTPUT"
+            echo "conflict=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git checkout trunk-mac-modded
+          if ! git merge --no-edit trunk-mac; then
+            git diff --name-only --diff-filter=U > conflict-files.txt || true
+            git merge --abort || true
+            echo "where=trunk-mac-modded" >> "$GITHUB_OUTPUT"
+            echo "conflict=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "conflict=0" >> "$GITHUB_OUTPUT"
+
+      - name: Install Homebrew dependencies
+        if: steps.merge.outputs.conflict == '0'
+        run: |
+          brew install pkg-config autoconf automake ftgl glew protobuf boost \
+                       sdl2 sdl2_image sdl2_mixer libpng
+
+      - name: Build the merged result
+        id: build
+        if: steps.merge.outputs.conflict == '0'
+        run: |
+          ./macos-build.sh --clean \
+            --build-dir "$GITHUB_WORKSPACE/.build" \
+            --prefix "$GITHUB_WORKSPACE/dist"
+
+      - name: Push the merges
+        if: steps.merge.outputs.conflict == '0' && steps.build.outcome == 'success'
+        run: |
+          git push origin HEAD:trunk-mac-modded
+          git push origin trunk-mac
+
+      - name: Report problem
+        if: steps.merge.outputs.conflict == '1' || steps.build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          INCOMING: ${{ steps.merge.outputs.incoming }}
+          CONFLICT: ${{ steps.merge.outputs.conflict }}
+          WHERE: ${{ steps.merge.outputs.where }}
+        run: |
+          if [ "$CONFLICT" = "1" ]; then
+            title="Upstream sync: merge conflict in ${WHERE}"
+            body="Merging \`upstream/trunk\` (${INCOMING}) conflicts.
+
+          Files: $(paste -sd' ' - < conflict-files.txt 2>/dev/null || echo unknown)"
+          else
+            title="Upstream sync: builds red after merge"
+            body="Merged \`upstream/trunk\` (${INCOMING}) and the macOS build failed.
+
+          Log tail:
+          \`\`\`
+          $(tail -30 .build/build.log 2>/dev/null || echo "no log")
+          \`\`\`"
+          fi
+          body="${body}
+
+          Run log: ${RUN_URL}"
+          {
+            echo "### ${title}"
+            echo
+            echo "${body}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Issues may be disabled on the repository; then the red run is the report.
+          if existing=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' 2>/dev/null); then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body "$body" || true
+            else
+              gh issue create --title "$title" --body "$body" || true
+            fi
+          else
+            echo "Could not file an issue (Issues may be disabled on this repository)."
+          fi
