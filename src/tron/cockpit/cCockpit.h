@@ -57,11 +57,31 @@ class Base;
 class ePlayerNetID;
 class gCycle;
 
+//! while true the cockpit keeps drawing even though the player counts as chatting
+extern bool sg_hudVisibleInMenu;
+
 //! Cockpit class: keeps a list of widgets and delegates rendering and parsing to them
 class cCockpit : public tXmlResource, public eCockpitPrototype {
     static std::list<cCockpit *> m_Cockpits;
 public:
     static std::list<cCockpit *> const &Cockpits() {return m_Cockpits;}
+
+    //! the cockpit file currently in use
+    static tString GetFile();
+    //! switch to another cockpit file and reload
+    static void SetFile( const tString & file );
+    //! the cockpit shipped as this build's default
+    static tString const & GetDefaultFile();
+
+    //! widgets the player can toggle: those with a toggle key, plus the map
+    void GetToggleWidgets( std::vector< cWidget::Base * > & out );
+
+    //! show or hide the map of the cockpit that has one. Used by the bindable
+    //! HUD_MAP action, so the minimap can be switched during a match.
+    static bool ToggleMap();
+
+    //! the HUD_MAP action itself, so the settings menu can offer a binding for it
+    static class uActionGlobal & GetHudMapAction();
 
     enum cockpit_type {
         VIEWPORT_TOP,
@@ -71,6 +91,7 @@ public:
 
 private:
     cockpit_type m_Type;
+    float m_factor; //!< the last readjust factor, re-applied after re-parsing
 public:
 
     enum cameras {

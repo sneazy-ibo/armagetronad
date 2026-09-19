@@ -55,6 +55,7 @@ static bool stc_forbidHudMap = false;
 // TODO find out why this is throwing an error: “Two tConfItems with the same name FORBID_HUD_MAP!”
 // Z-Man: hmm, it doesn't throw an error for me.
 static nSettingItem<bool> fcs("FORBID_HUD_MAP", stc_forbidHudMap);
+
 extern std::vector<tCoord> se_rimWallRubberBand;
 
 #ifndef DEDICATED

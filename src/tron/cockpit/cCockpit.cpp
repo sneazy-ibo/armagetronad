@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "cockpit/cCamview.h"
 #include "cockpit/cRectangle.h"
 #include "nConfig.h"
+#include "uMenu.h"
 
 #ifndef DEDICATED
 
@@ -68,8 +69,108 @@ static void readjust_cockpit () {
 
 static rCallbackAfterScreenModeChange reloadft(&readjust_cockpit);
 
-static tString cockpit_file("Anonymous/standard-0.0.1.aacockpit.xml");
+//! Keep drawing the cockpit while the settings menu is open. ESC leaves it false,
+//! so the in-game menu still hides the HUD.
+bool sg_hudVisibleInMenu = false;
+
+//! this build's default HUD: the 0.2.9 recreation
+static tString cockpit_file("wrtlprnft/classic-0.0.1.aacockpit.xml");
 static tConfItem<tString> cf("COCKPIT_FILE",cockpit_file,&parsecockpit);
+
+//! Per cockpit memory of whether the map is drawn ("0:path" shown, "1:path"
+//! hidden), so the choice survives switching cockpits and restarting.
+static tString hud_map_states;
+static tConfItemLine hud_map_states_conf( "HUD_MAP_STATES", hud_map_states );
+
+//! the stored map state for a cockpit: 1 hidden, 0 shown, -1 we never saw it
+static int sg_storedMapState( tString const & path )
+{
+    tString::size_type pos = 0;
+    while ( pos < hud_map_states.size() )
+    {
+        tString::size_type end = hud_map_states.find( " ", pos );
+        tString const token = hud_map_states.substr( pos, ( end == tString::npos ? hud_map_states.size() : end ) - pos );
+
+        if ( token.size() > 2 && token[1] == ':' && token.substr( 2 ) == path )
+            return token[0] == '1' ? 1 : 0;
+
+        if ( end == tString::npos )
+            break;
+
+        pos = end + 1;
+    }
+
+    return -1;
+}
+
+//! remember one cockpit's map state
+static void sg_storeMapState( tString const & path, bool hidden )
+{
+    tString out;
+
+    // keep every other entry
+    tString::size_type pos = 0;
+    while ( pos < hud_map_states.size() )
+    {
+        tString::size_type end = hud_map_states.find( " ", pos );
+        tString const token = hud_map_states.substr( pos, ( end == tString::npos ? hud_map_states.size() : end ) - pos );
+
+        bool const mine = token.size() > 2 && token[1] == ':' && token.substr( 2 ) == path;
+        if ( !mine && token.size() > 0 )
+            out << token << " ";
+
+        if ( end == tString::npos )
+            break;
+
+        pos = end + 1;
+    }
+
+    out << ( hidden ? "1:" : "0:" ) << path;
+    hud_map_states = out;
+}
+
+tString cCockpit::GetFile() {
+    return cockpit_file;
+}
+
+tString const & cCockpit::GetDefaultFile() {
+    static tString const def( "wrtlprnft/classic-0.0.1.aacockpit.xml" );
+    return def;
+}
+
+void cCockpit::GetToggleWidgets( std::vector< cWidget::Base * > & out ) {
+    out.clear();
+    for( widget_list_t::iterator i = m_Widgets.begin(); i != m_Widgets.end(); ++i ) {
+        cWidget::Base * widget = &(*(*i));
+        if ( !widget )
+            continue;
+        if ( widget->GetToggleId() > 0 || widget->GetTypeName() == "Map" )
+            out.push_back( widget );
+    }
+}
+
+bool cCockpit::ToggleMap() {
+    for( std::list< cCockpit * >::const_iterator i = m_Cockpits.begin(); i != m_Cockpits.end(); ++i ) {
+        std::vector< cWidget::Base * > parts;
+        ( *i )->GetToggleWidgets( parts );
+
+        for( int p = 0; p < (int)parts.size(); ++p ) {
+            if ( parts[p]->GetTypeName() == "Map" ) {
+                bool const shown = !parts[p]->Active();
+                parts[p]->SetActive( shown );
+                sg_storeMapState( cockpit_file, !shown );   // remember it for this cockpit
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void cCockpit::SetFile( const tString & file ) {
+    cockpit_file = file;
+    parsecockpit();
+}
 
 typedef std::pair<tString, tValue::Callback<cCockpit>::cb_ptr> cbpair;
 static const cbpair cbarray[] = {
@@ -144,6 +245,7 @@ cCockpit::~cCockpit() {
     m_Cockpits.remove(this);
 }
 cCockpit::cCockpit(cockpit_type type) :
+        m_factor(0),
         m_Type(type),
         m_Cam(all),
         m_Player(0),
@@ -195,27 +297,29 @@ tValue::BasePtr cCockpit::cb_CurrentRubber(void) {
     return tValue::BasePtr(new tValue::Float(m_FocusCycle->GetRubber()));
 }
 tValue::BasePtr cCockpit::cb_CurrentAcceleration(void) {
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !m_FocusCycle) return tValue::BasePtr(new tValue::Base());
     return tValue::BasePtr(new tValue::Float(m_FocusCycle->GetAcceleration()));
 }
 tValue::BasePtr cCockpit::cb_CurrentPing(void) {
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    // a widget can be drawn before this cockpit knows its player, and the top
+    // cockpit never has one at all
+    if(m_Type == VIEWPORT_TOP || !m_ViewportPlayer) return tValue::BasePtr(new tValue::Base());
     return tValue::BasePtr(new tValue::Int((int)(m_ViewportPlayer->ping*1000)));
 }
 tValue::BasePtr cCockpit::cb_CurrentSpeed(void) {
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !m_FocusCycle) return tValue::BasePtr(new tValue::Base());
     return tValue::BasePtr(new tValue::Float(m_FocusCycle->Speed()));
 }
 tValue::BasePtr cCockpit::cb_MaxSpeed(void) {
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !m_FocusCycle) return tValue::BasePtr(new tValue::Base());
     return tValue::BasePtr(new tValue::Int( static_cast<int>(ceil( m_FocusCycle->MaximalSpeed() / 10.) *10)));
 }
 tValue::BasePtr cCockpit::cb_CurrentBrakingReservoir(void) {
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !m_FocusCycle) return tValue::BasePtr(new tValue::Base());
     return tValue::BasePtr(new tValue::Float(m_FocusCycle->GetBrakingReservoir()));
 }
 tValue::BasePtr cCockpit::cb_AliveEnemies(void){
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !GetCurrentOrFocusedPlayer()) return tValue::BasePtr(new tValue::Base());
     int aliveenemies=0;
     eTeam *curr = GetCurrentOrFocusedPlayer()->CurrentTeam();
     unsigned short int max = se_PlayerNetIDs.Len();
@@ -227,7 +331,7 @@ tValue::BasePtr cCockpit::cb_AliveEnemies(void){
     return tValue::BasePtr(new tValue::Int(aliveenemies));
 }
 tValue::BasePtr cCockpit::cb_AliveTeammates(void){
-    if(m_Type == VIEWPORT_TOP) return tValue::BasePtr(new tValue::Base());
+    if(m_Type == VIEWPORT_TOP || !GetCurrentOrFocusedPlayer()) return tValue::BasePtr(new tValue::Base());
     int alivemates=0;
     eTeam *curr = GetCurrentOrFocusedPlayer()->CurrentTeam();
     unsigned short int max = se_PlayerNetIDs.Len();
@@ -429,6 +533,9 @@ cCockpit* cCockpit::_instance = 0;
 void cCockpit::ProcessCockpit(void) {
     ClearWidgets();
 
+    // LoadWithParsing skips the read while a document for the path is cached.
+    Unload();
+
     if (!LoadWithParsing(cockpit_file)) return;
     node cur = GetFileContents();
     if(!cur) {
@@ -440,7 +547,25 @@ void cCockpit::ProcessCockpit(void) {
     }
     if (cur.IsOfType("Cockpit")) {
         ProcessWidgets(cur);
-        if(sr_screenWidth != 0) Readjust();
+
+        // a map the player switched off stays off when the cockpit is loaded again
+        int const storedMapState = sg_storedMapState( cockpit_file );
+        if ( storedMapState >= 0 )
+        {
+            std::vector< cWidget::Base * > parts;
+            GetToggleWidgets( parts );
+            for ( int p = 0; p < (int)parts.size(); ++p )
+                if ( parts[p]->GetTypeName() == "Map" )
+                    parts[p]->SetActive( storedMapState == 0 );
+        }
+
+        if(m_factor > 0) {
+            // re-apply the adjustment made before this re-parse; the widgets are
+            // new objects, so it is not carried over by itself
+            Readjust(m_factor);
+        } else if(m_Type == VIEWPORT_TOP && sr_screenWidth != 0) {
+            Readjust();
+        }
         return;
     } else {
         tERR_WARN("Found a node of type '" + cur.GetName() + "' where type 'Cockpit' was expected");
@@ -479,6 +604,7 @@ void cCockpit::ProcessWidgets(node cur) {
             continue;
         }
         cWidget::Base &widget = *widget_ptr;
+        widget.SetTypeName( cur.GetName() );
 
         widget.SetCockpit(this);
         widget.ParseTemplate(true);
@@ -509,7 +635,9 @@ void cCockpit::ProcessWidget(node cur, cWidget::Base &widget) {
     ProcessWidgetCamera(cur, widget);
     int num;
     cur.GetProp("toggle", num);
-    AddEventHandler(num, &widget);
+    widget.SetToggleId(num);
+    if ( num > 0 )
+        AddEventHandler(num, &widget);
     widget.SetDefaultState(cur.GetPropBool("toggleDefault"));
     widget.SetSticky(cur.GetPropBool("toggleSticky"));
     ProcessWidgetCore(cur, widget);
@@ -707,7 +835,7 @@ void cCockpit::Render() {
             Color(1,1,1);
             if(m_Player->cam) {
 
-                if (m_FocusCycle && ( !m_Player->netPlayer || !m_Player->netPlayer->IsChatting()) && se_GameTime()>-2){
+                if (m_FocusCycle && ( !m_Player->netPlayer || !m_Player->netPlayer->IsChatting() || sg_hudVisibleInMenu ) && se_GameTime()>-2){
                     //h->Speed()>maxmeterspeed?maxmeterspeed+=10:1;
 
                     for(widget_list_t::const_iterator i=m_Widgets.begin(); i!=m_Widgets.end(); ++i)
@@ -800,12 +928,29 @@ void cCockpit::AfterRoundProcess() {
 static void display_cockpit_lucifer() {
     static cCockpit static_cockpit(cCockpit::VIEWPORT_TOP);
 
+
     sr_ResetRenderState(true);
 
-    if (!(se_mainGameTimer &&
-            se_mainGameTimer->speed > .9 &&
-            se_mainGameTimer->speed < 1.1 &&
-            se_mainGameTimer->IsSynced() )) return;
+    bool running = se_mainGameTimer &&
+                   se_mainGameTimer->speed > .9 &&
+                   se_mainGameTimer->speed < 1.1 &&
+                   se_mainGameTimer->IsSynced();
+
+    // The game is paused while a menu is open, but the cockpit still has to be drawn.
+    bool pausedInGame = uMenu::MenuActive() && se_mainGameTimer != 0 && se_mainGameTimer->IsSynced();
+
+    if ( !running && !pausedInGame ) return;
+
+    // Fonts scale with the screen, while this viewport is square in pixels.
+    struct ViewportStretchGuard {
+        REAL old;
+        ViewportStretchGuard() : old( sr_fontStretchViewport ) {
+            if ( sr_screenHeight > 0 ) {
+                sr_fontStretchViewport = REAL(sr_screenWidth) / REAL(sr_screenHeight);
+            }
+        }
+        ~ViewportStretchGuard() { sr_fontStretchViewport = old; }
+    } viewportStretchGuard;
 
     rViewportConfiguration* viewportConfiguration = rViewportConfiguration::CurrentViewportConfiguration();
 
@@ -816,6 +961,7 @@ static void display_cockpit_lucifer() {
 
         // get the player
         ePlayer* player = ePlayer::PlayerConfig( playerID );
+        if ( !player ) continue;
 
         rViewport *port = viewportConfiguration->Port( viewport );
         tCoord dims = port->GetDimensions();
@@ -857,6 +1003,22 @@ static uActionGlobalFunc ck3(&cockpitKey3, &cCockpit::ProcessKey3, true);
 static uActionGlobalFunc ck4(&cockpitKey4, &cCockpit::ProcessKey4, true);
 static uActionGlobalFunc ck5(&cockpitKey5, &cCockpit::ProcessKey5, true);
 uActionTooltip sc_key1Tooltip(uActionTooltip::Level_Advanced, cockpitKey1, 1);
+
+//! Bindable map toggle, so hiding the minimap needs no menu.
+static uActionGlobal hudMapAction( "HUD_MAP" );
+static bool sg_hudMapKey( REAL x )
+{
+    if ( x > 0 )
+        cCockpit::ToggleMap();
+
+    return true;
+}
+static uActionGlobalFunc hudMapActionFunc( &hudMapAction, &sg_hudMapKey, true );
+uActionTooltip sc_hudMapTooltip( uActionTooltip::Level_Advanced, hudMapAction, 1 );
+
+uActionGlobal & cCockpit::GetHudMapAction() {
+    return hudMapAction;
+}
 
 bool ProcessKey(float i, int num) {
     bool ret = false;
@@ -901,6 +1063,7 @@ void cCockpit::Readjust(void) {
     Readjust(factor);
 }
 void cCockpit::Readjust(float factor) {
+    m_factor = factor;
     for(widget_list_t::iterator iter = m_Widgets.begin(); iter != m_Widgets.end(); ++iter) {
         if(cWidget::WithCoordinates *coordWidget = dynamic_cast<cWidget::WithCoordinates *>(&(*(*iter)))) {
             coordWidget->SetFactor(factor);

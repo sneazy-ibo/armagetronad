@@ -2522,6 +2522,10 @@ void MainMenu(bool ingame){
     (&MainMenu,&Settings,
      "$system_settings_menu_help");
 
+    uMenuItemSubmenu subm_modded
+    (&Settings,&sg_moddedMenu,
+     "Settings added by this build");
+
 
     uMenuItem* team = NULL;
     if ( ingame )
