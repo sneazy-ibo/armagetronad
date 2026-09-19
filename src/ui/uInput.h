@@ -50,6 +50,9 @@ extern REAL su_doubleBindTimeout; //! timeout value for double binds; second key
 
 class uActionTooltip;
 
+//! The first key bound to an action, for showing which key does something.
+tString su_GetBoundKeyName( class uAction * action );
+
 // the possible actions; player actions and global actions
 
 class uAction:public tListItem<uAction>{
@@ -352,8 +355,9 @@ class uMenuItemInput: uMenuItem
     uAction      *act;
     int         ePlayer;
     bool        active;
+    tString      label;   //!< shown instead of the action's own description when set
 public:
-    uMenuItemInput(uMenu *M,uAction *a,int p);
+    uMenuItemInput(uMenu *M,uAction *a,int p,char const * newLabel=0);
     virtual ~uMenuItemInput(){}
     virtual void Render(REAL x,REAL y,REAL alpha=1,bool selected=0);
     virtual void Enter();

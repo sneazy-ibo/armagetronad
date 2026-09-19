@@ -1857,14 +1857,42 @@ void uActionTooltip::ReadVal(std::istream & s )
 //  Menuitem for input selection
 // *****************************************************
 
-uMenuItemInput::uMenuItemInput(uMenu *M,uAction *a,int p)
-    :uMenuItem(M,a->helpText),act(a),ePlayer(p),active(0)
+uMenuItemInput::uMenuItemInput(uMenu *M,uAction *a,int p,char const * newLabel)
+    :uMenuItem(M,a->helpText),act(a),ePlayer(p),active(0),label(newLabel?newLabel:"")
 {
+}
+
+tString su_GetBoundKeyName( uAction * action )
+{
+    if ( !action )
+        return tString();
+
+    // Prefer a real key over mouse or joystick; global actions are player -1 or 0.
+    tString fallback;
+
+    for ( uInputs::const_iterator i = su_inputs.begin(); i != su_inputs.end(); ++i )
+    {
+        uBind * bind = (*i)->GetBind();
+        if ( !bind || bind->act != action || (*i)->Name().size() == 0 )
+            continue;
+        if ( !bind->CheckPlayer( -1 ) && !bind->CheckPlayer( 0 ) )
+            continue;
+
+        tString const name( (*i)->Name() );
+        if ( (*i)->PersistentID().StartsWith( "SCANCODE_" ) )
+            return name;
+
+        if ( fallback.Len() == 0 )
+            fallback = name;
+    }
+
+    return fallback;
 }
 
 void uMenuItemInput::Render(REAL x,REAL y,REAL alpha,bool selected)
 {
-    DisplayText(REAL(x-.02),y,act->description,selected,alpha,1);
+    char const * text = label.Len() > 0 ? (char const *)label : (char const *)act->description;
+    DisplayText(REAL(x-.02),y,text,selected,alpha,1);
 
     if (active)
     {

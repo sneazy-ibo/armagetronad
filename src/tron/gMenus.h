@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern void  sg_PlayerMenu();
 extern uMenu sg_screenMenu;
+extern uMenu sg_moddedMenu;
 void         sg_ConsoleInput(); // let the player enter one line of console input
 
 #endif

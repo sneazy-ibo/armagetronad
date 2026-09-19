@@ -448,13 +448,17 @@ void WithColorFunctions::ProcessGradientCore(tXmlParser::node cur, rGradient &gr
 void WithColorFunctions::ProcessImage(tXmlParser::node cur, rGradient &gradient, int repeat) {
     for(cur = cur.GetFirstChild(); cur; ++cur) {
         if(cur.IsOfType("Graphic")) {
+            // Some cockpits omit the extension (the tutorials, Lucifer's Playroom); path
+            // validation rejects an empty one, which re-downloaded the graphic every load.
+            tString extension = cur.HasProp("extension") ? cur.GetProp("extension") : tString("png");
+
             tResourcePath path(
                 cur.HasProp("author") ? cur.GetProp("author") : m_Cockpit->Path().Author(),
                 cur.HasProp("category") ? cur.GetProp("category") : m_Cockpit->Path().Category(),
                 cur.GetProp("name"),
                 cur.GetProp("version"),
                 tString("aatex"),
-                cur.GetProp("extension"),
+                extension,
                 cur.GetProp("uri")
             );
             gradient.SetTexture(rResourceTexture(path, repeat & 1, repeat & 2));

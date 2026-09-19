@@ -59,6 +59,8 @@ namespace cWidget {
 class Base : public tReferencable<Base> {
     int m_Cam; //!< The camera(s) the widget will be rendered for
     bool m_ParsingTemplate;
+    int m_ToggleId; //!< cockpit key that toggles this widget (0 = none)
+    tString m_TypeName; //!< the XML element this widget was made from, for user visible lists
 protected:
     void DisplayError(tXmlParser::node cur); //!< Displays a parsing error message
     bool m_Render; //!< Should this Widget be rendered?
@@ -66,7 +68,7 @@ protected:
     bool m_Sticky; //!< Should this Widget be sticky?
     cCockpit *m_Cockpit; //!< the cockpit this widget belongs to
 public:
-    Base() : m_ParsingTemplate(false), m_Render(true), m_RenderDefault(true), m_Sticky(true) {}
+    Base() : m_ParsingTemplate(false), m_ToggleId(0), m_Render(true), m_RenderDefault(true), m_Sticky(true) {}
     virtual ~Base() { }
     virtual void Render() = 0; //!< Needs to be owerwritten for all widgets that can be rendered (and therefore created)
     virtual void PostParsingProcess() {};
@@ -80,6 +82,14 @@ public:
     void SetCockpit(cCockpit *cockpit) {m_Cockpit = cockpit;} //!< Set the cockpit this widget belongs to
     void SetSticky (bool sticky) { m_Sticky = sticky; }
     bool Active() { return m_Render; } //!< Should we render this?
+    //! show or hide the widget outright (used by the settings menu)
+    void SetActive (bool active) { m_Render = active; }
+    //! cockpit key that toggles this widget, 0 if it has none
+    int GetToggleId() { return m_ToggleId; }
+    void SetToggleId (int id) { m_ToggleId = id; }
+    //! name of the XML element behind this widget, for menu labels
+    tString const & GetTypeName() { return m_TypeName; }
+    void SetTypeName (tString const & name) { m_TypeName = name; }
     //! Toggle activity
     void Toggle(bool state) {
         if(m_Sticky) {
@@ -198,6 +208,9 @@ public:
 class WithCaption : virtual public Base{
     void ProcessCaption(tXmlParser::node cur); //!< Processes the inside of a Caption node
     void ProcessCaptionLocation(tXmlParser::node cur); //!< Processes the location attribute of a Caption node
+public:
+    //! the caption text, used to name the widget in the settings menu
+    tString const & GetCaptionText() const { return m_caption; }
 protected:
     enum location { //!< the possible positions of a caption
         top,

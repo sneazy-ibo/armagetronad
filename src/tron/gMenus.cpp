@@ -39,6 +39,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "rModel.h"
 #include "gGame.h"
 #include "gCycle.h"
+#include "cockpit/cCockpit.h"
+#include "cockpit/cMap.h"
+#include "rFont.h"
+#include "tDirectories.h"
 #include "tRecorder.h"
 #include "rSysdep.h"
 #include "uInput.h"
@@ -46,6 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sstream>
 #include <set>
 #include <ctime>
+#include <algorithm>
 #include <vector>
 #include <array>
 #include <memory>
@@ -76,6 +81,915 @@ static uMenuItemSubmenu smp(&sg_screenMenu,&screen_menu_prefs,
                             "$preferences_menu_help");
 static uMenuItemFunction smm(&sg_screenMenu,"$screen_mode_menu",
                              "$screen_mode_menu_help", sg_ScreenModeMenu );
+
+// Modded Settings: HUD and look options added by this build.
+
+uMenu sg_moddedMenu("Modded Settings");
+
+//! The cockpit in use: what the menu was opened with, or what was last confirmed
+//! with enter. Hovering only previews, so this is both what the list marks and what
+//! a cancelled menu returns to.
+static tString sg_cockpitCommitted;
+
+static void sg_ModdedSettingsMenu()
+{
+    // Same as pressing escape: tell the chat system, and pause a local game.
+    se_ChatState( ePlayerNetID::ChatFlags_Menu, true );
+    if ( sn_GetNetState() == nSTANDALONE )
+        se_PauseGameTimer( true, eTIMER_PAUSE_MENU );
+
+    // ... but keep the HUD drawn while we are in here. The in-game menu lets it
+    // disappear, this one should not.
+    sg_hudVisibleInMenu = true;
+
+    // what was in use when we came in: hovering only previews, so a menu left
+    // without pressing enter goes back to this
+    sg_cockpitCommitted = cCockpit::GetFile();
+
+    sg_moddedMenu.Enter();          // returns once the menu is left
+
+    sg_hudVisibleInMenu = false;
+
+    if ( sg_cockpitCommitted.Len() > 0 && cCockpit::GetFile() != sg_cockpitCommitted )
+        cCockpit::SetFile( sg_cockpitCommitted );
+    sg_cockpitCommitted = tString();
+
+    if ( sn_GetNetState() == nSTANDALONE )
+        se_PauseGameTimer( false, eTIMER_PAUSE_MENU );
+    se_ChatState( ePlayerNetID::ChatFlags_Menu, false );
+}
+
+static uActionGlobal moddedSettingsAction( "MODDED_SETTINGS" );
+static bool sg_moddedSettingsKey( REAL x )
+{
+    if ( x > 0 )
+    {
+        if ( uMenu::MenuActive() )
+            sg_moddedMenu.Exit();          // back out and play on
+        else
+            st_ToDo( &sg_ModdedSettingsMenu );
+    }
+
+    return true;
+}
+static uActionGlobalFunc moddedSettingsActionFunc( &moddedSettingsAction, &sg_moddedSettingsKey, true );
+
+//! Binding for the action above, in the menu it opens.
+static uMenuItemInput moddedSettingsBinding( &sg_moddedMenu, &moddedSettingsAction, 0, "Open this menu" );
+
+//! Binding for the in-game map toggle; H until the player changes it.
+static uMenuItemInput moddedHudMapBinding( &sg_moddedMenu, &cCockpit::GetHudMapAction(), 0 );
+
+//! re-read the current cockpit file, so layout edits apply without a restart
+static void sg_reloadCockpit()
+{
+    cCockpit::SetFile( cCockpit::GetFile() );
+    con << "Cockpit reloaded: " << cCockpit::GetFile() << "\n";
+}
+
+//! Horizontal stretch of all text; 1 is the engine default.
+static uMenuItemReal moddedTextWidth( &sg_moddedMenu,
+                                      "Text width",
+                                      "Horizontal stretch of all text. 1 = normal",
+                                      sr_fontStretch, 0.5, 2.5, 0.05 );
+
+//! changing the font type reloads the fonts at once, so the effect is visible
+static void sg_fontChosen( int const & )
+{
+    sr_ReloadFont();
+}
+
+//! font rendering type; values match the FONT_TYPE setting
+class gFontMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gFontMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Font", "How text is rendered", sr_fontType, &sg_fontChosen )
+    {
+        NewChoice( tOutput( "Pixmap" ),   tOutput( "Fixed size, like the original 0.2.9 look" ), sr_fontPixmap );
+        NewChoice( tOutput( "Bitmap" ),   tOutput( "Bitmap font" ),                              sr_fontBitmap );
+        NewChoice( tOutput( "Texture" ),  tOutput( "Scaled texture font, the default" ),         sr_fontTexture );
+        NewChoice( tOutput( "Polygon" ),  tOutput( "Polygon font" ),                             sr_fontPolygon );
+        NewChoice( tOutput( "Outline" ),  tOutput( "Outline font" ),                             sr_fontOutline );
+        NewChoice( tOutput( "Extruded" ), tOutput( "Extruded font, experimental" ),              sr_fontExtruded );
+    }
+};
+
+static gFontMenuItem moddedFont( &sg_moddedMenu );
+
+// Cockpits. The catalogue is the wiki's list, kept here in the source so it is
+// always there, and it supplies the prose that a cockpit XML cannot carry.
+
+struct gCockpitVersion
+{
+    char const * label;   // "0.0.7"
+    char const * path;
+    char const * url;     // empty when the default repository serves it
+    char const * note;    // what is special about this version
+};
+
+struct gCockpitCatalogueEntry
+{
+    char const * title;
+    char const * author;
+    char const * description;
+    gCockpitVersion const * versions;
+    int versionCount;
+    bool forked;          //!< this build's own version of someone else's cockpit
+};
+
+static gCockpitVersion const sg_versions_classic[] = {
+    { "0.0.1", "wrtlprnft/classic-0.0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_classicMinimap[] = {
+    { "0.0.2", "nelg/armaclassic-0.0.2.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_classicPlus[] = {
+    { "0.0.1", "rxfreaks/cockpits/classicplus-0.0.1.aacockpit.xml",
+      "http://rxtron.com/aa/resource/rxfreaks/cockpits/classicplus-0.0.1.aacockpit.xml",
+      "its host is frequently unreachable" },
+};
+static gCockpitVersion const sg_versions_essential[] = {
+    { "0.0.5", "Rain/essential-0.0.5.aacockpit.xml", "", "the current one" },
+    { "0.0.1", "Rain/essential-0.0.1.aacockpit.xml", "", "the first release" },
+};
+static gCockpitVersion const sg_versions_cadillac[] = {
+    { "0.1", "Cadillac/cockpits/full-0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_nivek[] = {
+    { "1.1.0", "NIVEK/Cockpits/Niveks_vanplus-1.1.0.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_playroom[] = {
+    { "0.0.3", "Lucifer/sick/Playroom-0.0.3.aacockpit.xml", "",
+      "shipped with this build; the repository copy is empty" },
+    { "0.0.1", "Lucifer/sick/Playroom-0.0.1.aacockpit.xml", "", "the version on the wiki" },
+};
+static gCockpitVersion const sg_versions_skypit[] = {
+    { "0.0.1", "lukesky/skypit-0.0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_standard[] = {
+    { "0.0.1", "Anonymous/standard-0.0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_vanoriginal[] = {
+    { "0.0.1", "Vanhayes/cockpit/vanoriginal-0.0.1.aacockpit.xml", "",
+      "its host is frequently unreachable" },
+};
+static gCockpitVersion const sg_versions_vanoriginalFix[] = {
+    { "0.0.2", "vov/cockpit/vanoriginal_mapfix-0.0.2.aacockpit.xml", "", "map is transparent again" },
+};
+static gCockpitVersion const sg_versions_vov[] = {
+    { "0.6", "vov/cockpit/new_notextures-0.6.aacockpit.xml", "", "no textures" },
+};
+static gCockpitVersion const sg_versions_wordsview[] = {
+    { "0.0.1", "Word/cockpit/WordsView-0.0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_wrtl[] = {
+    { "0.0.3", "wrtlprnft/testfile-0.0.3.aacockpit.xml", "", "needs 0.3.1 or later" },
+};
+static gCockpitVersion const sg_versions_xevi[] = {
+    { "0.0.7", "xevi/xevi-0.0.7.aacockpit.xml", "", "the version the repository serves" },
+};
+static gCockpitVersion const sg_versions_abyss[] = {
+    { "0.0.1", "spidey/abyss-0.0.1.aacockpit.xml", "", "" },
+};
+static gCockpitVersion const sg_versions_pink[] = {
+    { "0.0.1", "spidey/pink-0.0.1.aacockpit.xml", "", "" },
+};
+
+//! our fork of Pink, kept under its own name so the original is untouched
+static gCockpitVersion const sg_versions_pinkplus[] = {
+    { "0.0.1", "spidey/pinkplus-0.0.1.aacockpit.xml", "", "ping fixed, brake gauge added" },
+};
+
+static gCockpitCatalogueEntry const sg_cockpitCatalogue[] =
+{
+    { "Classic", "wrtlprnft",
+      "The 0.2.9 HUD recreated: needle gauges for speed, rubber and brakes, scores, fastest player, enemies and friends, ping and the frame rate, in the original colours and positions. This build's default.",
+      sg_versions_classic, 1, true },
+    { "Classic Minimap", "nelg", "The classic cockpit with a minimap added.",
+      sg_versions_classicMinimap, 1 },
+    { "Classic Plus", "dukevin",
+      "Classic plus health gauges above cycles, a small transparent minimap in the corner, a speed-versus-fastest meter, and a brake meter that changes colour with the brake left.",
+      sg_versions_classicPlus, 1 },
+    { "Essential", "rain",
+      "Simple and lightweight. Cockpit key 1 hides the brake and speed labels, key 2 shows the debug tools.",
+      sg_versions_essential, 2 },
+    { "Cadillac's Cockpit", "Cadillac",
+      "A clean fortress layout meant to be read in peripheral vision: impact meters, enemy rubber and brakes, team balance and a minimap. Cockpit keys 1 to 5 toggle the extras.",
+      sg_versions_cadillac, 1 },
+    { "NIVEK's vanplus", "NIVEK",
+      "Vanoriginal and Classic Plus mixed: a three mode map, a front proximity gauge, enemy rubber and a last-alive bar. Cockpit keys 1 to 5 cycle the map views and toggle the meters.",
+      sg_versions_nivek, 1 },
+    { "Playroom", "Lucifer",
+      "A fortress cockpit with every gauge close to where your eyes already are: speed, brake and rubber meters, a colour coded enemies gauge and a map.",
+      sg_versions_playroom, 2 },
+    { "Skypit", "LukeSky", "A compact HUD. Cockpit key 1 toggles the map, key 2 the time and FPS display.",
+      sg_versions_skypit, 1 },
+    { "Standard", "wrtlprnft and Lucifer",
+      "The stock 0.3 and 0.4 HUD: HUD map and bar gauges, showing about the same data as 0.2.8.",
+      sg_versions_standard, 1 },
+    { "Vanoriginal", "Vanhayes",
+      "All gauges are vertical bars, the top right only shows time and FPS, and the enemies and friends meter from incam is included. Cockpit keys 1, 2 and 5 toggle the map, the impact meters and the top right labels.",
+      sg_versions_vanoriginal, 1 },
+    { "Vanoriginal (map fix)", "vov", "vov's fixed version of Vanoriginal.",
+      sg_versions_vanoriginalFix, 1 },
+    { "vov's Cockpit", "Ninja Potato",
+      "A well documented cockpit, without textures. Cockpit key 5 toggles the side bars.",
+      sg_versions_vov, 1 },
+    { "WordsView", "Word",
+      "Vertical gauges, a minimap, and rubber meters drawn above enemies and teammates.",
+      sg_versions_wordsview, 1 },
+    { "Wrtl's Cockpit", "wrtlprnft",
+      "A big rubber gauge on the left, player information top right, and a gauge showing the approximate time to the next impact. Cockpit key 1 hides the big map, key 2 dims the 3D rendering.",
+      sg_versions_wrtl, 1 },
+    { "Xevi's Cockpit", "Xevi",
+      "An evolution of the real HUD with warning bars for front, left and right impacts. Cockpit key 3 switches to the full screen map.",
+      sg_versions_xevi, 1 },
+    { "Abyss", "Spidey", "A dark, minimal cockpit.", sg_versions_abyss, 1 },
+    { "Pink", "Spidey", "A pink themed cockpit.", sg_versions_pink, 1 },
+    { "Pink Plus", "Spidey", "spidey's Pink with the ping working and a brake bar gauge added. Speed, rubber and brakes as bars, enemies and friends, scores, time, FPS, ping and a map.",
+      sg_versions_pinkplus, 1, true },
+};
+
+static int const sg_cockpitCatalogueSize = sizeof( sg_cockpitCatalogue ) / sizeof( sg_cockpitCatalogue[0] );
+
+//! the submenu the browser lives in
+uMenu sg_cockpitMenu( "Cockpits", false );
+
+//! cockpit files found in the resource directories, as resource paths
+static tArray< tString > sg_cockpitFiles;
+
+//! those of them that contain a Map widget. Detected from the file itself, so it
+//! also works for a cockpit that is not the one in use, and before a game starts.
+static std::vector< tString > sg_cockpitsWithMap;
+
+//! the path a version entry loads
+static tString sg_cockpitPath( gCockpitVersion const & version )
+{
+    tString path( version.path );
+    if ( version.url[0] != '\0' )
+        path << "(" << version.url << ")";
+
+    return path;
+}
+
+//! does this cockpit file hold a map? looks for the Map element in the XML
+static bool sg_scanCockpitForMap( tString const & path )
+{
+    FILE * file = tResourceManager::openResource( path );
+    if ( !file )
+        return false;
+
+    bool found = false;
+    char buffer[4096];
+    size_t got = 0;
+    tString tail;
+
+    while ( ( got = fread( buffer, 1, sizeof( buffer ), file ) ) > 0 )
+    {
+        tString chunk;
+        chunk.append( buffer, got );
+        tail << chunk;
+
+        // "<Map", but not "<MapModes": the element name ends in space, > or /
+        tString::size_type pos = tail.find( "<Map" );
+        while ( pos != tString::npos )
+        {
+            char const next = pos + 4 < tail.Len() ? tail[pos + 4] : '\0';
+            if ( next == '\0' || next == '>' || next == '/' || next == ' ' || next == '\t' || next == '\n' || next == '\r' )
+            {
+                found = true;
+                break;
+            }
+            pos = tail.find( "<Map", pos + 4 );
+        }
+
+        if ( found )
+            break;
+
+        // keep enough of the tail to see an element split across reads
+        if ( tail.Len() > 16 )
+            tail = tail.substr( tail.Len() - 16 );
+    }
+
+    fclose( file );
+    return found;
+}
+
+//! does this cockpit file hold a map?
+static bool sg_cockpitHasMap( char const * path )
+{
+    for ( int i = 0; i < (int)sg_cockpitsWithMap.size(); ++i )
+        if ( sg_cockpitsWithMap[i] == path )
+            return true;
+
+    return false;
+}
+
+//! does the resource directory hold this cockpit?
+static bool sg_cockpitInstalled( char const * path )
+{
+    for ( int i = 0; i < sg_cockpitFiles.Len(); ++i )
+        if ( sg_cockpitFiles( i ) == path )
+            return true;
+
+    return false;
+}
+
+//! the catalogue in the order it is shown: what is installed first, then the
+//! rest, each group sorted by title
+static std::vector< int > sg_cockpitOrder;
+
+static int sg_lowerCase( int c )
+{
+    return ( c >= 'A' && c <= 'Z' ) ? c - 'A' + 'a' : c;
+}
+
+//! is any version of this cockpit installed?
+static bool sg_cockpitEntryInstalled( gCockpitCatalogueEntry const & entry )
+{
+    for ( int v = 0; v < entry.versionCount; ++v )
+        if ( sg_cockpitInstalled( entry.versions[v].path ) )
+            return true;
+
+    return false;
+}
+
+static bool sg_cockpitTitleLess( int a, int b )
+{
+    char const * x = sg_cockpitCatalogue[a].title;
+    char const * y = sg_cockpitCatalogue[b].title;
+
+    for ( ; *x != '\0' && *y != '\0'; ++x, ++y )
+    {
+        int const cx = sg_lowerCase( *x );
+        int const cy = sg_lowerCase( *y );
+        if ( cx != cy )
+            return cx < cy;
+    }
+
+    return *x == '\0' && *y != '\0';
+}
+
+static void sg_buildCockpitOrder()
+{
+    std::vector< int > installed, rest;
+
+    for ( int i = 0; i < sg_cockpitCatalogueSize; ++i )
+    {
+        if ( sg_cockpitEntryInstalled( sg_cockpitCatalogue[i] ) )
+            installed.push_back( i );
+        else
+            rest.push_back( i );
+    }
+
+    std::sort( installed.begin(), installed.end(), sg_cockpitTitleLess );
+    std::sort( rest.begin(), rest.end(), sg_cockpitTitleLess );
+
+    sg_cockpitOrder = installed;
+    sg_cockpitOrder.insert( sg_cockpitOrder.end(), rest.begin(), rest.end() );
+}
+
+//! where the list cursor is, and which version of the highlighted cockpit is chosen
+static int sg_cockpitSelected = 0;
+static int sg_cockpitVersionEntry = -1;
+static int sg_cockpitSelectedVersion = 0;
+
+//! the entry under the cursor
+static gCockpitCatalogueEntry const & sg_selectedCockpit()
+{
+    return sg_cockpitCatalogue[ sg_cockpitOrder[ sg_cockpitSelected ] ];
+}
+
+//! Preview the cockpit under the cursor, but only one that is already here.
+static void sg_previewCockpit()
+{
+    gCockpitCatalogueEntry const & entry = sg_selectedCockpit();
+
+    // the chosen version if it is installed, else the newest installed one
+    int pick = -1;
+    if ( sg_cockpitSelectedVersion >= 0 && sg_cockpitSelectedVersion < entry.versionCount
+         && sg_cockpitInstalled( entry.versions[sg_cockpitSelectedVersion].path ) )
+        pick = sg_cockpitSelectedVersion;
+    else
+        for ( int v = 0; v < entry.versionCount; ++v )
+            if ( sg_cockpitInstalled( entry.versions[v].path ) )
+                pick = v;
+
+    if ( pick >= 0 )
+        cCockpit::SetFile( sg_cockpitPath( entry.versions[pick] ) );
+    else if ( sg_cockpitCommitted.Len() > 0 )
+        // nothing to show for this one: don't leave a different cockpit's HUD up
+        cCockpit::SetFile( sg_cockpitCommitted );
+}
+
+//! make sure the chosen version belongs to the highlighted cockpit, defaulting to
+//! a version that is already here
+static void sg_syncCockpitVersion()
+{
+    if ( sg_cockpitVersionEntry == sg_cockpitSelected )
+        return;
+
+    sg_cockpitVersionEntry = sg_cockpitSelected;
+    sg_cockpitSelectedVersion = 0;
+
+    gCockpitCatalogueEntry const & entry = sg_selectedCockpit();
+    for ( int v = 0; v < entry.versionCount; ++v )
+        if ( sg_cockpitInstalled( entry.versions[v].path ) )
+            sg_cockpitSelectedVersion = v;
+}
+
+//! Collect the cockpits in one directory, then look deeper: a resource path is
+//! <author>/[<category>/]<name>, so they can sit three directories below a root.
+static void sg_scanCockpitDir( tString const & root, tString const & prefix, int depth )
+{
+    tArray< tString > files;
+    tDirectories::GetFiles( root + prefix, tString( "*.aacockpit.xml" ), files, tDirectories::eGetFilesFilesOnly );
+    for ( int f = 0; f < files.Len(); ++f )
+    {
+        tString file = prefix + files( f );
+
+        // the tutorial cockpits belong to the tutorial maps, they are not
+        // something a player picks
+        if ( file.find( "/tutorial/" ) != tString::npos )
+            continue;
+
+        // 'included/' and 'automatic/' name repositories, not part of the resource path.
+        if ( file.substr( 0, 9 ) == "included/" )
+            file = file.substr( 9 );
+        else if ( file.substr( 0, 10 ) == "automatic/" )
+            file = file.substr( 10 );
+
+        bool known = false;
+        for ( int i = 0; i < sg_cockpitFiles.Len(); ++i )
+            if ( sg_cockpitFiles( i ) == file )
+                known = true;
+
+        if ( !known )
+        {
+            sg_cockpitFiles.push_back( file );
+            if ( sg_scanCockpitForMap( file ) )
+                sg_cockpitsWithMap.push_back( file );
+        }
+    }
+
+    if ( depth <= 0 )
+        return;
+
+    tArray< tString > dirs;
+    tDirectories::GetFiles( root + prefix, tString( "*" ), dirs, tDirectories::eGetFilesDirsOnly );
+    for ( int d = 0; d < dirs.Len(); ++d )
+        sg_scanCockpitDir( root, prefix + dirs( d ), depth - 1 );
+}
+
+static void sg_findCockpits()
+{
+    sg_cockpitFiles.SetLen( 0 );
+    sg_cockpitsWithMap.clear();
+
+    tArray< tString > roots;
+    tDirectories::Resource().GetPaths( roots );
+
+    for ( int r = 0; r < roots.Len(); ++r )
+    {
+        tString root = roots( r );
+        if ( !root.EndsWith( "/" ) )
+            root += "/";
+
+        sg_scanCockpitDir( root, tString( "" ), 3 );
+    }
+}
+
+//! is this the cockpit in use? the configured value may carry its repository
+static bool sg_cockpitIsCurrent( gCockpitVersion const & version )
+{
+    return sg_cockpitCommitted == sg_cockpitPath( version ) || sg_cockpitCommitted == version.path;
+}
+
+//! the HUD parts of the cockpit in use (the map first, so the browser can find it)
+static std::vector< cWidget::Base * > sg_hudParts;
+
+static void sg_findHudParts()
+{
+    sg_hudParts.clear();
+
+    for ( std::list< cCockpit * >::const_iterator i = cCockpit::Cockpits().begin();
+          i != cCockpit::Cockpits().end() && sg_hudParts.empty(); ++i )
+    {
+        std::vector< cWidget::Base * > parts;
+        ( *i )->GetToggleWidgets( parts );
+        sg_hudParts = parts;
+    }
+}
+
+static cWidget::Base * sg_hudPart( char const * typeName )
+{
+    for ( int i = 0; i < (int)sg_hudParts.size(); ++i )
+        if ( sg_hudParts[i]->GetTypeName() == typeName )
+            return sg_hudParts[i];
+
+    return 0;
+}
+
+//! label of a toggleable HUD part: its caption if it has one, else its type
+static tString sg_hudPartLabel( cWidget::Base * widget )
+{
+    if ( cWidget::WithCaption * caption = dynamic_cast< cWidget::WithCaption * >( widget ) )
+        if ( caption->GetCaptionText().Len() > 0 )
+            return caption->GetCaptionText();
+
+    return widget->GetTypeName();
+}
+
+//! The state of a cockpit: in use, here, or still to fetch.
+static char const * sg_cockpitStateIcon( bool inUse, bool installed )
+{
+    if ( inUse )
+        return "[*]";
+    return installed ? "[x]" : "[ ]";
+}
+
+//! One row of the list; also used for measuring it.
+static tString sg_cockpitRowLabel( gCockpitCatalogueEntry const & entry, bool cursor, bool * installedOut )
+{
+    bool inUse = false;
+    bool installed = false;
+    for ( int v = 0; v < entry.versionCount; ++v )
+    {
+        if ( sg_cockpitInstalled( entry.versions[v].path ) )
+            installed = true;
+        if ( sg_cockpitIsCurrent( entry.versions[v] ) )
+            inUse = true;
+    }
+    if ( installedOut )
+        *installedOut = installed;
+
+    tString label( cursor ? "> " : "  " );
+    label << ( entry.forked ? "+ " : "  " );
+    label << sg_cockpitStateIcon( inUse, installed );
+    label << " " << entry.title;
+
+    return label;
+}
+
+//! The height text can have without growing wider than maxWidth.
+static REAL sg_fitHeight( tString const & text, REAL h, REAL maxWidth )
+{
+    REAL const w = rTextField::GetTextLength( text, h, false );
+    return ( w > maxWidth && w > 0 ) ? h * maxWidth / w : h;
+}
+
+//! The browser: the cockpits on the left, everything about the highlighted one on
+//! the right, including the controls that belong to it.
+class uMenuItemCockpitBrowser : public uMenuItem
+{
+public:
+    uMenuItemCockpitBrowser( uMenu * menu )
+        : uMenuItem( menu, tOutput() ) {}
+
+    //! reading the list again on entry keeps it correct after a download
+    virtual void Select()
+    {
+        sg_findCockpits();
+        sg_buildCockpitOrder();
+        sg_cockpitSelected = 0;
+        sg_findHudParts();
+        sg_syncCockpitVersion();
+
+        if ( sg_cockpitCommitted.Len() == 0 )
+            sg_cockpitCommitted = cCockpit::GetFile();
+    }
+
+    //! the browser draws its own help, and it does not fit the menu's help box
+    virtual bool DisplayHelp( bool, REAL, REAL ) { return false; }
+
+    virtual void RenderBackground()
+    {
+        menu->GenericBackground();
+    }
+
+    virtual void Render( REAL, REAL, REAL alpha, bool selected );
+
+    virtual bool Event( SDL_Event & event );
+
+    virtual void Enter();
+
+private:
+};
+
+void uMenuItemCockpitBrowser::Render( REAL, REAL, REAL alpha, bool )
+{
+#ifndef DEDICATED
+    if ( !sr_glOut )
+        return;
+
+    REAL const hText = .055f;    // half the menu default (.11): readable, and
+    REAL const hTitle = .075f;   // leaves room for two panes of text
+    REAL const line = .075f;
+
+    REAL const left = -.92f;
+    REAL const right = .06f;
+    REAL const top = .56f;    // below the key hint line, which the menu draws at .66
+
+    if ( sg_cockpitOrder.empty() )
+        sg_buildCockpitOrder();
+
+    if ( sg_cockpitSelected < 0 )
+        sg_cockpitSelected = 0;
+    if ( sg_cockpitSelected >= (int)sg_cockpitOrder.size() )
+        sg_cockpitSelected = (int)sg_cockpitOrder.size() - 1;
+
+    // The key actually bound to HUD_MAP, or H when nothing is bound.
+    tString const boundKey = su_GetBoundKeyName( &cCockpit::GetHudMapAction() );
+    tString const mapKey = boundKey.Len() > 0 ? boundKey : tString( "H" );
+
+    // the key hint sits right under the title the menu draws
+    SetColor( false, alpha * .7f );
+    {
+        tString hint( "up/down choose   left/right version   enter use   " );
+        hint << mapKey << " map   R reload   (+ our version)";
+        ::DisplayText( left, .66f, sg_fitHeight( hint, hText, .94f - left ), hint, sr_fontMenu, -1 );
+    }
+
+    // Measure the widest row and shrink the list to fit, instead of guessing at widths.
+    REAL const listWidth = ( right - .04f ) - left;
+    REAL hRow = hText;
+    {
+        REAL widest = 0;
+        for ( int i = 0; i < (int)sg_cockpitOrder.size(); ++i )
+        {
+            REAL const w = rTextField::GetTextLength(
+                sg_cockpitRowLabel( sg_cockpitCatalogue[ sg_cockpitOrder[i] ], false, NULL ), hRow, false );
+            if ( w > widest )
+                widest = w;
+        }
+        if ( widest > listWidth )
+            hRow *= listWidth / widest;
+    }
+
+    // the list, one line per cockpit
+    int const maxRows = 15;
+    int first = 0;
+    if ( sg_cockpitSelected >= maxRows )
+        first = sg_cockpitSelected - maxRows + 1;
+
+    REAL const listTop = .60f;
+
+    // say so when the list continues out of sight
+    if ( first > 0 )
+    {
+        tString more;
+        more << first << ( first == 1 ? " more cockpit above  ^" : " more cockpits above  ^" );
+        SetColor( false, alpha * .55f );
+        ::DisplayText( left, listTop, hText, more, sr_fontMenu, -1 );
+    }
+
+    for ( int row = 0; row < maxRows && first + row < (int)sg_cockpitOrder.size(); ++row )
+    {
+        int const index = sg_cockpitOrder[ first + row ];
+        gCockpitCatalogueEntry const & entry = sg_cockpitCatalogue[index];
+
+        bool installed = false;
+        tString const label = sg_cockpitRowLabel( entry, ( first + row ) == sg_cockpitSelected, &installed );
+
+        // the highlighted row is the one the cursor is on, so it is the row
+        // position that matters here, not the catalogue index
+        bool const highlighted = ( first + row ) == sg_cockpitSelected;
+        SetColor( highlighted, alpha );
+        if ( !installed )
+            SetColor( highlighted, alpha * .55f );   // dim what is not here yet
+
+        REAL const y = listTop - line * ( row + 1 );
+        ::DisplayText( left, y, hRow, label, sr_fontMenu, -1 );
+    }
+
+    if ( first + maxRows < (int)sg_cockpitOrder.size() )
+    {
+        tString more;
+        int const remaining = (int)sg_cockpitOrder.size() - ( first + maxRows );
+        more << "v  " << remaining << ( remaining == 1 ? " more cockpit below" : " more cockpits below" );
+        SetColor( false, alpha * .55f );
+        ::DisplayText( left, listTop - line * ( maxRows + 1 ), hText, more, sr_fontMenu, -1 );
+    }
+
+    // the right pane: everything about the highlighted cockpit
+    gCockpitCatalogueEntry const & entry = sg_selectedCockpit();
+
+    bool inUse = false;
+    int installedVersion = -1;
+    for ( int v = 0; v < entry.versionCount; ++v )
+    {
+        if ( sg_cockpitInstalled( entry.versions[v].path ) )
+            installedVersion = v;
+        if ( sg_cockpitIsCurrent( entry.versions[v] ) )
+            inUse = true;
+    }
+
+    // the version the chooser is on
+    sg_syncCockpitVersion();
+    if ( sg_cockpitSelectedVersion >= entry.versionCount )
+        sg_cockpitSelectedVersion = 0;
+
+    gCockpitVersion const & version = entry.versions[sg_cockpitSelectedVersion];
+
+    REAL y = top;
+    SetColor( true, alpha );
+    ::DisplayText( right, y, hTitle, entry.title, sr_fontMenu, -1 );
+    y -= line;
+
+    tString sub;
+    sub << sg_cockpitStateIcon( inUse, installedVersion >= 0 ) << "  " << entry.author << "  -  ";
+    if ( inUse )
+        sub << "in use";
+    else if ( installedVersion >= 0 )
+        sub << "installed";
+    else
+        sub << "not installed";
+    SetColor( false, alpha * .8f );
+    ::DisplayText( right, y, hText, sub, sr_fontMenu, -1 );
+    y -= line;
+
+    if ( entry.versionCount > 1 )
+    {
+        tString versionLine;
+        versionLine << "< " << version.label << " >   version " << ( sg_cockpitSelectedVersion + 1 )
+                    << " of " << entry.versionCount;
+        SetColor( false, alpha );
+        ::DisplayText( right, y, hText, versionLine, sr_fontMenu, -1 );
+        y -= line * .9f;
+
+        if ( version.note[0] != '\0' )
+        {
+            SetColor( false, alpha * .7f );
+            ::DisplayText( right, y, hText, version.note, sr_fontMenu, -1 );
+            y -= line * .9f;
+        }
+    }
+    else
+    {
+        tString versionLine;
+        versionLine << "version " << version.label;
+        SetColor( false, alpha * .8f );
+        ::DisplayText( right, y, hText, versionLine, sr_fontMenu, -1 );
+        y -= line * .9f;
+    }
+
+    // The widgets a reload replaces, so ask for them again on every frame and
+    // every key press: keeping the pointers around is what made M stop working.
+    sg_findHudParts();
+    cWidget::Base * map = sg_hudPart( "Map" );
+
+    // The minimap has a line of its own and is left out of the parts list below,
+    // otherwise it shows up twice.
+    tString mapLine( "minimap: " );
+    if ( inUse )
+    {
+        if ( map )
+            mapLine << ( map->Active() ? "shown" : "hidden" ) << "   [" << mapKey << "]";
+        else
+            mapLine << "none in this cockpit";
+    }
+    else if ( !sg_cockpitInstalled( version.path ) )
+        mapLine << "unknown until it is installed";
+    else
+        mapLine << ( sg_cockpitHasMap( version.path ) ? "yes" : "no" );
+
+    SetColor( false, alpha * .8f );
+    ::DisplayText( right, y, hText, mapLine, sr_fontMenu, -1 );
+    y -= line * .9f;
+
+    // the other parts of the cockpit in use
+    if ( inUse )
+    {
+        tString partsHelp;
+        int shownParts = 0;
+        for ( int i = 0; i < (int)sg_hudParts.size() && shownParts < 4; ++i )
+        {
+            if ( sg_hudParts[i] == map )
+                continue;
+
+            tString part;
+            part << sg_hudPartLabel( sg_hudParts[i] ) << ": "
+                 << ( sg_hudParts[i]->Active() ? "shown" : "hidden" );
+
+            if ( shownParts == 0 )
+            {
+                y -= line * .5f;
+                SetColor( false, alpha * .8f );
+                ::DisplayText( right, y, hText, "HUD parts", sr_fontMenu, -1 );
+                y -= line;
+            }
+
+            SetColor( false, alpha * .75f );
+            ::DisplayText( right, y, hText, part, sr_fontMenu, -1 );
+            y -= line * .9f;
+            ++shownParts;
+        }
+    }
+
+    // the description, wrapped, so long text stays inside the pane
+    y -= line * .5f;
+    if ( sr_alphaBlend )
+        glColor4f( .85f, .85f, .9f, alpha * .9f );
+    else
+        Color( alpha * .85f, alpha * .85f, alpha * .9f );
+
+    rTextField c( right, y, hText, sr_fontMenu );
+    c.SetWidth( .92f - right );
+    c.EnableLineWrap();
+    c << entry.description;
+#endif
+}
+
+bool uMenuItemCockpitBrowser::Event( SDL_Event & event )
+{
+    if ( event.type != SDL_KEYDOWN )
+        return false;
+
+    sg_syncCockpitVersion();
+    gCockpitCatalogueEntry const & entry = sg_selectedCockpit();
+
+    switch ( event.key.keysym.sym )
+    {
+    case SDLK_UP:
+    case SDLK_KP_8:
+        // wrap around: the list is a loop, so leaving the top lands at the bottom
+        if ( --sg_cockpitSelected < 0 )
+            sg_cockpitSelected = (int)sg_cockpitOrder.size() - 1;
+        sg_syncCockpitVersion();
+        sg_previewCockpit();
+        return true;
+
+    case SDLK_DOWN:
+    case SDLK_KP_2:
+        if ( ++sg_cockpitSelected >= (int)sg_cockpitOrder.size() )
+            sg_cockpitSelected = 0;
+        sg_syncCockpitVersion();
+        sg_previewCockpit();
+        return true;
+
+    case SDLK_LEFT:
+    case SDLK_KP_4:
+        if ( --sg_cockpitSelectedVersion < 0 )
+            sg_cockpitSelectedVersion = entry.versionCount - 1;
+        sg_previewCockpit();
+        return true;
+
+    case SDLK_RIGHT:
+    case SDLK_KP_6:
+        if ( ++sg_cockpitSelectedVersion >= entry.versionCount )
+            sg_cockpitSelectedVersion = 0;
+        sg_previewCockpit();
+        return true;
+
+    default:
+        break;
+    }
+
+    if ( event.key.keysym.sym == SDLK_h || event.key.keysym.sym == SDLK_m )
+    {
+        // the same switch the bindable HUD_MAP action uses. H is the default
+        // binding, M is what many players pick; accept both here.
+        cCockpit::ToggleMap();
+        return true;
+    }
+
+    if ( event.key.keysym.sym == SDLK_r )
+    {
+        sg_reloadCockpit();
+        return true;
+    }
+
+    return false;
+}
+
+void uMenuItemCockpitBrowser::Enter()
+{
+    sg_syncCockpitVersion();
+
+    gCockpitCatalogueEntry const & entry = sg_selectedCockpit();
+    int const v = sg_cockpitSelectedVersion >= 0 && sg_cockpitSelectedVersion < entry.versionCount ? sg_cockpitSelectedVersion : 0;
+
+    gCockpitVersion const & version = entry.versions[v];
+    tString const path = sg_cockpitPath( version );
+
+    if ( !sg_cockpitInstalled( version.path ) )
+        con << "Fetching cockpit " << version.path << " ...\n";
+
+    cCockpit::SetFile( path );
+    sg_cockpitCommitted = path;      // this one is in use now, not just previewed
+
+    sg_findCockpits();
+    sg_buildCockpitOrder();
+    sg_findHudParts();
+}
+
+static uMenuItemCockpitBrowser modded_cockpit( &sg_cockpitMenu );
+
+//! the entry that puts the cockpit browser into Modded Settings. It only stores
+//! the pointer to the menu, so the submenu's own name ("Cockpits") is the label.
+static uMenuItemSubmenu modded_cockpitEntry( &sg_moddedMenu, &sg_cockpitMenu,
+                                             "Choose the HUD cockpit, its version and which parts of it to draw" );
 
 static tConfItemLine c_ext("GL_EXTENSIONS",gl_extensions);
 static tConfItemLine c_ver("GL_VERSION",gl_version);

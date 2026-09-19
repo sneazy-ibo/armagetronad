@@ -1176,6 +1176,12 @@ input_ingame_menu_tooltip           Press \1 to access the in-game menu.
 input_ingame_menu_text              In-game menu
 input_ingame_menu_help              Triggers the in-game menu. ESC is hardcoded to this function so you don't get trapped in the game :)
 
+input_modded_settings_text          Modded Settings
+input_modded_settings_help          Opens the Modded Settings menu, where this build's extra options live. Bind it here or in Global Keyboard Configuration.
+
+input_hud_map_text                  Toggle HUD map
+input_hud_map_help                  Shows or hides the map of the cockpit you are using, during a match. Cockpits without a map ignore it.
+
 input_pause_game_text               Pause game
 input_pause_game_help               Stops the game timer or resumes it.
 
