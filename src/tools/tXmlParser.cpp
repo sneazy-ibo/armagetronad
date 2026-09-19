@@ -289,6 +289,14 @@ bool tXmlParser::LoadWithoutParsing(const char* filename, const char* uri) {
     return success;
 }
 
+void tXmlParser::Unload() {
+    if ( m_Doc ) {
+        xmlFreeDoc( m_Doc );
+        m_Doc = 0;
+    }
+    m_Filename.Clear();
+}
+
 bool tXmlParser::LoadWithParsing(const char* filename, const char *uri) {
     bool success = true;
 
