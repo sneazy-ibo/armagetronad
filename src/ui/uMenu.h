@@ -458,6 +458,7 @@ protected:
     int &target;
     int Min,Max;
     int Step;
+    bool ClampOnInit;
 public:
     /*
       uMenuItemInt(uMenu *m,const char *tit,
@@ -466,7 +467,7 @@ public:
     */
     uMenuItemInt(uMenu *m,const tOutput &title,
                  const tOutput &help,int &targ,
-                 int mi,int ma,int step=1);
+                 int mi,int ma,int step=1,bool clampOnInit=true);
 
     ~uMenuItemInt(){}
 

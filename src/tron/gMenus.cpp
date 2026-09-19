@@ -2022,9 +2022,11 @@ protected:
     int *rgb;
     unsigned short me;
 public:
+    // Colours can be set above the classic 0..15 with the COLOR_R/G/B_n console
+    // commands, and opening this menu must not clamp what the player chose.
     ArmageTron_color_menuitem(uMenu *m,const char *tit,
                               const char *help, int *RGB,int Me)
-            :uMenuItemInt(m,tit,help,RGB[Me],0,15),
+            :uMenuItemInt(m,tit,help,RGB[Me],0,255,1,false),
     rgb(RGB),me(Me) {
         m->RequestSpaceBelow(.2);
     }
