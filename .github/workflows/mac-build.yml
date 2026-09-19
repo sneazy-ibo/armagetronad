@@ -1,0 +1,80 @@
+name: macOS build
+
+# Builds the macOS port on every push and reports failures. Uses the same
+# autotools build as a local run (macos-build.sh), so CI cannot drift from it.
+
+on:
+  push:
+    branches: [ trunk-mac, trunk-mac-modded ]
+  pull_request:
+    branches: [ trunk-mac, trunk-mac-modded ]
+  workflow_dispatch:
+
+concurrency:
+  group: mac-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  build:
+    # macos-14 and later are Apple Silicon (arm64); the port is native arm64.
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Homebrew dependencies
+        run: |
+          brew install pkg-config autoconf automake ftgl glew protobuf boost \
+                       sdl2 sdl2_image sdl2_mixer libpng
+
+      - name: Build and bundle
+        id: build
+        run: |
+          ./macos-build.sh --bundle --clean \
+            --build-dir "$GITHUB_WORKSPACE/.build" \
+            --prefix "$GITHUB_WORKSPACE/dist"
+
+      - name: Upload the app bundle
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArmagetronTrunk-macOS-arm64
+          path: dist/Armagetron Advanced.app
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="macOS build broken on ${GITHUB_REF_NAME}"
+          body="Build failed at \`${SHA}\`.
+
+          Run log: ${RUN_URL}
+
+          Reproduce locally: \`./macos-build.sh --clean\`"
+          {
+            echo "### ${title}"
+            echo
+            echo "${body}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Issues may be disabled on the repository; then the red run is the report.
+          if existing=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' 2>/dev/null); then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body "$body" || true
+            else
+              gh issue create --title "$title" --body "$body" || true
+            fi
+          else
+            echo "Could not file an issue (Issues may be disabled on this repository)."
+          fi
