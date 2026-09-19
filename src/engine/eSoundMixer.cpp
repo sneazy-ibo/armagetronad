@@ -106,7 +106,8 @@ static tConfItem<int> sw("MUSIC_VOLUME",musicVolume);
 int numSoundcardChannels=2;
 static tConfItem<int> scc("SOUND_CHANNELS",numSoundcardChannels);
 
-int musicActive = 1;
+// off by default: a freshly started client should not start playing music
+int musicActive = 0;
 static tConfItem<int> se("MUSIC_ACTIVE", musicActive);
 
 float buffersize = 1.0;
