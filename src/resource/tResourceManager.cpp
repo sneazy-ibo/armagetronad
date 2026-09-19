@@ -454,7 +454,7 @@ namespace
     }
 }
 
-tString tResourceManager::locateResourceCached(const char *file, const char *uri) {
+tString tResourceManager::locateResourceCached(const char *file, const char *uri, bool fullPath) {
     if (!file || file[0] == '\0' || file[0] == '/' || file[0] == '\\')
         return tString();
 
@@ -471,7 +471,7 @@ tString tResourceManager::locateResourceCached(const char *file, const char *uri
 
     tString filepath = tDirectories::Resource().GetReadPath(resourcePath.c_str());
     if (filepath != "")
-        return filepath;
+        return fullPath ? filepath : resourcePath;
 
     tString savepath = tDirectories::Resource().GetWritePath(resourcePath.c_str());
     if (savepath == "")
