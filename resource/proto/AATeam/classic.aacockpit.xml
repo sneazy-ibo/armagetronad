@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
 <!DOCTYPE Resource SYSTEM "cockpit.dtd">
 
-<Resource type="aacockpit" name="classic" version="0.0.1" author="wrtlprnft" category="">
+<Resource type="aacockpit" name="classic" version="0.0.1" author="ibo+wrtlprnft" category="">
     <Cockpit version="0.0.1">
 	<!-- Template for all needle gauges -->
 	<WidgetTemplate id="ng">
             <Position x="0." y="-0.9" />
-            <Size height="0.175" width="0.175" />
+            <Size height="0.131" width="0.131" />
             <ShowCurrent value="true" />
             <ShowMaximum value="true" />
             <ShowMinimum value="true" />
             <Foreground>
                 <Solid>
-                    <Color r="1." g="1." b="1." alpha="1." />
+                    <Color r=".5" g=".5" b="1." alpha="1." />
                 </Solid>
             </Foreground>
 	</WidgetTemplate>
 	<!-- Template for text displays -->
 	<WidgetTemplate id="text">
-            <Size height="0.039" width="0.0195" />
+            <Size height="0.0273" width="0.0137" />
 	</WidgetTemplate>
 
         <!-- speed meter -->
@@ -67,17 +67,18 @@
             <DataSet id="friends">
                 <AtomicData field="source" source="friends_alive" />
             </DataSet>
-            <Position x="0.35" y="-0.95" />
+            <Position x="0.26" y="-0.94" />
+            <Size height="1.18" width="1.18" />
             <Caption location="off">
                 <Text value="Player Status" />
             </Caption>
             <Face>
                 <Table>
                     <Row>
-                        <Cell><Text value="Enemies:" /></Cell>
-                        <Cell><GameData data="enemies" /></Cell>
-                        <Cell><Text value="Friends:" /></Cell>
-                        <Cell><GameData data="friends" /></Cell>
+                        <Cell><Text value="0xfefefeEnemies:" /></Cell>
+                        <Cell><Text value="0xfefefe" /><GameData data="enemies" /></Cell>
+                        <Cell><Text value="0xfefefeFriends:" /></Cell>
+                        <Cell><Text value="0xfefefe" /><GameData data="friends" /></Cell>
                     </Row>
                 </Table>
             </Face>
@@ -88,15 +89,16 @@
             <DataSet id="ping">
                 <AtomicData field="source" source="current_ping" />
             </DataSet>
-            <Position x=".75" y="-0.95" />
+            <Position x="0.72" y="-0.94" />
+            <Size height="1.18" width="1.18" />
             <Caption location="off">
                 <Text value="Player Status" />
             </Caption>
             <Face>
                 <Table>
                     <Row>
-                        <Cell><Text value="Ping:" /></Cell>
-                        <Cell><GameData data="ping" /></Cell>
+                        <Cell><Text value="0xfefefePing:" /></Cell>
+                        <Cell><Text value="0xfefefe" /><GameData data="ping" /></Cell>
                     </Row>
                 </Table>
             </Face>
@@ -110,17 +112,16 @@
             <DataSet id="name">
                 <AtomicData source="fastest_name_round" />
             </DataSet>
-            <Position x="-0.175" y="-0.95" />
-	    <Size height="0.9230769230769230769" width="0.9230769230769230769" />
+            <Position x="-0.36" y="-0.94" />
+            <Size height="1.18" width="1.18" />
             <Caption location="off">
                 <Text value="Fastest" />
             </Caption>
             <Face>
                 <Table>
                     <Row>
-                        <Cell><Text value="Fastest:" /></Cell>
-                        <Cell><GameData data="name" /></Cell>
-                        <Cell><Text value="(" /><GameData data="number" /><Text value=")" /></Cell>
+                        <Cell><Text value="0xbf9d50Fastest: " /><GameData data="name" /></Cell>
+                        <Cell><Text value="0xbf9d50" /><Text value="(" /><GameData data="number" /><Text value=")" /></Cell>
                     </Row>
                 </Table>
             </Face>
@@ -151,75 +152,54 @@
                     </IfFalse>
                 </Conditional>
             </DataSet>
-            <Position x="-.93" y="-.88" />
+            <Position x="-0.84" y="-0.904" />
+            <Size height="1.3" width="2.0" />
             <Caption location="top">
                 <Text value="Scores" />
             </Caption>
             <Face>
                 <Table>
                     <Row>
-                        <Cell><GameData data="color" /><Text value="Me:" /></Cell>
-                        <Cell><GameData data="color" /><Text value="Top:" /></Cell>
+                        <Cell><Text value="0xefefefMe:  Top:" /></Cell>
                     </Row>
                     <Row>
-                        <Cell><GameData data="color" /><GameData data="myscore" /></Cell>
-                        <Cell><GameData data="color" /><GameData data="topscore" /></Cell>
+                        <Cell><GameData data="color" /><GameData data="myscore" /><Text value="     " /><Text value="0xffff00" /><GameData data="topscore" /></Cell>
                     </Row>
                 </Table>
             </Face>
         </Label>
 
 	<!-- combined meter for rest -->
-        <Label usetemplate="text" viewport="top">
-            <DataSet id="hours">
-                <AtomicData source="current_hours12h" minwidth="2" fill="0" />
-            </DataSet>
-            <DataSet id="minutes">
-                <AtomicData source="current_minutes" minwidth="2" fill="0" />
-            </DataSet>
-            <DataSet id="ampm">
-                <Conditional field="source" lvalue="current_hours" rvalue="12" operator="le">
-                    <IfTrue>
-                        <AtomicData source="AM" />
-                    </IfTrue>
-                    <IfFalse>
-                        <AtomicData source="PM" />
-                    </IfFalse>
-                </Conditional>
-            </DataSet>
+        <Label camera="^in" viewport="top">
             <DataSet id="fps">
                 <AtomicData source="current_framerate" />
             </DataSet>
-            <DataSet id="seconds">
-                <AtomicData source="time_since_start" />
-            </DataSet>
-            <DataSet id="song">
-                <AtomicData source="current_song" />
-            </DataSet>
-            <Position x="0.4" y="0.45" />
-            <Caption location="top">
-                <Text value="Time/Fps/Timestamp" />
+            <Position x="0.70" y="0.39" />
+            <Size height="0.036" width="0.018" />
+            <Caption location="off">
+                <Text value="FPS" />
             </Caption>
             <Face>
                 <Table>
                     <Row>
-                        <Cell><Text value="Time:" /></Cell>
-                        <Cell><GameData data="hours" /><Text value=":" /><GameData data="minutes" /><Text value=" " /><GameData data="ampm" /></Cell>
-                    </Row>
-                    <Row>
-                        <Cell><Text value="Framerate:" /></Cell>
-                        <Cell><GameData data="fps" /><Text value=" FPS" /></Cell>
-                    </Row>
-                    <Row>
-                        <Cell><Text value="Running for:" /></Cell>
-                        <Cell><GameData data="seconds" /><Text value=" Seconds" /></Cell>
-                    </Row>
-                    <Row>
-                        <Cell><Text value="Music:" /></Cell>
-                        <Cell><GameData data="song" /></Cell>
+                        <Cell><Text value="0xffffffFPS: " /></Cell>
+                        <Cell><GameData data="fps" /></Cell>
                     </Row>
                 </Table>
             </Face>
         </Label>
+        <Map>
+            <Position x="0.73" y="-0.72" />
+            <Size height="0.25" width="0.25" />
+            <Background>
+                <Solid>
+                    <Color r="1." g="1." b="1." alpha=".2" />
+                </Solid>
+            </Background>
+            <MapModes toggleKey="1">
+                <MapMode mode="full" rotation="spawn" />
+                <MapMode mode="cycle" rotation="camera" zoomFactor="3" clipMode="ellipse" />
+            </MapModes>
+        </Map>
     </Cockpit>
 </Resource>

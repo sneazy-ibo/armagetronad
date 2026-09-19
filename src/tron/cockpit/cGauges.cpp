@@ -213,13 +213,34 @@ void NeedleGauge::RenderGraph(float min, float max, float val, float factor, tVa
     Vertex(-x*m_size.x+m_position.x,y*m_size.y+m_position.y,0);
     RenderEnd();
 
-    if(m_showvalue)
+    // the original HUD hid the value while the needle sits at the minimum and
+    // printed it in cyan, slightly larger than the other gauges' text
+    if(m_showvalue && y >= .24*m_size.x)
         DisplayText( -x*1.45*m_size.x+m_position.x, y*1.35*m_size.y+m_position.y,
-                     .2*m_size.x,
-                     val_s.GetString().c_str(),
+                     .24*m_size.x,
+                     ("0xccffff" + val_s.GetString()).c_str(),
                      sr_fontCockpit);
     if (!sr_glOut)
         return;
+}
+
+// The original needle meters put the numbers on the needle's baseline in grey and
+// the title in red; the generic gauge draws both below, so these override it.
+void NeedleGauge::RenderMinMax(tValue::Base const &min_s, tValue::Base const &max_s) {
+    if((m_showmin && !m_reverse) || (m_showmax && m_reverse))
+        DisplayText(
+            m_position.x-1.1*m_size.x, m_position.y,
+            .24*m_size.x,
+            ("0xcccccc" + (m_reverse?max_s:min_s).GetString()).c_str(), sr_fontCockpit);
+    if((m_showmax && !m_reverse) || (m_showmin && m_reverse))
+        DisplayText( m_position.x+1.1*m_size.x, m_position.y,
+                     .24*m_size.x,
+                     ("0xcccccc" + (m_reverse?min_s:max_s).GetString()).c_str(), sr_fontCockpit);
+}
+
+void NeedleGauge::RenderCaption(void) {
+    if ( m_captionloc != off )
+        DisplayText(m_position.x, m_position.y, .24*m_size.x, m_caption.c_str(), sr_fontCockpit);
 }
 
 }

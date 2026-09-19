@@ -74,7 +74,7 @@ static rCallbackAfterScreenModeChange reloadft(&readjust_cockpit);
 bool sg_hudVisibleInMenu = false;
 
 //! this build's default HUD: the 0.2.9 recreation
-static tString cockpit_file("wrtlprnft/classic-0.0.1.aacockpit.xml");
+static tString cockpit_file("ibo+wrtlprnft/classic-0.0.1.aacockpit.xml");
 static tConfItem<tString> cf("COCKPIT_FILE",cockpit_file,&parsecockpit);
 
 //! Per cockpit memory of whether the map is drawn ("0:path" shown, "1:path"
@@ -134,7 +134,7 @@ tString cCockpit::GetFile() {
 }
 
 tString const & cCockpit::GetDefaultFile() {
-    static tString const def( "wrtlprnft/classic-0.0.1.aacockpit.xml" );
+    static tString const def( "ibo+wrtlprnft/classic-0.0.1.aacockpit.xml" );
     return def;
 }
 

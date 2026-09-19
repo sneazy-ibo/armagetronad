@@ -199,7 +199,7 @@ struct gCockpitCatalogueEntry
 };
 
 static gCockpitVersion const sg_versions_classic[] = {
-    { "0.0.1", "wrtlprnft/classic-0.0.1.aacockpit.xml", "", "" },
+    { "0.0.1", "ibo+wrtlprnft/classic-0.0.1.aacockpit.xml", "", "" },
 };
 static gCockpitVersion const sg_versions_classicMinimap[] = {
     { "0.0.2", "nelg/armaclassic-0.0.2.aacockpit.xml", "", "" },
