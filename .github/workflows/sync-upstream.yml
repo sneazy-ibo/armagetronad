@@ -1,0 +1,57 @@
+name: Mirror upstream branches
+
+# Makes the fork's branches and tags identical to the canonical GitLab
+# repository, which is the source of truth: this fork was created from a GitHub
+# mirror that was missing branches and years behind on others.
+#
+# This is a mirror, not a merge: each branch is force-pushed from upstream, so
+# any commit of ours on a branch that also exists upstream would be discarded.
+# Only fork-only branches (trunk-mac, trunk-mac-modded) are outside its reach,
+# and nothing is ever deleted - neither a branch nor a tag that only exists
+# here. Work happens on those fork-only branches, for exactly this reason.
+#
+# Scheduled workflows are only read from the repository's default branch, so
+# this file has to exist there.
+
+on:
+  schedule:
+    # daily at 04:17 UTC
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror-upstream
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the canonical repository
+        run: |
+          git remote add upstream https://gitlab.com/armagetronad/armagetronad.git
+          git fetch upstream '+refs/heads/*:refs/remotes/upstream/*'
+          git fetch upstream --tags
+
+      - name: Push upstream's branches
+        run: |
+          set -euo pipefail
+          # The loop only walks refs that exist upstream, so a fork-only branch
+          # cannot be overwritten even with --force.
+          for ref in $(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream); do
+            if [ "$ref" = "HEAD" ]; then continue; fi
+            echo "::group::$ref"
+            git push origin --force "refs/remotes/upstream/$ref:refs/heads/$ref"
+            echo "::endgroup::"
+          done
+
+      - name: Push upstream's tags
+        run: git push origin --force --tags
