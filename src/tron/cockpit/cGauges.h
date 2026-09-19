@@ -66,6 +66,9 @@ public:
     virtual ~NeedleGauge() { }; //!< Do- nothing destructor
 protected:
     virtual void RenderGraph(float min, float max, float val, float factor, tValue::Base const &val_s); //!< Renders the needle and current value (if enabled)
+    //! Original HUD: the numbers and caption sit on the needle's own baseline.
+    virtual void RenderMinMax(tValue::Base const &min_s, tValue::Base const &max_s);
+    virtual void RenderCaption(void);
 };
 
 }
