@@ -1,16 +1,25 @@
 name: Release (macOS)
 
-# Turns a tagged build into a downloadable disk image and attaches it to a
-# GitHub release. Pushes to the branches only produce workflow artifacts
-# (mac-build.yml), which expire; a release is what keeps a version around.
+# Packages the app bundle and attaches it to a GitHub release, as a .zip (the
+# bundle stays a bundle) and as a .dmg.
 #
-# Tags must be named mac-*, ours only: sync-upstream.yml mirrors upstream's tags
-# into this repository with --force, so a tag upstream also uses could be
-# overwritten. Example: mac-v0.4.0-1
+# Two ways in:
+#   * push a mac-* tag, for a version prepared in advance
+#   * run this workflow by hand with a version, which tags the branch it is
+#     run from - the "this change deserves a download" button
+#
+# Tags must be mac-* and ours: sync-upstream.yml mirrors upstream's tags into
+# this repository with --force, so a name upstream also uses could be clobbered.
 
 on:
   push:
     tags: [ 'mac-*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag, e.g. 0.4.0-2 (becomes mac-v0.4.0-2)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -22,6 +31,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out the tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=mac-v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Homebrew dependencies
         run: |
@@ -35,17 +55,44 @@ jobs:
             --build-dir "$GITHUB_WORKSPACE/.build" \
             --prefix "$GITHUB_WORKSPACE/dist"
 
-      - name: Package as a disk image
+      - name: Package the bundle
         run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # ditto keeps the bundle structure and its symlinks intact
+          ditto -c -k --keepParent "dist/Armagetron Advanced.app" "Armagetron-${TAG}.zip"
           hdiutil create -volname "Armagetron Advanced" \
             -srcfolder "dist/Armagetron Advanced.app" \
-            -ov -format UDZO "Armagetron-${GITHUB_REF_NAME}.dmg"
+            -ov -format UDZO "Armagetron-${TAG}.dmg"
+          ls -lh Armagetron-*
+
+      - name: Keep the packages with the run
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.tag.outputs.tag }}
+          path: |
+            Armagetron-*.zip
+            Armagetron-*.dmg
+          retention-days: 90
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
-            "Armagetron-${GITHUB_REF_NAME}.dmg"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --generate-notes \
+              "Armagetron-${TAG}.zip" "Armagetron-${TAG}.dmg"
+          else
+            gh release create "$TAG" --generate-notes \
+              "Armagetron-${TAG}.zip" "Armagetron-${TAG}.dmg"
+          fi
+
+      - name: Note the missing signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          notes="$(gh release view "$TAG" --json body --jq .body)"
+          gh release edit "$TAG" --notes "${notes}
+
+          The app is not signed or notarised: after unzipping it, right-click and choose Open once, and macOS will let it start from then on."
