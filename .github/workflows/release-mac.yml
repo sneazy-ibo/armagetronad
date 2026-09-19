@@ -1,0 +1,51 @@
+name: Release (macOS)
+
+# Turns a tagged build into a downloadable disk image and attaches it to a
+# GitHub release. Pushes to the branches only produce workflow artifacts
+# (mac-build.yml), which expire; a release is what keeps a version around.
+#
+# Tags must be named mac-*, ours only: sync-upstream.yml mirrors upstream's tags
+# into this repository with --force, so a tag upstream also uses could be
+# overwritten. Example: mac-v0.4.0-1
+
+on:
+  push:
+    tags: [ 'mac-*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Homebrew dependencies
+        run: |
+          brew install pkg-config autoconf automake ftgl glew protobuf boost \
+                       sdl2 sdl2_image sdl2_mixer libpng
+
+      - name: Build and bundle
+        run: |
+          ./macos-build.sh --bundle --clean \
+            --name "Armagetron Advanced" \
+            --build-dir "$GITHUB_WORKSPACE/.build" \
+            --prefix "$GITHUB_WORKSPACE/dist"
+
+      - name: Package as a disk image
+        run: |
+          hdiutil create -volname "Armagetron Advanced" \
+            -srcfolder "dist/Armagetron Advanced.app" \
+            -ov -format UDZO "Armagetron-${GITHUB_REF_NAME}.dmg"
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            "Armagetron-${GITHUB_REF_NAME}.dmg"
