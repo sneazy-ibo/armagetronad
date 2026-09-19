@@ -126,6 +126,7 @@ say "Configuring ($OPT_FLAGS) in $BUILD_DIR"
 "$SOURCE_DIR/configure" \
     --with-boost="$BREW_PREFIX" \
     CPPFLAGS="-I$BREW_PREFIX/include" \
+    LDFLAGS="-Wl,-headerpad_max_install_names" \
     CXXFLAGS="$OPT_FLAGS -ffp-contract=off" \
     CFLAGS="$OPT_FLAGS -ffp-contract=off" \
     > configure.log 2>&1 \
@@ -199,10 +200,24 @@ PLIST
     if [ "$SELF_CONTAINED" = 1 ]; then
         if command -v dylibbundler >/dev/null; then
             say "Copying third-party libraries into the bundle"
+            # Contents/Frameworks, where SDL insists on finding itself (it shows a
+            # modal error otherwise). The executable sits four directories deeper
+            # in Contents/MacOS/usr/local/bin, so the load path has to climb out
+            # of that to reach it.
             dylibbundler -od -b -x "$BUNDLE_PATH/Contents/MacOS/usr/local/bin/armagetronad" \
                 -d "$BUNDLE_PATH/Contents/Frameworks" \
-                -p @executable_path/../Frameworks > /dev/null 2>&1 \
+                -p @executable_path/../../../../Frameworks > /dev/null 2>&1 \
                 || say "warning: dylibbundler failed; bundle still links Homebrew libraries"
+
+            # Homebrew's SDL2 is sdl2-compat, which loads SDL3 at runtime: it is
+            # not a linked dependency, so dylibbundler cannot see it. It looks
+            # next to the executable first, and without it every start pops up a
+            # modal error dialog.
+            if [ -e "$BREW_PREFIX/lib/libSDL3.dylib" ]; then
+                cp -f "$BREW_PREFIX/lib/libSDL3.dylib" "$BUNDLE_PATH/Contents/MacOS/usr/local/bin/libSDL3.dylib"
+            else
+                say "warning: libSDL3.dylib not found; the bundle needs an SDL2 that does not dlopen SDL3"
+            fi
         else
             say "warning: dylibbundler not installed (brew install dylibbundler) — skipping self-contained step"
         fi
