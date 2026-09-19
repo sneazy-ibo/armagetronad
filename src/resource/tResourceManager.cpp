@@ -323,19 +323,11 @@ static int myFetch(const char *URIs, const char *filename, const char *savepath)
     return rv;	// last error
 }
 
-// ---------------------------------------------------------------------------
-// Background resource fetching
-//
-// HTTP fetches must never run on the game thread: the game is single threaded,
-// the timeout is half a minute and legacy resources point at hosts that have
-// been dead for years. locateResourceCached() only ever hands out files that
-// are already on disk; anything missing is queued here and downloaded by a
-// worker thread. Downloaded files are written to <file>.part and renamed into
-// place, so a partially written file is never picked up, and they land in the
-// resource write path, i.e. they are cached across sessions. The worker reports
-// completions through consumeFetchCompletions(); the game uses that to reload
-// textures and cockpits without ever having blocked.
-// ---------------------------------------------------------------------------
+// Background resource fetching: HTTP never runs on the game thread (the game is
+// single threaded, the timeout is half a minute, legacy hosts are long dead).
+// Missing files are queued here, downloaded by a worker into <file>.part and
+// renamed into place, so a half written file is never picked up. The game is
+// told about finished downloads through consumeFetchCompletions().
 namespace
 {
     struct sr_FetchRequest
@@ -439,7 +431,26 @@ namespace
     void sr_startFetchWorker()
     {
         if ( !sr_fetchThread.joinable() )
+        {
             sr_fetchThread = std::thread( sr_fetchWorker );
+
+            // Joined at exit: a global joinable std::thread calls std::terminate when it is
+            // destroyed, which aborted the client on every close.
+            struct sr_FetchThreadGuard
+            {
+                ~sr_FetchThreadGuard()
+                {
+                    {
+                        std::unique_lock< std::mutex > lock( sr_fetchMutex );
+                        sr_fetchStop = true;
+                    }
+                    sr_fetchCondition.notify_all();
+                    if ( sr_fetchThread.joinable() )
+                        sr_fetchThread.join();
+                }
+            };
+            static sr_FetchThreadGuard sr_fetchGuard;
+        }
     }
 }
 
@@ -447,10 +458,8 @@ tString tResourceManager::locateResourceCached(const char *file, const char *uri
     if (!file || file[0] == '\0' || file[0] == '/' || file[0] == '\\')
         return tString();
 
-    // A resource path can carry its URI in parentheses, "name-1.aatex.png(uri)"
-    // (see tResourcePath). It has to come off before the file lookups below: a
-    // URI contains a colon, which those reject as an absolute path, so every
-    // graphic that names a URI failed to be found locally and was dropped.
+    // A path can carry its URI in parentheses; the colon would be read as an
+    // absolute path and the file never found.
     tString resourcePath( file );
     tString embeddedUri;
     tString::size_type open = resourcePath.find( '(' );
@@ -602,11 +611,8 @@ tString tResourceManager::locateResource(const char *file, const char *uri, bool
         return (tString) NULL;
     }
 
-    // Repositories first, the file's own URI last. Legacy resources point their
-    // URI at personal hosts that have been dead for years; trying those first
-    // costs a DNS timeout and prints an error even when the repositories can
-    // serve the file fine. If the repositories do not have it, the URI is still
-    // tried, so nothing that used to work stops working.
+    // Repositories first, the file's own URI last: those URIs usually point at hosts
+    // that have been dead for years, and trying them first costs a DNS timeout.
     if ( AccessRepoServer().Len() > 2 )
         a_uri << AccessRepoServer() << file << ';';
 
