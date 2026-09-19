@@ -3,6 +3,30 @@
 
 #include "tDefer.h"
 
+// not needed here, maybe for some other place
+/*
+#include "gAIBase.h"
+#include "tToDo.h"
+namespace
+{
+void Cleanup()
+{
+    sn_SetNetState(nSTANDALONE);
+
+    st_DoToDo();
+
+    // delete all the things
+    nNetObject::SyncAll();
+    gAIPlayer::ClearAll();
+    nNetObject::ClearAll();
+    ePlayerNetID::ClearAll();
+    nNetObject::ClearAllDeleted();
+
+    st_DoToDo();
+}
+} // namespace
+*/
+
 // Tests for ePlayerNetID system
 // Purpose: Document the status quo behavior and detect regressions
 
@@ -11,8 +35,8 @@ TEST_SUITE("ePlayerNetID")
     TEST_CASE("ePlayerNetID basics")
     {
         // check that player gets destroyed at the end
-        tRefPtr<nObserver> observer;
-        // INVARIANT_CHECK(!observer.get()); // does not work yet, objects (temporarily) leak because the network system knows about them.
+        INVARIANT_CHECK(!se_PlayerNetIDs.Len())
+        // INVARIANT(Cleanup();)
 
         GIVEN("an ePlayerNetID for an existing player")
         {
@@ -20,10 +44,6 @@ TEST_SUITE("ePlayerNetID")
             // store the result in a smart pointer for later cleanup.
             // This constructor creates a player bound to local player 0.
             auto player = tRefPtr<ePlayerNetID>::Make(0);
-
-            // observe player
-            observer = &player->GetObserver();
-            player->ReleaseOwnership();
 
             THEN("player has a name")
             {
@@ -42,9 +62,6 @@ TEST_SUITE("ePlayerNetID")
         {
             // This constructor creates a player not bound to a local player.
             auto player = tRefPtr<ePlayerNetID>::Make();
-
-            // observe player
-            observer = &player->GetObserver();
 
             THEN("player has a network ID")
             {
