@@ -41,10 +41,13 @@ static tSettingItem<REAL> g_s("GRID_SIZE",sg_gridSize);
 static REAL sg_gridSizeMoviePack=2;
 static tSettingItem<REAL> g_sm("GRID_SIZE_MOVIEPACK",sg_gridSizeMoviePack);
 
-static REAL moviepack_floor_red=.5,moviepack_floor_green=.5,moviepack_floor_blue=.5;
-static REAL floor_red=.15,floor_green=.3,floor_blue=.15;
+static REAL moviepack_floor_red=.2,moviepack_floor_green=.2,moviepack_floor_blue=.2;
+//! defaults match what the original 0.2.9 grid looked like
+static REAL floor_red=.2,floor_green=.2,floor_blue=.2;
 
-static tSettingItem<REAL>
+// config items, not settings: REAL settings were not written to the user config,
+// so they were forgotten on every start.
+static tConfItem<REAL>
 mfr("MOVIEPACK_FLOOR_RED",moviepack_floor_red),
 mfg("MOVIEPACK_FLOOR_GREEN",moviepack_floor_green),
 mfb("MOVIEPACK_FLOOR_BLUE",moviepack_floor_blue),
