@@ -85,9 +85,10 @@ public:
     //! Return the position of the resource in the cache
     static tString locateResource(const char *filename, const char *uri="", bool fullPath=true, bool forceFetch=false);
 
-    //! locateResource() without blocking: the cached path, or queue a download and
-    //! return an empty string.
-    static tString locateResourceCached(const char *filename, const char *uri="");
+    //! locateResource() without blocking: the file's path when it is already on
+    //! disk (absolute with fullPath, the resource path otherwise), and an empty
+    //! string when it is missing - a background download is then queued.
+    static tString locateResourceCached(const char *filename, const char *uri="", bool fullPath=true);
 
     //! Queue a background download; uri may be empty to try the repositories only.
     static bool requestFetch(const char *filename, const char *uri, const char *savepath);

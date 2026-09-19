@@ -1073,26 +1073,22 @@ static void sr_VerifyResourceTexture( tString const & resourcePath )
     static std::set< tString > verified;
     if( verified.find(resourcePath) == verified.end() )
     {
-        // non-blocking: returns the cached file, or "" while a download is
-        // queued in the background
-        tString filePath = tResourceManager::locateResourceCached( resourcePath, "" );
+        // non-blocking: the resource path if the file is on disk, "" while a
+        // download is queued in the background
+        tString const filePath = tResourceManager::locateResourceCached( resourcePath, "", false );
         if( filePath != "" )
         {
-            // the path may carry its URI in parentheses; the lookups below reject the colon
-            tString resourceFile( resourcePath );
-            tString::size_type open = resourceFile.find( '(' );
-            if( open != tString::npos && resourceFile.EndsWith( ")" ) )
-                resourceFile = resourceFile.substr( 0, open );
-
-            // if the file we found is the downloaded copy, check it by loading it once
-            tString w = tDirectories::Resource().GetWritePath( resourceFile.c_str() );
-            if( w == filePath )
+            // Check the downloaded copy by loading it once. The lookups take the
+            // resource path, not a file name: GetSurface resolves it against the
+            // hierarchy it is given, and an absolute path is rejected outright.
+            tString const w = tDirectories::Resource().GetWritePath( filePath.c_str() );
+            tString const r = tDirectories::Resource().GetReadPath( filePath.c_str() );
+            if( w != "" && w == r )
             {
-                rSurface const * surface = rSurfaceCache::GetSurface( filePath, &tDirectories::Resource() );
-                if( !surface )
+                if( !rSurfaceCache::GetSurface( filePath, &tDirectories::Resource() ) )
                 {
                     // queue a re-download in the background instead of blocking
-                    tResourceManager::requestFetch( resourceFile.c_str(), "", w.c_str() );
+                    tResourceManager::requestFetch( filePath.c_str(), "", w.c_str() );
                 }
             }
         }
