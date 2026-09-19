@@ -517,9 +517,18 @@ void eSoundMixer::Update() {
 
     // We only act on music if the mode has changed, indicated by m_isDirty
     if (m_isDirty) {
-        // Also, we only update if the music has stopped for some reason.
-        if(!m_musicIsPlaying) {
+        // read here, not just in the constructor: MUSIC_ACTIVE can change at any time
+        m_PlayMusic = ( musicActive == 1 );
 
+        if ( !m_PlayMusic ) {
+            if (m_TitleTrack && m_TitleTrack->IsPlaying())
+                m_TitleTrack->FadeOut();
+            if (m_GuiTrack && m_GuiTrack->IsPlaying())
+                m_GuiTrack->FadeOut();
+            if (m_GameTrack && m_GameTrack->IsPlaying())
+                m_GameTrack->FadeOut();
+        } else if(!m_musicIsPlaying) {
+            // Also, we only update if the music has stopped for some reason.
             switch(m_Mode) {
             case TITLE_TRACK:
                 m_TitleTrack->Play();
