@@ -165,6 +165,15 @@ void sr_utf8216(tString const &in, std::wstring &out) {
 int sr_fontType = sr_fontTexture;
 static tConfItem< int > sr_fontTypeConf( "FONT_TYPE", sr_fontType, &sr_ReloadFont);
 
+//! Horizontal stretch of all text. 0.2.9 sized text against a 640x480 screen, so
+//! on a wider one it was stretched by (width/height)/(4/3) - 4/3 at 16:9.
+REAL sr_fontStretch = 1.;
+static tConfItem< REAL > sr_fontStretchConf( "FONT_STRETCH", sr_fontStretch );
+
+//! Stretch for text in a viewport whose pixels are square (the cockpit): fonts
+//! scale with the screen, so text there would otherwise be compressed.
+REAL sr_fontStretchViewport = 1.;
+
 bool restrictLineHeight( float const &newValue )
 {
     return newValue > 0;
@@ -191,14 +200,14 @@ public:
     }
     */
     float GetWidth(FTGL_STRING const &str, float height) {
-        return GetFont(height).Advance(str.c_str())/sr_screenWidth*2.;
+        return GetFont(height).Advance(str.c_str())/sr_screenWidth*2.*sr_fontStretch*sr_fontStretchViewport;
     }
     void Render(FTGL_STRING const &str, float height, tCoord const &where) {
         //std::cerr << "len: " << str.size() << std::endl;
         if(sr_fontType >= sr_fontTexture) {
             glPushMatrix();
             glTranslatef(where.x, where.y, 0.);
-            glScalef(2./sr_screenWidth, 2./sr_screenHeight, 1.);
+            glScalef(2./sr_screenWidth*sr_fontStretch*sr_fontStretchViewport, 2./sr_screenHeight, 1.);
             if(sr_fontType == sr_fontTexture) {
                 glEnable(GL_TEXTURE_2D);
                 glEnable(GL_BLEND);
@@ -240,12 +249,10 @@ public:
         if(sr_fontType != sr_fontOld) {
             float rubbish;
             GetFont(height).BBox(str.c_str(), l, b, rubbish, r, t, rubbish);
-            l/=sr_screenWidth/2.;
-            r/=sr_screenWidth/2.;
+            l = where.x-0.005 + l/sr_screenWidth*2.*sr_fontStretch*sr_fontStretchViewport;
+            r = where.x+0.005 + r/sr_screenWidth*2.*sr_fontStretch*sr_fontStretchViewport;
             t/=sr_screenHeight/2.;
             b/=sr_screenHeight/2.;
-            l+=where.x-0.005;
-            r+=where.x+0.005;
             t+=where.y+0.005;
             b+=where.y-0.005;
             return;
