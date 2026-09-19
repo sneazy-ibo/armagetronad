@@ -1073,22 +1073,26 @@ static void sr_VerifyResourceTexture( tString const & resourcePath )
     static std::set< tString > verified;
     if( verified.find(resourcePath) == verified.end() )
     {
-        tString filePath = tResourceManager::locateResource( resourcePath, "", false  );
+        // non-blocking: returns the cached file, or "" while a download is
+        // queued in the background
+        tString filePath = tResourceManager::locateResourceCached( resourcePath, "" );
         if( filePath != "" )
         {
-            // check read and write path
-            tString w = tDirectories::Resource().GetWritePath( filePath );
-            tString r = tDirectories::Resource().GetReadPath( filePath );
+            // the path may carry its URI in parentheses; the lookups below reject the colon
+            tString resourceFile( resourcePath );
+            tString::size_type open = resourceFile.find( '(' );
+            if( open != tString::npos && resourceFile.EndsWith( ")" ) )
+                resourceFile = resourceFile.substr( 0, open );
 
-            // if they're equal, that means the resource has been downloaded before. Check it
-            // by loading it once
-            if( w == r )
+            // if the file we found is the downloaded copy, check it by loading it once
+            tString w = tDirectories::Resource().GetWritePath( resourceFile.c_str() );
+            if( w == filePath )
             {
                 rSurface const * surface = rSurfaceCache::GetSurface( filePath, &tDirectories::Resource() );
                 if( !surface )
                 {
-                    // trigger a redownload
-                    tResourceManager::locateResource( resourcePath, "", true, true );
+                    // queue a re-download in the background instead of blocking
+                    tResourceManager::requestFetch( resourceFile.c_str(), "", w.c_str() );
                 }
             }
         }
@@ -1099,7 +1103,7 @@ static void sr_VerifyResourceTexture( tString const & resourcePath )
 #endif
 }
 
-rResourceTexture::InternalTex::InternalTex(tResourcePath const &path) : rFileTexture(rTextureGroups::TEX_OBJ, tResourceManager::locateResource(path.Path().c_str()).c_str(), true, true, true, 0), use_(1), path_(path) {
+rResourceTexture::InternalTex::InternalTex(tResourcePath const &path) : rFileTexture(rTextureGroups::TEX_OBJ, tResourceManager::locateResourceCached(path.Path().c_str(), "").c_str(), true, true, true, 0), use_(1), path_(path) {
     sr_VerifyResourceTexture( path.Path() );
 
     textures.push_back(this);

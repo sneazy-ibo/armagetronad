@@ -38,6 +38,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <libxml/nanohttp.h>
 
+#include <atomic>
+#include <condition_variable>
+#include <deque>
+#include <mutex>
+#include <set>
+#include <string>
+#include <thread>
+
 #include "tConfiguration.h"
 #include "tDict.h"
 #include "tDirectories.h"
@@ -168,6 +176,10 @@ tString & tResourceManager::AccessRepoClient()
 
 static tSettingItem<tString> conf_res_repo("RESOURCE_REPOSITORY_CLIENT", tResourceManager::AccessRepoClient());
 
+//! set while running on the background fetch thread: keeps it from writing to
+//! the console, which is owned by the game thread
+static thread_local bool sr_quietFetch = false;
+
 tResourceManager::Result tResourceManager::FetchURI(const char* URI, std::ostream& o)
 {
 #ifdef LIBCURL_PROTOCOL_HTTP
@@ -224,13 +236,15 @@ tResourceManager::Result tResourceManager::FetchURI(const char* URI, std::ostrea
         ctxt = xmlNanoHTTPOpen(URI, NULL);
         if (ctxt == NULL)
         {
-            con << tOutput("$resource_fetcherror_noconnect", URI);
+            if (!sr_quietFetch)
+                con << tOutput("$resource_fetcherror_noconnect", URI);
             return ERROR_Uri;
         }
 
         if ((rc = xmlNanoHTTPReturnCode(ctxt)) != 200)
         {
-            con << tOutput(rc == 404 ? "$resource_fetcherror_404" : "$resource_fetcherror", rc);
+            if (!sr_quietFetch)
+                con << tOutput(rc == 404 ? "$resource_fetcherror_404" : "$resource_fetcherror", rc);
             return static_cast<tResourceManager::Result>(rc);
         }
 
@@ -248,7 +262,8 @@ tResourceManager::Result tResourceManager::FetchURI(const char* URI, std::ostrea
     return Result::ERROR_Unknown;
 #endif
 #endif
-    con << "OK\n";
+    if (!sr_quietFetch)
+        con << "OK\n";
     return Result::RESULT_Ok;
 }
 
@@ -306,6 +321,194 @@ static int myFetch(const char *URIs, const char *filename, const char *savepath)
     }
 
     return rv;	// last error
+}
+
+// ---------------------------------------------------------------------------
+// Background resource fetching
+//
+// HTTP fetches must never run on the game thread: the game is single threaded,
+// the timeout is half a minute and legacy resources point at hosts that have
+// been dead for years. locateResourceCached() only ever hands out files that
+// are already on disk; anything missing is queued here and downloaded by a
+// worker thread. Downloaded files are written to <file>.part and renamed into
+// place, so a partially written file is never picked up, and they land in the
+// resource write path, i.e. they are cached across sessions. The worker reports
+// completions through consumeFetchCompletions(); the game uses that to reload
+// textures and cockpits without ever having blocked.
+// ---------------------------------------------------------------------------
+namespace
+{
+    struct sr_FetchRequest
+    {
+        std::string file;      // cache path relative to the resource directory
+        std::string uriList;   // ';' separated URIs, tried in order
+        std::string savepath;  // absolute path to write to
+    };
+
+    std::mutex sr_fetchMutex;
+    std::condition_variable sr_fetchCondition;
+    std::deque< sr_FetchRequest > sr_fetchQueue;
+    std::set< std::string > sr_fetchPending;
+    std::thread sr_fetchThread;
+    bool sr_fetchStop = false;
+    std::atomic<int> sr_fetchCompleted( 0 );
+
+    //! one quiet HTTP fetch; writes to a temp file first, then renames it
+    bool sr_fetchOne( std::string const & uri, std::string const & savepath )
+    {
+        std::string tmp = savepath + ".part";
+        bool ok = false;
+        try
+        {
+            std::ofstream o( tmp.c_str(), std::ios::binary );
+            if ( o )
+            {
+                tResourceManager::Result ret = tResourceManager::FetchURI( uri.c_str(), o );
+                o.close();
+                if ( ret == tResourceManager::Result::RESULT_Ok )
+                {
+                    std::remove( savepath.c_str() );
+                    ok = ( std::rename( tmp.c_str(), savepath.c_str() ) == 0 );
+                }
+            }
+        }
+        catch ( ... )
+        {
+        }
+        if ( !ok )
+            std::remove( tmp.c_str() );
+        return ok;
+    }
+
+    //! tries every URI in the ';' separated list
+    bool sr_fetchQueued( sr_FetchRequest const & req )
+    {
+        sr_quietFetch = true;
+        bool ok = false;
+
+        std::string const & list = req.uriList;
+        std::string::size_type pos = 0;
+        while ( pos <= list.size() )
+        {
+            std::string::size_type end = list.find( ';', pos );
+            std::string uri = list.substr( pos, end == std::string::npos ? std::string::npos : end - pos );
+            if ( !uri.empty() && sr_fetchOne( uri, req.savepath ) )
+            {
+                ok = true;
+                break;
+            }
+            if ( end == std::string::npos )
+                break;
+            pos = end + 1;
+        }
+
+        sr_quietFetch = false;
+        return ok;
+    }
+
+    void sr_fetchWorker()
+    {
+        for ( ;; )
+        {
+            sr_FetchRequest req;
+            {
+                std::unique_lock< std::mutex > lock( sr_fetchMutex );
+                sr_fetchCondition.wait( lock, [] { return sr_fetchStop || !sr_fetchQueue.empty(); } );
+                if ( sr_fetchQueue.empty() )
+                {
+                    if ( sr_fetchStop )
+                        return;
+                    continue;
+                }
+                req = sr_fetchQueue.front();
+                sr_fetchQueue.pop_front();
+            }
+
+            bool ok = sr_fetchQueued( req );
+
+            {
+                std::lock_guard< std::mutex > lock( sr_fetchMutex );
+                sr_fetchPending.erase( req.file );
+            }
+            if ( ok )
+                sr_fetchCompleted.fetch_add( 1 );
+        }
+    }
+
+    //! caller must hold sr_fetchMutex
+    void sr_startFetchWorker()
+    {
+        if ( !sr_fetchThread.joinable() )
+            sr_fetchThread = std::thread( sr_fetchWorker );
+    }
+}
+
+tString tResourceManager::locateResourceCached(const char *file, const char *uri) {
+    if (!file || file[0] == '\0' || file[0] == '/' || file[0] == '\\')
+        return tString();
+
+    // A resource path can carry its URI in parentheses, "name-1.aatex.png(uri)"
+    // (see tResourcePath). It has to come off before the file lookups below: a
+    // URI contains a colon, which those reject as an absolute path, so every
+    // graphic that names a URI failed to be found locally and was dropped.
+    tString resourcePath( file );
+    tString embeddedUri;
+    tString::size_type open = resourcePath.find( '(' );
+    if ( open != tString::npos && resourcePath.EndsWith( ")" ) )
+    {
+        embeddedUri = resourcePath.substr( open + 1, resourcePath.size() - open - 2 );
+        resourcePath = resourcePath.substr( 0, open );
+    }
+
+    tString filepath = tDirectories::Resource().GetReadPath(resourcePath.c_str());
+    if (filepath != "")
+        return filepath;
+
+    tString savepath = tDirectories::Resource().GetWritePath(resourcePath.c_str());
+    if (savepath == "")
+        return tString();
+
+    const char *fetchUri = ( uri && uri[0] ) ? uri : embeddedUri.c_str();
+    if ( requestFetch( resourcePath.c_str(), fetchUri, (const char *)savepath ) )
+        con << "Fetching " << resourcePath << " in the background...\n";
+
+    return tString();
+}
+
+bool tResourceManager::requestFetch(const char *file, const char *uri, const char *savepath) {
+    if (!file || file[0] == '\0' || savepath == NULL || savepath[0] == '\0')
+        return false;
+
+    // Repositories first, the file's own URI last (legacy URIs point at hosts
+    // that have been dead for years, so they are only a last resort).
+    tString a_uri;
+    if ( AccessRepoServer().Len() > 2 )
+        a_uri << AccessRepoServer() << file << ';';
+
+    if ( AccessRepoClient().Len() > 2 && AccessRepoClient() != AccessRepoServer() )
+        a_uri << AccessRepoClient() << file << ';';
+
+    if (uri && strcmp("0", uri))
+        a_uri << uri << ';';
+
+    std::lock_guard< std::mutex > lock( sr_fetchMutex );
+    if ( sr_fetchPending.find( file ) != sr_fetchPending.end() )
+        return false; // already queued or in flight
+
+    sr_FetchRequest req;
+    req.file = file;
+    req.uriList = (const char *)a_uri;
+    req.savepath = savepath;
+
+    sr_fetchPending.insert( req.file );
+    sr_fetchQueue.push_back( req );
+    sr_startFetchWorker();
+    sr_fetchCondition.notify_one();
+    return true;
+}
+
+int tResourceManager::consumeFetchCompletions() {
+    return sr_fetchCompleted.exchange( 0 );
 }
 
 /*
@@ -399,16 +602,19 @@ tString tResourceManager::locateResource(const char *file, const char *uri, bool
         return (tString) NULL;
     }
 
-    // Some sort of File not found
-    if (uri && strcmp("0", uri))
-        a_uri << uri << ';';
-
-    // add repositories to uri
+    // Repositories first, the file's own URI last. Legacy resources point their
+    // URI at personal hosts that have been dead for years; trying those first
+    // costs a DNS timeout and prints an error even when the repositories can
+    // serve the file fine. If the repositories do not have it, the URI is still
+    // tried, so nothing that used to work stops working.
     if ( AccessRepoServer().Len() > 2 )
         a_uri << AccessRepoServer() << file << ';';
 
     if ( AccessRepoClient().Len() > 2 && AccessRepoClient() != AccessRepoServer() )
         a_uri << AccessRepoClient() << file << ';';
+
+    if (uri && strcmp("0", uri))
+        a_uri << uri << ';';
 
     rv = myFetch((const char *)a_uri, file, (const char *)savepath);
 

@@ -85,6 +85,17 @@ public:
     //! Return the position of the resource in the cache
     static tString locateResource(const char *filename, const char *uri="", bool fullPath=true, bool forceFetch=false);
 
+    //! locateResource() without blocking: the cached path, or queue a download and
+    //! return an empty string.
+    static tString locateResourceCached(const char *filename, const char *uri="");
+
+    //! Queue a background download; uri may be empty to try the repositories only.
+    static bool requestFetch(const char *filename, const char *uri, const char *savepath);
+
+    //! Number of background downloads that finished since the last call; reset
+    //! to zero. Lets the game reload textures/cockpits once new files arrive.
+    static int consumeFetchCompletions();
+
     //! opens a resource
     static FILE *openResource(const char *filename, const char *uri="");
 
