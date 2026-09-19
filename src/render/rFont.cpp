@@ -232,6 +232,10 @@ public:
     FTFont &GetFont(float height) {
         static float size_factor = .8; // guess, then improve
         int size = int(height/sr_lineHeight*size_factor*sr_screenHeight/2.+.5);
+        // A zero height, an unset screen or a failed font used to reach FTGL as an
+        // invalid pixel size and crash it.
+        if ( size < 1 )
+            size = 1;
         FTFont *ret;
         if(count(size)) {
             ret = (*this)[size]; //already exists
@@ -242,7 +246,9 @@ public:
         // current font… this assumes the line height is linear to
         // the font size, which should be true unless the font uses
         // different glyphs for different sizes.
-        size_factor = size / ret->LineHeight();
+        float lineHeight = ret->LineHeight();
+        if ( lineHeight > 0 )
+            size_factor = size / lineHeight;
         return *ret;
     }
     void BBox(FTGL_STRING const &str, float height, tCoord where, float &l, float &b, float &r, float &t) {
@@ -325,9 +331,12 @@ FTFont &rFontContainer::New(int size) {
         font = Load(tDirectories::Data().GetReadPath("textures/Armagetronad.ttf"));
 
     }
-    font->CharMap(ft_encoding_latin_1);
-    font->FaceSize(size);
-    font->CharMap(ft_encoding_unicode);
+    // FTGL is only called with a loaded font and a valid pixel size.
+    if ( !font->Error() && size > 0 ) {
+        font->CharMap(ft_encoding_latin_1);
+        font->FaceSize(size);
+        font->CharMap(ft_encoding_unicode);
+    }
     (*this)[size] = font;
     return *font;
 }
