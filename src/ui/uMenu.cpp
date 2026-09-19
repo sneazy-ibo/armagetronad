@@ -775,21 +775,25 @@ void uMenuItemToggle::Enter(){
 #ifdef SLOPPYLOCALE
 uMenuItemInt::uMenuItemInt
 (uMenu *m,const char *tit,const char *help,int &targ,
- int mi,int ma,int step)
+ int mi,int ma,int step,bool clampOnInit)
         :uMenuItem(m,help),title(tit),target(targ),Min(mi),Max(ma),
-        Step(step){
-    if (target<Min) target=Min;
-    if (target>Max) target=Max;
+        Step(step),ClampOnInit(clampOnInit){
+    if (ClampOnInit){
+        if (target<Min) target=Min;
+        if (target>Max) target=Max;
+    }
 }
 #endif
 
 uMenuItemInt::uMenuItemInt
 (uMenu *m,const tOutput &tit,const tOutput &help,int &targ,
- int mi,int ma,int step)
+ int mi,int ma,int step,bool clampOnInit)
         :uMenuItem(m,help),title(tit),target(targ),Min(mi),Max(ma),
-        Step(step){
-    if (target<Min) target=Min;
-    if (target>Max) target=Max;
+        Step(step),ClampOnInit(clampOnInit){
+    if (ClampOnInit){
+        if (target<Min) target=Min;
+        if (target>Max) target=Max;
+    }
 }
 
 
