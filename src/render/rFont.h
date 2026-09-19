@@ -90,6 +90,12 @@ enum sr_fontTypes {
 
 extern int sr_fontType;
 
+//! horizontal stretch applied to all text (the FONT_STRETCH setting)
+extern REAL sr_fontStretch;
+
+//! extra stretch while rendering into a square-pixel viewport (set by the cockpit)
+extern REAL sr_fontStretchViewport;
+
 class FTFont;
 
 // maybe make this a child of std::ostream...
