@@ -474,7 +474,7 @@ TEST_SUITE("ePlayerNetID")
                 THEN("creation time is valid")
                 {
                     // Just verify it doesn't crash and returns a value
-                    CHECK(creationTime >= 0);
+                    CHECK(creationTime >= doctest::Approx(0));
                 }
             }
             
@@ -485,7 +485,7 @@ TEST_SUITE("ePlayerNetID")
                 THEN("last activity time is valid")
                 {
                     // Should be 0 or positive for newly created player
-                    CHECK(lastActivity >= 0);
+                    CHECK(lastActivity >= doctest::Approx(0));
                 }
             }
         }
@@ -493,18 +493,28 @@ TEST_SUITE("ePlayerNetID")
         GIVEN("a player with activity")
         {
             auto player = tRefPtr<ePlayerNetID>::Make();
-            
-            WHEN("recording activity")
-            {
-                REAL lastActivityBefore = player->LastActivity();
+            REAL lastActivityBefore = player->LastActivity();
 
-                tMockAdvanceFrame(0.01);
-                player->Activity();
+            WHEN("letting time pass")
+            {
+                tMockAdvanceFrame(1);
 
                 THEN("last activity time increased")
                 {
                     REAL lastActivity = player->LastActivity();
                     CHECK(lastActivity >= lastActivityBefore);
+                }
+            }
+
+            WHEN("recording activity")
+            {
+                tMockAdvanceFrame(1);
+                player->Activity();
+
+                THEN("last activity time goes to near zero")
+                {
+                    REAL lastActivity = player->LastActivity();
+                    CHECK(lastActivity <= doctest::Approx(0));
                 }
             }
         }
