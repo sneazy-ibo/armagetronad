@@ -2,6 +2,7 @@
 #include "ePlayer.h"
 
 #include "tDefer.h"
+#include "MockConsole.h"
 
 // not needed here, maybe for some other place
 /*
@@ -72,6 +73,8 @@ TEST_SUITE("ePlayerNetID")
 
     TEST_CASE("Scoring system")
     {
+        MockConsole swallow;
+
         GIVEN("a player with default score")
         {
             auto player = tRefPtr<ePlayerNetID>::Make(0);
@@ -147,6 +150,8 @@ TEST_SUITE("ePlayerNetID")
 
     TEST_CASE("Player state")
     {
+        MockConsole swallow;
+
         GIVEN("a newly created player")
         {
             auto player = tRefPtr<ePlayerNetID>::Make(0);
@@ -277,6 +282,8 @@ TEST_SUITE("ePlayerNetID")
 
     TEST_CASE("Static collection methods")
     {
+        MockConsole swallow;
+
         GIVEN("no players created")
         {
             WHEN("checking player list")
@@ -353,6 +360,8 @@ TEST_SUITE("ePlayerNetID")
 
     TEST_CASE("Name management")
     {
+        MockConsole swallow;
+
         GIVEN("a player with default name")
         {
             auto player = tRefPtr<ePlayerNetID>::Make(0);
@@ -492,6 +501,8 @@ TEST_SUITE("ePlayerNetID")
 
     TEST_CASE("Chat functionality")
     {
+        MockConsole swallow;
+
         GIVEN("a player")
         {
             auto player = tRefPtr<ePlayerNetID>::Make(0);
@@ -527,11 +538,6 @@ TEST_SUITE("ePlayerNetID")
         }
     }
 
-    // Access control tests disabled: SetAccessLevel calls tCurrentAccessLevel::GetAccessLevel()
-    // which asserts currentLevel_ != tAccessLevel_Invalid. In test mode, the global
-    // access level is not initialized, causing assertion failures.
-    // As per spec guidelines, tests blocked by uninitialized dependencies are disabled.
-    #if false
     TEST_CASE("Access control")
     {
         GIVEN("a player")
@@ -562,6 +568,10 @@ TEST_SUITE("ePlayerNetID")
             
             WHEN("setting logged in state")
             {
+                // this is the old remote admin system, it requires elevated base access rights
+                tCurrentAccessLevel elevator( tAccessLevel_Owner, true );
+                // the old system is no longer usable in default builds.
+
                 player->BeLoggedIn();
                 
                 THEN("IsLoggedIn returns true")
@@ -591,5 +601,4 @@ TEST_SUITE("ePlayerNetID")
             }
         }
     }
-    #endif
 }
