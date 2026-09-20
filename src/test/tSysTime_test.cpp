@@ -2,6 +2,7 @@
 #include "tSysTime.h"
 #include <cmath>
 #include "tMath.h"
+#include <tuple>
 
 // Tests for tSysTime utilities
 // Purpose: Document the status quo behavior and detect regressions
@@ -16,8 +17,7 @@ TEST_SUITE("tSysTime")
             {
                 // This function checks if high-resolution timers are available
                 bool isAccurate = tTimerIsAccurate();
-                CHECK((isAccurate == true || isAccurate == false));
-                // We can't assume the result, just that it returns a valid boolean
+                std::ignore = isAccurate;
             }
         }
     }
