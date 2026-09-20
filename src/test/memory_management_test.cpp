@@ -15,7 +15,6 @@ TEST_SUITE("MemoryManagement")
             
             THEN("placeholder test passes")
             {
-                CHECK(true); // Placeholder
             }
         }
     }

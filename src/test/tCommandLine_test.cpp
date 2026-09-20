@@ -61,7 +61,6 @@ TEST_SUITE("tCommandLine")
             
             THEN("parser can be constructed without crashing")
             {
-                CHECK(true); // If we get here, construction succeeded
             }
             
             THEN("Executable returns the program name")

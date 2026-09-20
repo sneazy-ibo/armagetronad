@@ -19,7 +19,6 @@ TEST_SUITE("nSocket")
                 // TODO: This test is skipped because nSocket likely requires
                 // network subsystem initialization that isn't available in
                 // a simple test environment.
-                CHECK(true); // Placeholder - test skipped due to network dependencies
             }
         }
     }

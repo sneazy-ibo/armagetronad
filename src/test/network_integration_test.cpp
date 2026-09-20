@@ -16,7 +16,6 @@ TEST_SUITE("NetworkIntegration")
             
             THEN("placeholder test passes")
             {
-                CHECK(true); // Placeholder
             }
         }
     }
