@@ -3,6 +3,7 @@
 
 #include "tDefer.h"
 #include "MockConsole.h"
+#include "tSysTime.h"
 
 // not needed here, maybe for some other place
 /*
@@ -141,8 +142,7 @@ TEST_SUITE("ePlayerNetID")
                 
                 THEN("no crash occurs")
                 {
-                    // Just verify it doesn't crash
-                    CHECK(true);
+                    // TODO lastScore_ is private and we have no way of reading it
                 }
             }
         }
@@ -314,8 +314,8 @@ TEST_SUITE("ePlayerNetID")
         
         GIVEN("players with scores for ranking")
         {
-            auto player1 = tRefPtr<ePlayerNetID>::Make(0);
             auto player2 = tRefPtr<ePlayerNetID>::Make();
+            auto player1 = tRefPtr<ePlayerNetID>::Make(0);
             
             tOutput reasonWin, reasonLose;
             player1->AddScore(100, reasonWin, reasonLose);
@@ -323,11 +323,16 @@ TEST_SUITE("ePlayerNetID")
             
             WHEN("sorting by score")
             {
+                // players start ordered as we put them
+                CHECK(player1.get() == se_PlayerNetIDs(1));
+                CHECK(player2.get() == se_PlayerNetIDs(0));
+
                 ePlayerNetID::SortByScore();
                 
-                THEN("no crash occurs")
+                THEN("players are sorted")
                 {
-                    CHECK(true);
+                    CHECK(player1.get() == se_PlayerNetIDs(0));
+                    CHECK(player2.get() == se_PlayerNetIDs(1));
                 }
             }
             
@@ -346,13 +351,15 @@ TEST_SUITE("ePlayerNetID")
         {
             WHEN("clearing all players")
             {
-                // Note: This may affect other tests, so we just verify it doesn't crash
-                // In a real scenario, we'd check the list is empty
                 THEN("ClearAll completes without crash")
                 {
-                    // Don't actually clear in shared test context
-                    // Just document that the method exists
-                    CHECK(true);
+                    ePlayerNetID::ClearAll();
+                }
+
+                THEN("ClearAll also works with players active")
+                {
+                    auto player1 = tRefPtr<ePlayerNetID>::Make(0);
+                    ePlayerNetID::ClearAll();
                 }
             }
         }
@@ -489,11 +496,15 @@ TEST_SUITE("ePlayerNetID")
             
             WHEN("recording activity")
             {
+                REAL lastActivityBefore = player->LastActivity();
+
+                tAdvanceFrame();
                 player->Activity();
-                
-                THEN("no crash occurs")
+
+                THEN("last activity time increased")
                 {
-                    CHECK(true);
+                    REAL lastActivity = player->LastActivity();
+                    CHECK(lastActivity >= lastActivityBefore);
                 }
             }
         }
@@ -527,13 +538,9 @@ TEST_SUITE("ePlayerNetID")
             
             WHEN("sending chat message")
             {
-                // Note: Chat may produce console output, but should not crash
                 player->Chat(tString("Test message"));
-                
-                THEN("no crash occurs")
-                {
-                    CHECK(true);
-                }
+
+                CHECK(strstr(swallow.GetLastPrinted(), "Test message"));
             }
         }
     }
