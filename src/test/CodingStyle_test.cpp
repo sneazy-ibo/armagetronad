@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "doctest.h"
 #include "tDefer.h"
 
+#include "tSysTime.h"
+
 // FYI tests use BDD patterns whenever appropriate
 TEST_SUITE("CodingStyle")
 {
@@ -76,10 +78,7 @@ TEST_SUITE("CodingStyle")
         {
             {
                 // we start and end with zero objects
-                CHECK(0 == cReferenceCounted::GetNumberOfObjects());
-                auto guard = tDefer([] {
-                    CHECK(0 == cReferenceCounted::GetNumberOfObjects());
-                });
+                INVARIANT_CHECK(0 == cReferenceCounted::GetNumberOfObjects())
 
                 cShallowCopy holder{new cReferenceCountedDerived};
 
@@ -129,8 +128,11 @@ TEST_SUITE("CodingStyle")
         GIVEN("a filled deep copy holder")
         {
             {
-                // we start and end with zero objects
-                INVARIANT_CHECK(0 == cReferenceCounted::GetNumberOfObjects())
+                // we start and end with zero objects (alternative manual version)
+                CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                auto guard = tDefer([] {
+                    CHECK(0 == cReferenceCounted::GetNumberOfObjects());
+                });
 
                 // FYI the Make(...) function is the equivalent to std::make_shared or std::make_unique
                 auto referenceCounted = tRefPtr<cReferenceCountedDerived>::Make();
@@ -213,5 +215,15 @@ TEST_SUITE("CodingStyle")
                 }
             }
         }
+    }
+
+    TEST_CASE("Time")
+    {
+        // FYI this test demonstrates how to advance time in tests without actually adding delays.
+        auto timeStart = tSysTimeFloat(); // get time
+        tMockAdvanceFrame(1);             // go forward one second
+        auto timeEnd = tSysTimeFloat();   // get time again
+
+        CHECK(timeEnd - timeStart >= doctest::Approx(1));
     }
 }

@@ -498,7 +498,7 @@ TEST_SUITE("ePlayerNetID")
             {
                 REAL lastActivityBefore = player->LastActivity();
 
-                tAdvanceFrame();
+                tMockAdvanceFrame(0.01);
                 player->Activity();
 
                 THEN("last activity time increased")
