@@ -224,11 +224,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     mkdir -p "$BUILD_DIR"
 
 	if echo $config | grep _debug > /dev/null; then
-        set -x
         cd "${ROOT}/build"
         # link output directory to canonical build directory where VS code will be able to find it
         CANONICAL_BUILD_DIR_BASE="./test_${NAME}"
-        rm "${CANONICAL_BUILD_DIR_BASE}" # it's a directory link, if we do not remove it, ln below will create a link inside of it
+        rm -f "${CANONICAL_BUILD_DIR_BASE}" # it's a directory link, if we do not remove it, ln below will create a link inside of it
         ln -sf "${BUILD_DIR_BASE}" "${CANONICAL_BUILD_DIR_BASE}"
 	fi
 
