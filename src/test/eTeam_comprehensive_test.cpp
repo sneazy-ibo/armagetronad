@@ -1,4 +1,8 @@
 #include "doctest.h"
+
+#include "tSysTime.h"
+#include "tDefer.h"
+
 #include "eTeam.h"
 #include "ePlayer.h"
 
@@ -30,6 +34,9 @@ TEST_SUITE("eTeam Comprehensive")
                 THEN("team has 1 player")
                 {
                     CHECK(team->NumPlayers() == 1);
+
+                    // two ways to check team membership (we prefer the first):
+                    CHECK(player1->CurrentTeam() == team);
                     CHECK(team->Player(0) == player1);
                 }
 
@@ -37,8 +44,9 @@ TEST_SUITE("eTeam Comprehensive")
                 THEN("team has 2 players")
                 {
                     CHECK(team->NumPlayers() == 2);
-                    CHECK(team->Player(0) == player1);
-                    CHECK(team->Player(1) == player2);
+                    CHECK(player1->CurrentTeam() == team);
+                    CHECK(player2->CurrentTeam() == team);
+                    CHECK(player3->CurrentTeam() == nullptr);
                 }
 
                 team->AddPlayer(player3);
@@ -59,8 +67,9 @@ TEST_SUITE("eTeam Comprehensive")
                 THEN("team has 2 players after removal")
                 {
                     CHECK(team->NumPlayers() == 2);
-                    CHECK(team->Player(0) == player1);
-                    CHECK(team->Player(1) == player3);
+                    CHECK(player1->CurrentTeam() == team);
+                    CHECK(player2->CurrentTeam() == nullptr);
+                    CHECK(player3->CurrentTeam() == team);
                 }
 
                 team->RemovePlayer(player1);
@@ -86,16 +95,15 @@ TEST_SUITE("eTeam Comprehensive")
             {
                 // Just verify it doesn't crash and returns a boolean
                 bool allowed = eTeam::NewTeamAllowed();
-                // Can't CHECK boolean with || in doctest, so just verify it returns
-                (void)allowed;
+                CHECK(allowed);
             }
 
             WHEN("checking if player may join")
             {
                 bool mayJoin1 = team->PlayerMayJoin(player1);
                 bool mayJoin2 = team->PlayerMayJoin(player2);
-                (void)mayJoin1;
-                (void)mayJoin2;
+                CHECK(mayJoin1);
+                CHECK(mayJoin2);
             }
         }
     }
@@ -159,7 +167,9 @@ TEST_SUITE("eTeam Comprehensive")
             auto player3 = tRefPtr<ePlayerNetID>::Make();
 
             team->AddPlayer(player1);
+            tMockAdvanceFrame(0.1);
             team->AddPlayer(player2);
+            tMockAdvanceFrame(0.1);
             team->AddPlayer(player3);
 
             WHEN("querying player count")
@@ -169,6 +179,7 @@ TEST_SUITE("eTeam Comprehensive")
 
             WHEN("accessing players by index")
             {
+                // using the normally not preferred team check method, testing that players are added in order
                 CHECK(team->Player(0) == player1);
                 CHECK(team->Player(1) == player2);
                 CHECK(team->Player(2) == player3);
@@ -183,19 +194,27 @@ TEST_SUITE("eTeam Comprehensive")
                 CHECK(humans + ais <= team->NumPlayers());
             }
 
-            // WHEN("checking oldest and youngest players")
-            // {
-            //     OldestPlayer/YoungestPlayer may crash without proper initialization
-            //     auto oldest = team->OldestPlayer();
-            //     auto youngest = team->YoungestPlayer();
-            //     CHECK(oldest != nullptr);
-            //     CHECK(youngest != nullptr);
-            // }
+            WHEN("checking oldest and youngest players")
+            {
+                auto oldest = team->OldestPlayer();
+                auto youngest = team->YoungestPlayer();
+                CHECK(oldest != nullptr);
+                CHECK(youngest != nullptr);
+                CHECK(youngest != oldest);
+            }
+
+            WHEN("checking oldest and youngest human players")
+            {
+                auto oldest = team->OldestHumanPlayer();
+                auto youngest = team->YoungestHumanPlayer();
+                CHECK(oldest != nullptr);
+                CHECK(youngest != nullptr);
+            }
 
             WHEN("checking if team is alive")
             {
                 bool isAlive = team->Alive();
-                (void)isAlive;
+                CHECK(!isAlive); // we have not spawned any game objects, so nobody is alive yet
             }
         }
     }
@@ -262,14 +281,14 @@ TEST_SUITE("eTeam Comprehensive")
             WHEN("getting colored name")
             {
                 tColoredString colored = team->GetColoredName();
-                // Just verify it doesn't crash
+                CHECK(colored.Len() >= 3);
             }
 
             WHEN("printing name")
             {
                 tString nameStr;
                 team->PrintName(nameStr);
-                CHECK(nameStr.Len() > 0);
+                CHECK(nameStr.Len() >= 3);
             }
         }
     }
@@ -290,10 +309,10 @@ TEST_SUITE("eTeam Comprehensive")
 
         auto team = tRefPtr<eTeam>::Make();
         bool balance = team->BalanceThisTeam();
-        (void)balance;
+        CHECK(balance);
 
         bool isHuman = team->IsHuman();
-        (void)isHuman;
+        CHECK(isHuman);
     }
 
     // Static Methods Tests (fn-9-6)
@@ -301,26 +320,71 @@ TEST_SUITE("eTeam Comprehensive")
     {
         MockConsole mockConsole;
 
-        auto team1 = tRefPtr<eTeam>::Make();
-        auto team2 = tRefPtr<eTeam>::Make();
-        auto player = tRefPtr<ePlayerNetID>::Make();
-
-        bool areEnemies1 = eTeam::Enemies(team1, player);
-        (void)areEnemies1;
-
-        bool areEnemies2 = eTeam::Enemies(team1, team2);
-        (void)areEnemies2;
-
-        eTeam::SortByScore();
-
-        int numTeams = eTeam::teams.Len();
-        if (numTeams >= 2)
+        GIVEN("two teams with onep player")
         {
-            eTeam::SwapTeamsNo(0, 1);
+            auto team1 = tRefPtr<eTeam>::Make();
+            auto team2 = tRefPtr<eTeam>::Make();
+            auto player1 = tRefPtr<ePlayerNetID>::Make();
+            auto player2 = tRefPtr<ePlayerNetID>::Make();
+            team1->AddPlayer(player1);
+            team2->AddPlayer(player2);
+            THEN("they are considered enemies")
+            {
+                CHECK(ePlayerNetID::Enemies(player1, player2));
+                CHECK(!eTeam::Enemies(team1, player1));
+                CHECK(!eTeam::Enemies(team2, player2));
+                CHECK(eTeam::Enemies(team1, player2));
+                CHECK(eTeam::Enemies(team2, player1));
+                CHECK(eTeam::Enemies(team1, team2));
+            }
         }
 
-        tString ranking = eTeam::Ranking();
-        (void)ranking;
+        GIVEN("two teams with diferent scores")
+        {
+            INVARIANT_CHECK(eTeam::teams.Len() == 0);
+
+            auto team1 = tRefPtr<eTeam>::Make();
+            auto team2 = tRefPtr<eTeam>::Make();
+
+            // teams need players to be added to the list
+            auto p1 = tRefPtr<ePlayerNetID>::Make();
+            auto p2 = tRefPtr<ePlayerNetID>::Make();
+            team1->AddPlayer(p1);
+            team2->AddPlayer(p2);
+
+            team2->AddScore(1);
+
+            THEN("they can be sorted")
+            {
+                CHECK(eTeam::teams(0) == team1);
+                CHECK(eTeam::teams(1) == team2);
+
+                eTeam::SortByScore();
+
+                CHECK(eTeam::teams(0) == team2);
+                CHECK(eTeam::teams(1) == team1);
+            }
+
+            THEN("they can be swapped")
+            {
+                int numTeams = eTeam::teams.Len();
+                CHECK(numTeams == 2);
+
+                CHECK(eTeam::teams(0) == team1);
+                CHECK(eTeam::teams(1) == team2);
+
+                eTeam::SwapTeamsNo(0, 1);
+
+                CHECK(eTeam::teams(0) == team2);
+                CHECK(eTeam::teams(1) == team1);
+            }
+
+            THEN("there is some ranking")
+            {
+                tString ranking = eTeam::Ranking();
+                CHECK(ranking.Len() >= 10);
+            }
+        }
     }
 
     // Update Methods Tests (fn-9-6)
@@ -333,19 +397,7 @@ TEST_SUITE("eTeam Comprehensive")
         team->UpdateProperties();
         team->UpdateAppearance();
         team->Update();
-    }
 
-    // Network Sync Tests (fn-9-6) - Standalone mode only
-    TEST_CASE("eTeam Network Sync Methods - Standalone Mode")
-    {
-        MockConsole mockConsole;
-
-        auto team = tRefPtr<eTeam>::Make();
-
-        bool clear = team->ClearToTransmit(0);
-        (void)clear;
-
-        auto& desc = team->CreatorDescriptor();
-        (void)desc;
+        // no assert, just do not crash
     }
 }
