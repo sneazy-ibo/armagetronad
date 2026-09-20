@@ -106,6 +106,7 @@ Tests are compiled as separate programs that link against the relevant project l
 - Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. Tautological checks like `CHECK(true)`, `CHECK(a == a)` and `REQUIRE(true)` are **outlawed**.
   - If the only thing a test can check is "yep, this operation did not crash", just write a comment to that effect.
 - If a test you wrote **SHOULD** work, but does not because of some roadblock you currently have no control over, disable the test via `#if false`, describe the roadblock in a comment, and make a note in `TODO.md`.
+- Tests and most of the actual program are single threaded; consider access to globals safe. We usually have methods available to reset them to the default state after tests.
 
 ### Allowed Operations During Tests
 - All regular in-memory operations
