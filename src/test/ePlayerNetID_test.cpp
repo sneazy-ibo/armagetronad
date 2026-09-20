@@ -474,7 +474,7 @@ TEST_SUITE("ePlayerNetID")
                 THEN("creation time is valid")
                 {
                     // Just verify it doesn't crash and returns a value
-                    CHECK(creationTime >= 0);
+                    CHECK(creationTime >= doctest::Approx(0));
                 }
             }
             
@@ -485,7 +485,7 @@ TEST_SUITE("ePlayerNetID")
                 THEN("last activity time is valid")
                 {
                     // Should be 0 or positive for newly created player
-                    CHECK(lastActivity >= 0);
+                    CHECK(lastActivity >= doctest::Approx(0));
                 }
             }
         }
