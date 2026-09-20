@@ -113,7 +113,7 @@ Tests are compiled as separate programs that link against the relevant project l
 - Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them, the main program should take care of the common ones)
 
 ### Avoid During Tests
-- Console output
+- Console output; use a local `MockConsole` object to swallow most of it
 
 ### **Forbidden** Operations During Tests
 - Network access
