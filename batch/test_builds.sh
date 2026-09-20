@@ -201,15 +201,9 @@ for config in "${SELECTED_CONFIGS[@]}"; do
     # the root directory is in there to force rebuild on container/host switches
     BUILD_KEY="$SPECIFIC_FLAGS $COMMON_FLAGS $ROOT"
 
-	if echo $config | grep _debug > /dev/null; then
-		# debug configurations do not get decorations, the VS code debug configs are really
-		# unflexible and need fixed paths to the executables.
-		WORKSPACE_KEY=""
-		CXX_KEY=""
-	fi
+    BUILD_DIR_BASE=test_${NAME}${WORKSPACE_KEY}${CXX_KEY}
+    BUILD_DIR="$ROOT/build/${BUILD_DIR_BASE}"
 
-    BUILD_DIR="$ROOT/build/test_${NAME}${WORKSPACE_KEY}${CXX_KEY}"
-    
     echo ""
     echo "============================================================"
     echo "Configuration: $NAME"
@@ -228,6 +222,16 @@ for config in "${SELECTED_CONFIGS[@]}"; do
 
     # Create build directory
     mkdir -p "$BUILD_DIR"
+
+	if echo $config | grep _debug > /dev/null; then
+        set -x
+        cd "${ROOT}/build"
+        # link output directory to canonical build directory where VS code will be able to find it
+        CANONICAL_BUILD_DIR_BASE="./test_${NAME}"
+        rm "${CANONICAL_BUILD_DIR_BASE}" # it's a directory link, if we do not remove it, ln below will create a link inside of it
+        ln -sf "${BUILD_DIR_BASE}" "${CANONICAL_BUILD_DIR_BASE}"
+	fi
+
     cd "$BUILD_DIR" || continue
 
     # Clear out directory on relevant changes to build configuration
