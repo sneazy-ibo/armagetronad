@@ -84,7 +84,11 @@ Tests are compiled as separate programs that link against the relevant project l
   - Ensures proper handling of special characters
 
 ## Notes from Humans
-### GUARDRAIL: The AI Agents keep out of this section.
+### MAIN GUARDRAIL: The AI Agents keep out of this section.
+
+### GUARDRAILS
+
+- Do run `batch/test_builds.sh debug` to verify all tests pass.
 
 ### Guidelines
 
@@ -118,8 +122,6 @@ Tests are compiled as separate programs that link against the relevant project l
 ### Do not Write These Nonsense Tests
 - Existence of functions or variables
 - "Correct" values for enums
-
-### 
 
 ### Remarks
 
