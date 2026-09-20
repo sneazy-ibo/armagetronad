@@ -16,7 +16,6 @@ TEST_SUITE("ConfigurationIntegration")
             
             THEN("placeholder test passes")
             {
-                CHECK(true); // Placeholder
             }
         }
     }

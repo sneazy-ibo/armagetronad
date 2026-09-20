@@ -84,7 +84,11 @@ Tests are compiled as separate programs that link against the relevant project l
   - Ensures proper handling of special characters
 
 ## Notes from Humans
-### GUARDRAIL: The AI Agents keep out of this section.
+### MAIN GUARDRAIL: The AI Agents keep out of this section.
+
+### GUARDRAILS
+
+- Do run `batch/test_builds.sh debug` to verify all tests pass.
 
 ### Guidelines
 
@@ -99,9 +103,11 @@ Tests are compiled as separate programs that link against the relevant project l
 - Test files end in `_test.cpp`.
 - If, during writing of tests, you find bugs or odd behavior, or cannot write a test because there is something blocking it, write them down in `TODO.md`.
 - Tests should test runtime behavior.
-- Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. `CHECK(true)` and `REQUIRE(true)` are **outlawed**.
+- Tests generally **NEED** notrivial `CHECK`s or `REQUIRE`s. Tautological checks like `CHECK(true)`, `CHECK(a == a)` and `REQUIRE(true)` are **outlawed**.
   - If the only thing a test can check is "yep, this operation did not crash", just write a comment to that effect.
 - If a test you wrote **SHOULD** work, but does not because of some roadblock you currently have no control over, disable the test via `#if false`, describe the roadblock in a comment, and make a note in `TODO.md`.
+- Tests and most of the actual program are single threaded; consider access to globals safe. We usually have methods available to reset them to the default state after tests.
+- Keep tests for one class in a single file. Use multiple `TEST_SUITE`s to group tests if appropriate.
 
 ### Allowed Operations During Tests
 - All regular in-memory operations
@@ -109,7 +115,7 @@ Tests are compiled as separate programs that link against the relevant project l
 - Initialize static systems, such as network base, translation, directories (it's unfortunate that we have them, the main program should take care of the common ones)
 
 ### Avoid During Tests
-- Console output
+- Console output; use a local `MockConsole` object to swallow most of it
 
 ### **Forbidden** Operations During Tests
 - Network access
@@ -118,8 +124,6 @@ Tests are compiled as separate programs that link against the relevant project l
 ### Do not Write These Nonsense Tests
 - Existence of functions or variables
 - "Correct" values for enums
-
-### 
 
 ### Remarks
 

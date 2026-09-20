@@ -26,7 +26,6 @@ TEST_SUITE("eTimer")
                 // 1. Initialize the network subsystem in tests
                 // 2. Refactor eTimer to reduce dependencies
                 // 3. Create integration tests that run with network support
-                CHECK(true); // Placeholder - test skipped due to network dependencies
             }
         }
     }

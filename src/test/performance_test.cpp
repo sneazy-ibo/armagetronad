@@ -15,7 +15,6 @@ TEST_SUITE("Performance")
             
             THEN("placeholder test passes")
             {
-                CHECK(true); // Placeholder
             }
         }
     }

@@ -311,7 +311,7 @@ unit_tests_SOURCES = thirdparty/doctest/doctest.h \
 	test/tEventQueue_test.cpp test/tDirectories_test.cpp test/md5_test.cpp \
 	test/eTimer_test.cpp test/eGrid_test.cpp \
 	test/ePath_test.cpp \
-	test/ePlayer_test.cpp test/eTeam_test.cpp \
+	test/ePlayer_test.cpp test/ePlayerNetID_test.cpp test/eTeam_test.cpp \
 	test/nSocket_test.cpp test/nNetwork_test.cpp test/nMessage_test.cpp \
 	test/nNetObject_test.cpp test/nServerInfo_test.cpp test/tCrypt_test.cpp \
 	test/tConfiguration_test.cpp \
@@ -329,6 +329,11 @@ unit_tests_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools
 chat_prefix_test_SOURCES = test/chat_prefix_test.cpp
 chat_prefix_test_CXXFLAGS = $(libengine_a_CXXFLAGS)
 chat_prefix_test_LDADD=libtron.a libengine.a libnetwork.a libui.a librender.a libtools.a protobuf/libprotobuf.a thirdparty/mathexpr/libmathexpr.a ${extralibs}
+
+# At least my AI seems to be stubborn about adding these nonsense patterns
+all-local:
+	if grep -n "CHECK(true)\|VERIFY(true)" ${srcdir}/test/*.cpp; then echo "ERROR: No tautological tests! Check grep output above."; false; fi
+
 endif # BUILDTESTS
 
 endif # BUILDFAKERELEASE

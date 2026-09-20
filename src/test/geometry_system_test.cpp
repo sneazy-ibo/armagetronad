@@ -16,7 +16,6 @@ TEST_SUITE("GeometrySystem")
             
             THEN("placeholder test passes")
             {
-                CHECK(true); // Placeholder
             }
         }
     }

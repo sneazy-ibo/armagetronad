@@ -19,7 +19,6 @@ TEST_SUITE("tCrypt")
                 // TODO: This test is a placeholder. The actual tCrypt functionality
                 // needs to be examined to determine what can be tested in isolation.
                 // Many cryptographic systems have complex dependencies.
-                CHECK(true); // Placeholder - test placeholder
             }
         }
     }

@@ -52,7 +52,6 @@ TEST_SUITE("ePath")
             THEN("static methods exist")
             {
                 (void)&ePath::RenderLast;
-                CHECK(true); // If we get here, the method exists
             }
         }
     }
