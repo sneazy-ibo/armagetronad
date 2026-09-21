@@ -647,8 +647,8 @@ consider this branch legacy.
   - Try `batch/test_builds.sh full` before you start modifications to see if that works. Fall back to less complete tests only after consulting the user.
   - For quick iterations, `batch/test_builds.sh debug` suffices, or even `batch/test_builds.sh server_debug` for just one configuration.
   - Before committing, run `batch/test_builds.sh full` or the user sanctioned alternative again. Only commit if that runs without error.
-- After `batch/test_builds.sh debug`, debug executables of the full game are `build/test_server_debug/armagetronad-dedicated` and `build/test_client_debug/armagetronad`.
-  They need to run in their respective directories. The unit test executable are `build/test_server_debug/src/unit_tests` and `build/test_client_debug/src/unit_tests`.
+- After `batch/test_builds.sh debug`, debug executables of the full game are `build/test_vs_server_debug/armagetronad-dedicated` and `build/test_vs_client_debug/armagetronad`.
+  They need to run in their respective directories. The unit test executable are `build/test_vs_server_debug/src/unit_tests` and `build/test_vs_client_debug/src/unit_tests`.
 - Unit tests are in `src/test`, see `src/test/AGENTS.md` for details.
 
 ### Coding Style
