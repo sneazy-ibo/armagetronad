@@ -33,8 +33,8 @@ ROOT="$(pwd)"
 
 # Define configurations: name:configure_flags
 DEBUG_CONFIGURATIONS=(
-    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout"
-    "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout"
+    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout --enable-coverage"
+    "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout --enable-coverage"
 )
 
 CONFIGURATIONS=(
@@ -305,6 +305,16 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         if [ "$TEST_PASSED" = true ]; then
             if [ "$VERBOSE" = "1" ]; then
                 cat /tmp/test_${NAME}.log
+            fi
+            # Verify coverage data files were generated
+            if [ "$NAME" = "client_debug" ] || [ "$NAME" = "server_debug" ]; then
+                if find . -name "*.gcda" -o -name "*.gcno" | grep -q .; then
+                    echo "✓ Coverage data files (.gcda/.gcno) generated for $NAME"
+                else
+                    echo "✗ Coverage data files (.gcda/.gcno) NOT found for $NAME"
+                    FAILURES=$((FAILURES + 1))
+                    FAILED_CONFIGS+=("$NAME")
+                fi
             fi
             echo "✓ All tests PASSED for $NAME"
         else

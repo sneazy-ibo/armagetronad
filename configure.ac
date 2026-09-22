@@ -134,6 +134,15 @@ AC_ARG_ENABLE(main,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-main) ;;
      esac],[armamain=true])
 
+AC_ARG_ENABLE(coverage,
+     AC_HELP_STRING([--enable-coverage],
+		[enable code coverage collection (gcov for GCC, llvm-cov for Clang)]),
+     [case "${enableval}" in
+       yes) enable_coverage=yes ;;
+       no)  enable_coverage=no ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-coverage) ;;
+     esac],[enable_coverage=no])
+
 AC_ARG_ENABLE(glout,
      AC_HELP_STRING([--enable-glout],
 		[Inverse alias of --enable-dedicated]),
@@ -426,6 +435,32 @@ dnl C++ Compiler:
 AC_PROG_CXX
 AC_PROG_CXXCPP
 dnl AC_OBJEXT
+
+if test x$enable_coverage = xyes; then
+    dnl Check for coverage tools and set appropriate flags
+    case "$CXX" in
+        *g++*|*gcc*)
+            dnl GCC compiler
+            AC_CHECK_PROG([GCOV_FOUND], [gcov], [yes], [no])
+            if test x$GCOV_FOUND = xno; then
+                AC_MSG_WARN([gcov not found; coverage may not work properly with GCC])
+            fi
+            CXXFLAGS="$CXXFLAGS --coverage"
+            ;;
+        *clang++*|*clang*)
+            dnl Clang compiler
+            AC_CHECK_PROG([LLVM_COV_FOUND], [llvm-cov], [yes], [no])
+            if test x$LLVM_COV_FOUND = xno; then
+                AC_MSG_WARN([llvm-cov not found; coverage may not work properly with Clang])
+            fi
+            CXXFLAGS="$CXXFLAGS -fprofile-instr-generate -fcoverage-mapping"
+            ;;
+        *)
+            AC_MSG_WARN([Unknown compiler $CXX; not adding coverage flags])
+            ;;
+    esac
+fi
+AM_CONDITIONAL(ENABLE_COVERAGE, test x$enable_coverage = xyes)
 
 dnl Make:
 dnl AC_PROG_MAKE_SET

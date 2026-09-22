@@ -161,6 +161,24 @@ if BUILDTESTS
 	src/unit_tests -ni
 endif
 
+###############
+# Coverage    #
+###############
+
+if ENABLE_COVERAGE
+coverage: unit_tests
+	@echo "Generating coverage report..."
+	@mkdir -p coverage
+	lcov --capture --directory . --output-file coverage/coverage.info
+	genhtml coverage/coverage.info --output-directory coverage/html
+	@echo "Coverage report generated in coverage/html/index.html"
+
+coverage-clean:
+	rm -rf coverage
+
+.PHONY: coverage coverage-clean
+endif
+
 ##########
 # README #
 ##########
