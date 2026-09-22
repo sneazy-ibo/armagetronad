@@ -437,28 +437,43 @@ AC_PROG_CXXCPP
 dnl AC_OBJEXT
 
 if test x$enable_coverage = xyes; then
+    FACTUAL_CXX=$CXX
+
     dnl Check for coverage tools and set appropriate flags
-    case "$CXX" in
-        *g++*|*gcc*)
-            dnl GCC compiler
-            AC_CHECK_PROG([GCOV_FOUND], [gcov], [yes], [no])
-            if test x$GCOV_FOUND = xno; then
-                AC_MSG_WARN([gcov not found; coverage may not work properly with GCC])
-            fi
-            CXXFLAGS="$CXXFLAGS --coverage"
-            ;;
-        *clang++*|*clang*)
-            dnl Clang compiler
-            AC_CHECK_PROG([LLVM_COV_FOUND], [llvm-cov], [yes], [no])
-            if test x$LLVM_COV_FOUND = xno; then
-                AC_MSG_WARN([llvm-cov not found; coverage may not work properly with Clang])
-            fi
-            CXXFLAGS="$CXXFLAGS -fprofile-instr-generate -fcoverage-mapping"
-            ;;
-        *)
-            AC_MSG_WARN([Unknown compiler $CXX; not adding coverage flags])
-            ;;
-    esac
+    for run in first second; do
+        case "${FACTUAL_CXX}_${run}" in
+            *g++*|*gcc*)
+                dnl GCC compiler
+                AC_CHECK_PROG([GCOV_FOUND], [gcov], [yes], [no])
+                if test x$GCOV_FOUND = xno; then
+                    AC_MSG_WARN([gcov not found; coverage may not work properly with GCC])
+                fi
+                AC_MSG_RESULT([Adding coverage flags for gcc...])
+                CXXFLAGS="$CXXFLAGS --coverage"
+                ;;
+            *clang++*|*clang*)
+                dnl Clang compiler
+                AC_CHECK_PROG([LLVM_COV_FOUND], [llvm-cov], [yes], [no])
+                if test x$LLVM_COV_FOUND = xno; then
+                    AC_MSG_WARN([llvm-cov not found; coverage may not work properly with Clang])
+                fi
+                AC_MSG_RESULT([Adding coverage flags for clang...])
+                CXXFLAGS="$CXXFLAGS -fprofile-instr-generate -fcoverage-mapping"
+                ;;
+            *_first)
+                # unknown at first, auto-detect
+                if c++ --version | grep clang > /dev/null; then
+                    FACTUAL_CXX=clang
+                fi
+                if c++ --version | grep GCC > /dev/null; then
+                    FACTUAL_CXX=gcc
+                fi
+                ;;
+            *)
+                AC_MSG_WARN([Unknown compiler $FACTUAL_CXX; not adding coverage flags])
+                ;;
+        esac
+    done
 fi
 AM_CONDITIONAL(ENABLE_COVERAGE, test x$enable_coverage = xyes)
 
