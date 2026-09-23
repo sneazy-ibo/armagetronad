@@ -307,16 +307,17 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                 cat /tmp/test_${NAME}.log
             fi
             # Verify coverage data files were generated
-            if [ "$NAME" = "client_debug" ] || [ "$NAME" = "server_debug" ]; then
+        	if echo $config | grep _debug > /dev/null; then
                 if find . -name "*.gcda" -o -name "*.gcno" | grep -q .; then
-                    echo "✓ Coverage data files (.gcda/.gcno) generated for $NAME"
+                    echo "✓ All tests PASSED, coverage data files (.gcda/.gcno) generated for $NAME"
                 else
-                    echo "✗ Coverage data files (.gcda/.gcno) NOT found for $NAME"
+                    echo "✗ Tests passed, but coverage data files (.gcda/.gcno) NOT found for $NAME"
                     FAILURES=$((FAILURES + 1))
                     FAILED_CONFIGS+=("$NAME")
                 fi
+            else
+                echo "✓ All tests PASSED for $NAME"
             fi
-            echo "✓ All tests PASSED for $NAME"
         else
             echo "✗ Tests FAILED for $NAME"
             echo "Test log:"
