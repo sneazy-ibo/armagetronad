@@ -158,7 +158,7 @@ distcheck-clean:
 unit_tests:
 if BUILDTESTS
 	$(MAKE) -C src unit_tests
-	src/unit_tests -ni
+	./src/unit_tests -ni
 endif
 
 ###############
