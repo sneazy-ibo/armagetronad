@@ -120,7 +120,7 @@ elif [ "$1" = "full" ]; then
     # we compare compilers by their version output
     DEFAULT_V=`$DEFAULT_CXX -v 2>&1`
     # identify possible compilers
-    for COMPILER in g++ clang c++ `ls /usr/bin/g++-* /usr/bin/clang++-* 2>/dev/null | sed -e s,/usr/bin/,,g`; do
+    for COMPILER in g++ clang++ c++ `ls /usr/bin/g++-* /usr/bin/clang++-* 2>/dev/null | sed -e s,/usr/bin/,,g`; do
         # see if they differ from the default; if yes, build with them
         COMPILER_V=`$COMPILER -v 2>&1` || continue
         if [ "$DEFAULT_V" = "$COMPILER_V" ]; then continue; fi
