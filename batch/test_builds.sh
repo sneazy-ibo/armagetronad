@@ -306,8 +306,8 @@ for config in "${SELECTED_CONFIGS[@]}"; do
             if [ "$VERBOSE" = "1" ]; then
                 cat /tmp/test_${NAME}.log
             fi
-            # Verify coverage data files were generated
-        	if echo $config | grep _debug > /dev/null; then
+            # Verify coverage data files were generated, if we support the configuration
+        	if test -f .coverage_available; then
                 if find . -name "*.gcda" -o -name "*.gcno" | grep -q .; then
                     echo "✓ All tests PASSED, coverage data files (.gcda/.gcno) generated for $NAME"
                 else

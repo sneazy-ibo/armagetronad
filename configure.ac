@@ -1053,6 +1053,9 @@ echo ${progname} | grep -q "\." && progid=org.${progname}
 echo ${progname} | grep -q "\..*\." && progid=${progname}
 AC_SUBST(progid)
 
+dnl this special file is created when we SHOULD be able to generate coverage data
+rm -f .coverage_available
+
 if test x$enable_coverage = xyes; then
     FACTUAL_CXX=$CXX
 
@@ -1064,6 +1067,7 @@ if test x$enable_coverage = xyes; then
                 AC_MSG_RESULT([Adding coverage flags for clang...])
                 dnl Use GCC-compatible flags to generate .gcda/.gcno files
                 CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+                echo "clang" > .coverage_available
                 break                    
                 ;;
             *g++*|*gcc*)
@@ -1074,6 +1078,7 @@ if test x$enable_coverage = xyes; then
                 fi
                 AC_MSG_RESULT([Adding coverage flags for gcc...])
                 CXXFLAGS="$CXXFLAGS --coverage"
+                echo "gcc" > .coverage_available
                 break
                 ;;
             *_first)
