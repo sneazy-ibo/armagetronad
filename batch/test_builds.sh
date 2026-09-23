@@ -64,7 +64,7 @@ fi
 WORKSPACE_KEY=""
 if [[ $ROOT == /work* ]]; then
     # looks like we are in a devcontainer
-    WORKSPACE_KEY="_devcnt"
+    WORKSPACE_KEY="_pod"
 fi
 
 # Common configure flags for all test builds
