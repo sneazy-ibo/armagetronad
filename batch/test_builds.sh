@@ -11,6 +11,7 @@
 #   TEST_ONLY=1 ./batch/test_builds.sh debug    # Skip build, just test existing build
 #   FORCE_RECONFIGURE=1 ./batch/test_builds.sh  # Force re-run of configure
 #   VERBOSE=1 ./batch/test_builds.sh            # Show full build output
+#   COVERAGE=1 ./batch/test_builds.sh server_debug # build debug server, run tests, generate coverage report
 #   MAKEFLAGS                                   # Flags passed on to make
 #
 # Available configurations (use 'list' or 'help' to see more):
@@ -98,6 +99,8 @@ elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  BUILD_ONLY=1       - Skip testing, only build"
     echo "  FORCE_RECONFIGURE=1 - Force re-run of configure step"
     echo "  VERBOSE=1          - Show full build output (not just summary)"
+    echo "  COVERAGE=1         - Generate human readable code coverage report (requires lcov)"
+    echo "  COVERAGE=2         - Silently generate code coverage report, do not fail on error (for AI Agents)"
     echo "  JOBS=N             - Number of parallel jobs (default: auto)"
     exit 0
 elif [ "$1" = "list" ]; then
@@ -310,6 +313,21 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         	if test -f .coverage_available; then
                 if find . -name "*.gcda" -o -name "*.gcno" | grep -q .; then
                     echo "✓ All tests PASSED, coverage data files (.gcda/.gcno) generated for $NAME"
+                    if [ "$COVERAGE" != "" ]; then
+                        rm -f coverage/coverage.info coverage/html/index.html
+                        if ! make -j"$JOBS" process_coverage > /dev/null 2>&1; then
+                            if [ "$COVERAGE" = "1" ]; then
+                                if ! make -j"$JOBS" coverage; then
+                                    echo "✗ Coverage processing did not work for $NAME"
+                                    FAILURES=$((FAILURES + 1))
+                                    FAILED_CONFIGS+=("$NAME")
+                                fi
+                            fi
+                        fi
+                        if [ -r coverage/coverage.info ] && [ -r coverage/html/index.html ]; then
+                            echo "✓ Test coverage data reviewable at file://`pwd`/coverage/html/index.html"
+                        fi
+                    fi
                 else
                     echo "✗ Tests passed, but coverage data files (.gcda/.gcno) NOT found for $NAME"
                     FAILURES=$((FAILURES + 1))

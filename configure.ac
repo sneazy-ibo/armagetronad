@@ -1092,10 +1092,22 @@ if test x$enable_coverage = xyes; then
                 ;;
             *)
                 AC_MSG_WARN([Unknown compiler $FACTUAL_CXX; not adding coverage flags])
+                enable_coverage=no
                 ;;
         esac
     done
 fi
+
+dnl check for lcov
+if test x$enable_coverage = xyes; then
+    AC_CHECK_PROG([LCOV_FOUND], [lcov], [yes], [no])
+    if test x$LCOV_FOUND = xno; then
+        AC_MSG_WARN([lcov not found; processing coverage for human consumption will not work.])
+        enable_coverage=no
+    fi
+fi
+
+dnl this conditional is only active if coverage is enabled and we can process it
 AM_CONDITIONAL(ENABLE_COVERAGE, test x$enable_coverage = xyes)
 
 # all include directories added via -I so far should be system level inlcudes, divide them from those added by individual makefiles

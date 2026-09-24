@@ -165,19 +165,21 @@ endif
 # Coverage    #
 ###############
 
+coverage: unit_tests process_coverage
+
+process_coverage:
 if ENABLE_COVERAGE
-coverage: unit_tests
 	@echo "Generating coverage report..."
 	@mkdir -p coverage
 	lcov --capture --directory . --output-file coverage/coverage.info
 	genhtml coverage/coverage.info --output-directory coverage/html
 	@echo "Coverage report generated in coverage/html/index.html"
+endif
 
 coverage-clean:
 	rm -rf coverage
 
-.PHONY: coverage coverage-clean
-endif
+.PHONY: coverage coverage-clean process_coverage unit_tests
 
 ##########
 # README #
