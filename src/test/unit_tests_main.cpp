@@ -32,7 +32,7 @@ int main(int argc, char** argv)
             {
                 // arrived, construct build/src dir and chdir to it
                 auto const buildDir = program.SubStr(0, i);
-                std::cout << buildDir << "\n";
+                // std::cout << buildDir << "\n";
                 auto const res = chdir(buildDir);
                 std::ignore = res;
 
