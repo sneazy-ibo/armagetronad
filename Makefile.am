@@ -157,9 +157,10 @@ distcheck-clean:
 
 unit_tests:
 if BUILDTESTS
+	find src -name "*.gcda" -exec rm -f \{\} \; # clear previous coverage data
+	rm -f coverage/*.info
 	$(MAKE) -C src unit_tests
 	./src/unit_tests -ni
-	rm -f coverage/*.info
 endif
 
 ###############

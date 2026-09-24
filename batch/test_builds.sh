@@ -299,6 +299,10 @@ for config in "${SELECTED_CONFIGS[@]}"; do
         # Run tests
         echo "[3/3] Testing..."
         TEST_PASSED=false
+
+        # clear previous coverage data
+        find src -name "*.gcda" -exec rm -f \{\} \;
+        rm -f coverage/*.info
         
         # Run unit_tests directly
         if [ -x ./src/unit_tests ] && ./src/unit_tests -ni -o=/tmp/test_${NAME}.log; then
