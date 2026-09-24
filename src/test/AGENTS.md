@@ -125,6 +125,11 @@ Tests are compiled as separate programs that link against the relevant project l
 - Existence of functions or variables
 - "Correct" values for enums
 
+### Test Coverage
+- To collect test coverage, run `COVERAGE=2 ./batch/test_builds.sh server_debug`.
+- Coverage files will be either in lcov digest format in `build/test_vs_server_debug/coverage/lcov.info` or raw gcov `.gcno/.gcda` files in `build/test_vs_server_debug/src` and subdirectories.
+- We do not chase 100% test coverage, but the coverage data can be used to decide which test to write next, and, more importantly, to verify that **new** or **changed** code is covered.
+
 ### Remarks
 
 - `chat_prefix_test` is just a relic, not actively used.
