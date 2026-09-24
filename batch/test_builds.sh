@@ -314,7 +314,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                 if find . -name "*.gcda" -o -name "*.gcno" | grep -q .; then
                     echo "✓ All tests PASSED, coverage data files (.gcda/.gcno) generated for $NAME"
                     if [ "$COVERAGE" != "" ]; then
-                        rm -f coverage/coverage.info coverage/html/index.html
+                        rm -f coverage/*.info coverage/html/index.html
                         if ! make -j"$JOBS" process_coverage > /dev/null 2>&1; then
                             if [ "$COVERAGE" = "1" ]; then
                                 if ! make -j"$JOBS" coverage; then
@@ -324,7 +324,7 @@ for config in "${SELECTED_CONFIGS[@]}"; do
                                 fi
                             fi
                         fi
-                        if [ -r coverage/coverage.info ] && [ -r coverage/html/index.html ]; then
+                        if [ -r coverage/html/index.html ]; then
                             echo "✓ Test coverage data reviewable at file://`pwd`/coverage/html/index.html"
                         fi
                     fi

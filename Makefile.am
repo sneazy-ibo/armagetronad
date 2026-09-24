@@ -159,6 +159,7 @@ unit_tests:
 if BUILDTESTS
 	$(MAKE) -C src unit_tests
 	./src/unit_tests -ni
+	rm -f coverage/*.info
 endif
 
 ###############
@@ -166,13 +167,18 @@ endif
 ###############
 
 coverage: unit_tests process_coverage
+process_coverage: coverage/lcov.info coverage/html/index.html
 
-process_coverage:
+coverage/lcov.info:
 if ENABLE_COVERAGE
 	@echo "Generating coverage report..."
 	@mkdir -p coverage
-	lcov --capture --directory . --output-file coverage/coverage.info
-	genhtml coverage/coverage.info --output-directory coverage/html
+	lcov --capture --directory . --output-file $@
+endif
+
+coverage/html/index.html: coverage/lcov.info
+if ENABLE_COVERAGE
+	genhtml $< --output-directory coverage/html
 	@echo "Coverage report generated in coverage/html/index.html"
 endif
 
