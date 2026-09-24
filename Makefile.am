@@ -173,7 +173,7 @@ coverage/lcov.info:
 if ENABLE_COVERAGE
 	@echo "Generating coverage report..."
 	@mkdir -p coverage
-	lcov --capture --directory . --output-file $@
+	lcov -j 4 --capture --directory . --exclude '/src/thirdparty/' --output-file $@
 endif
 
 coverage/html/index.html: coverage/lcov.info
