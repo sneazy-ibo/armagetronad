@@ -76,7 +76,7 @@ public:
     rScreenSize			windowSize;
     bool				fullscreen;
 #ifdef MACOSX
-    bool                lowDPIWindow{};
+    bool                lowDPIWindow;
 #endif    
     rColorDepth			colorDepth;
     rColorDepth			zDepth;

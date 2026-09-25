@@ -385,7 +385,11 @@ int rScreenSize::Compare( rScreenSize const & other ) const
 // *******************************************************************************************
 
 rScreenSettings::rScreenSettings( rResolution r, bool fs, rColorDepth cd, bool ce )
-:res(r), windowSize(r), fullscreen(fs), colorDepth(cd), zDepth( ArmageTron_ColorDepth_Desktop ), checkErrors(true), displayIndex(0), refreshRate(0), vSync( ArmageTron_VSync_Default ), aspect (1)
+:res(r), windowSize(r), fullscreen(fs),
+#ifdef MACOSX
+ lowDPIWindow(false),
+#endif
+ colorDepth(cd), zDepth( ArmageTron_ColorDepth_Desktop ), checkErrors(true), displayIndex(0), refreshRate(0), vSync( ArmageTron_VSync_Default ), aspect (1)
 {
     // special case for desktop resolution: window size of 640x480
     if ( r == ArmageTron_Desktop )
