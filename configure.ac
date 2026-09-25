@@ -1056,6 +1056,7 @@ AC_SUBST(progid)
 
 dnl this special file is created when we SHOULD be able to generate coverage data
 rm -f .coverage_available
+USING_CLANG_COVERAGE=no
 
 if test x$enable_coverage = xyes; then
     FACTUAL_CXX=$CXX
@@ -1069,6 +1070,7 @@ if test x$enable_coverage = xyes; then
                 dnl Use GCC-compatible flags to generate .gcda/.gcno files
                 CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
                 echo "clang" > .coverage_available
+                USING_CLANG_COVERAGE=yes
                 break                    
                 ;;
             *g++*|*gcc*)
@@ -1108,12 +1110,6 @@ if test x$enable_coverage = xyes; then
     fi
 fi
 
-dnl Determine if we're using clang for coverage
-if test x$enable_coverage = xyes && test -f .coverage_available && grep -q clang .coverage_available; then
-    USING_CLANG_COVERAGE=yes
-else
-    USING_CLANG_COVERAGE=no
-fi
 AC_SUBST(USING_CLANG_COVERAGE)
 
 dnl this conditional is only active if coverage is enabled and we can process it
