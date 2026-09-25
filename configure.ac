@@ -724,7 +724,8 @@ dnl *************************************************
 
 PKG_CHECK_MODULES([SDL], [sdl < 2], [
     CPPFLAGS="$CPPFLAGS $SDL_CFLAGS"
-    LIBS="$LIBS $SDL_LIBS"
+    dnl LIBS="$LIBS $SDL_LIBS"
+    dnl complete libs come later with SDL_image
     ], [
     AC_MSG_CHECKING(whether SDL is installed)
     if SDLLIBS=`${SDL_CONFIG} --libs`; then
@@ -732,7 +733,7 @@ PKG_CHECK_MODULES([SDL], [sdl < 2], [
     fi
 
     CPPFLAGS="$CPPFLAGS `${SDL_CONFIG} --cflags`"
-    LIBS="${SDLLIBS} $LIBS"
+    dnl LIBS="${SDLLIBS} $LIBS"
 
     AC_CHECK_FUNC(SDL_Init,
     AC_DEFINE(HAVE_LIBSDL,,[Define if you have the library SDL]),
