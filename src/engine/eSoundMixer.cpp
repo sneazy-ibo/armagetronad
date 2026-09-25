@@ -45,6 +45,9 @@ eSoundMixer by Dave Fancella
 
 #include "eSoundMixer.h"
 #include "sdl_mixer/eMusicTrackSDLMixer.h"
+#include "rRecorder.h"
+
+#include <cstring>
 #include "sdl_mixer/eChannelSDLMixer.h"
 
 // Possibly temporary?
@@ -112,6 +115,13 @@ static tConfItem<int> se("MUSIC_ACTIVE", musicActive);
 
 float buffersize = 1.0;
 static tConfItem<float> sbs("SOUND_BUFFER_SIZE", buffersize);
+
+//! Silences the speakers while leaving the mixer running. It is applied after the
+//! recorder has taken its copy of the mix, so muting gameplay never costs a
+//! recording its audio, and it is independent of SOUND_QUALITY (which decides
+//! whether the mixer runs at all, and at what rate).
+bool soundMuted = false;
+static tConfItem<bool> sm("SOUND_MUTE", soundMuted);
 
 namespace
 {
@@ -245,6 +255,23 @@ int se_mixerFrequency = 1;
 // I'm going to hell for this
 #include "eSound.cpp"
 
+#ifndef DEDICATED
+//! SDL_Mixer has room for exactly one post-mix callback, so this wraps the game's
+//! own filler (see fill_audio): run that first, then hand the finished mix to the
+//! recorder. The recorder taps the mix *before* any muting, so whether the
+//! speakers are silenced has no effect on what ends up in a recording.
+static void se_MoviePostMix( void * udata, Uint8 * stream, int len )
+{
+    fill_audio( udata, stream, len );
+
+    if ( rRecorder::AudioWanted() )
+        rRecorder::OnAudioSamples( stream, len );
+
+    if ( soundMuted )
+        memset( stream, 0, len );
+}
+#endif
+
 void eSoundMixer::Init() {
 #ifdef HAVE_LIBSDL_MIXER
     if(!SDL_WasInit( SDL_INIT_AUDIO )) {
@@ -295,6 +322,14 @@ void eSoundMixer::Init() {
         int c;
         Uint16 b;
         Mix_QuerySpec(&se_mixerFrequency,&b,&c);
+
+        // the recorder can only use the mixer output if it is signed 16 bit
+#ifndef DEDICATED
+        if ( SDL_AUDIO_BITSIZE( b ) == 16 && SDL_AUDIO_ISSIGNED( b ) )
+            rRecorder::SetAudioFormat( se_mixerFrequency, c );
+        else
+            rRecorder::SetAudioFormat( 0, 0 );
+#endif
         //std::cout << "SDL_Mixer initialized with " << c << " channels.\n";
     } else {
         //std::cout << "Couldn't initialize SDL_Mixer, disabling sound.  I'm very sorry about that, I'll try to do better next time.\n";
@@ -305,8 +340,12 @@ void eSoundMixer::Init() {
     Mix_VolumeMusic( musicVolume );
     Mix_HookMusicFinished( &eSoundMixer::SDLMusicFinished );
 
-    // register old school sound filler callback
+    // register old school sound filler callback, through the recorder's wrapper
+#ifndef DEDICATED
+    Mix_SetPostMix( &se_MoviePostMix, NULL );
+#else
     Mix_SetPostMix( &fill_audio, NULL );
+#endif
 
     const tPath& vpath = tDirectories::Data();
 
@@ -656,6 +695,13 @@ static uSelectEntry<int> d(sq_men,
                            "$sound_menu_quality_high_text",
                            "$sound_menu_quality_high_help",
                            SOUND_HIGH);
+
+//! mute the speakers without stopping the mixer, so recordings keep their audio
+static uMenuItemToggle mute_men
+(&Sound_menu,
+ "Mute",
+ "Silence the speakers. The mixer keeps running, so recordings still get audio.",
+ soundMuted);
 
 static uMenuItemSelection<int> bm_men
 (&Sound_menu,

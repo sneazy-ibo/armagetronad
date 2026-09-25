@@ -54,4 +54,15 @@ jobs:
           done
 
       - name: Push upstream's tags
-        run: git push origin --force --tags
+        run: |
+          set -euo pipefail
+          # Mirror upstream's tags, but never ours. mac-* tags belong to this
+          # fork's releases, and a blanket --force --tags could clobber one if
+          # upstream ever used the same name. Only refs that exist upstream are
+          # walked, so fork-only tags are safe.
+          for tag in $(git tag --list); do
+            case "$tag" in
+              mac-*) continue ;;   # ours; a release may depend on it
+            esac
+            git push origin --force "refs/tags/$tag:refs/tags/$tag"
+          done

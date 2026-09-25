@@ -811,10 +811,16 @@ case "$target" in
         ;;
     *-*-darwin*)
 	AC_DEFINE(MACOSX, 1, [Mac OS X])
+        dnl Objective C++ is used by the recorder and other native glue, and is
+        dnl needed for any macOS build, not just the legacy toolkit one.
+        AC_PROG_OBJCXX
+        AC_PROG_OBJCXXCPP
         MATHLIB=""
         SYS_GL_LIB=""
         SYS_GLU_LIB=""
         test x$build_regular = xfalse || LIBS="$LIBS -framework OpenGL -framework CoreFoundation -framework CoreServices"
+        dnl system video frameworks, used by the built-in recorder
+        LIBS="$LIBS -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework CoreGraphics -framework VideoToolbox"
         CXXFLAGS="${CXXFLAGS} -DGL_SILENCE_DEPRECATION"
         unset OBJC
         macosx=true

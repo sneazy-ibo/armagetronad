@@ -38,6 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "eSoundMixer.h"
 
 #include "rScreen.h"
+#include "rFont.h"
+#include "rRecorder.h"
 #include "rSysdep.h"
 #include "uInputQueue.h"
 //#include "eTess.h"
@@ -981,6 +983,14 @@ int main(int argc,char **argv){
                     // inform user of generic errors
                     tConsole::Message( e.GetName(), e.GetDescription(), 20 );
                 }
+
+                // Finalise any recording and release the font textures while the
+                // GL context and FreeType are still alive. Both must not be left
+                // to static destruction, which runs after the context is gone.
+                rRecorder::Shutdown();
+#ifndef DEDICATED
+                sr_ReloadFont();
+#endif
 
                 sr_ExitDisplay();
                 sr_RendererCleanup();

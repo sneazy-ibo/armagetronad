@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "tDirectories.h"
 #include "tRecorder.h"
 #include "rSysdep.h"
+#include "rRecorder.h"
 #include "uInput.h"
 
 #include <sstream>
@@ -86,6 +87,11 @@ static uMenuItemFunction smm(&sg_screenMenu,"$screen_mode_menu",
 
 uMenu sg_moddedMenu("Modded Settings");
 
+//! The built-in video recorder's own menu. Its entry in Modded Settings is added
+//! at the end of this file on purpose: the menu draws its list upwards, so the
+//! entry added last appears first.
+uMenu sg_nativeRecorderMenu( "Native Recorder", false );
+
 //! The cockpit in use: what the menu was opened with, or what was last confirmed
 //! with enter. Hovering only previews, so this is both what the list marks and what
 //! a cancelled menu returns to.
@@ -93,6 +99,17 @@ static tString sg_cockpitCommitted;
 
 static void sg_ModdedSettingsMenu()
 {
+    // The menu draws its rows bottom-up; reverse the recorder's once so its
+    // declarations read top to bottom (Instant replay first, folder last).
+    {
+        static bool ordered = false;
+        if ( !ordered )
+        {
+            ordered = true;
+            sg_nativeRecorderMenu.ReverseItems();
+        }
+    }
+
     // Same as pressing escape: tell the chat system, and pause a local game.
     se_ChatState( ePlayerNetID::ChatFlags_Menu, true );
     if ( sn_GetNetState() == nSTANDALONE )
@@ -139,6 +156,180 @@ static uMenuItemInput moddedSettingsBinding( &sg_moddedMenu, &moddedSettingsActi
 
 //! Binding for the in-game map toggle; H until the player changes it.
 static uMenuItemInput moddedHudMapBinding( &sg_moddedMenu, &cCockpit::GetHudMapAction(), 0 );
+
+// ---- Instant replay (the clipper) -----------------------------------------
+
+//! turn the rolling instant-replay buffer on or off. While it is on, the last
+//! few seconds are kept encoded in memory so a clip can be saved at any moment.
+static uMenuItemToggle moddedMovieBuffer( &sg_nativeRecorderMenu,
+                                          "Instant replay",
+                                          "Keep the last few seconds encoded in memory; press the clip key to save them",
+                                          rRecorder::sr_movieBuffer );
+
+//! whether the game's sound is written into recordings and clips. The mixer
+//! keeps running even when the speakers are muted, so muting never costs a
+//! recording its audio. Declared right after instant replay, so it shows just
+//! below it.
+static uMenuItemToggle moddedMovieAudio( &sg_nativeRecorderMenu,
+                                         "Record audio",
+                                         "Include the game's sound in recordings and clips",
+                                         rRecorder::sr_movieAudio );
+
+//! how long a saved clip is
+class gMovieClipLengthMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieClipLengthMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Clip length", "How long a saved clip is",
+                                   rRecorder::sr_movieClipSeconds )
+    {
+        NewChoice( tOutput( "15 s" ),  tOutput( "Short clips" ),      15 );
+        NewChoice( tOutput( "30 s" ),  tOutput( "The default" ),      30 );
+        NewChoice( tOutput( "60 s" ),  tOutput( "Long clips" ),       60 );
+        NewChoice( tOutput( "120 s" ), tOutput( "The longest" ),     120 );
+    }
+};
+
+static gMovieClipLengthMenuItem moddedMovieClipLength( &sg_nativeRecorderMenu );
+
+//! how sharp the video is. This is the bitrate knob, applied to both clips and
+//! takes; the selected choice's help line shows the bitrate it asks for.
+class gMovieQualityMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieQualityMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Quality", "How much data each frame may use",
+                                   rRecorder::sr_movieQuality )
+    {
+        for ( int q = 0; q <= 3; ++q )
+        {
+            char const * name = "Medium";
+            char const * note = "Balanced, the default";
+            switch ( q )
+            {
+            case 0: name = "Low";   note = "Smallest files, softest picture"; break;
+            case 2: name = "High";  note = "Sharper, larger files";           break;
+            case 3: name = "Ultra"; note = "Largest files, best picture";     break;
+            }
+
+            // show the bitrate this level asks for at the current size and rate
+            int const saved = rRecorder::sr_movieQuality;
+            rRecorder::sr_movieQuality = q;
+            int const mbps = rRecorder::MovieVideoBitrateBps() / 1000000;
+            rRecorder::sr_movieQuality = saved;
+
+            tString help;
+            help << note << " (" << mbps << " Mbps)";
+            NewChoice( tOutput( name ), tOutput( help ), q );
+        }
+    }
+};
+
+static gMovieQualityMenuItem moddedMovieQuality( &sg_nativeRecorderMenu );
+
+//! target size for the clip's worth of buffered history. The buffer is sized from
+//! this so it reads as "how big a clip, and how much memory the replay may use".
+class gMovieTargetSizeMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieTargetSizeMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Target size", "About how big a saved clip may get; sizes the replay buffer",
+                                   rRecorder::sr_movieBufferMaxMB )
+    {
+        NewChoice( tOutput( "25 MB" ),  tOutput( "Small, easy to share" ),      25 );
+        NewChoice( tOutput( "50 MB" ),  tOutput( "The default" ),               50 );
+        NewChoice( tOutput( "100 MB" ), tOutput( "More headroom" ),            100 );
+        NewChoice( tOutput( "200 MB" ), tOutput( "Largest buffer" ),           200 );
+    }
+};
+
+static gMovieTargetSizeMenuItem moddedMovieTargetSize( &sg_nativeRecorderMenu );
+
+//! Save the last clip length of gameplay. Instant replay has to be on for this
+//! to have anything to save.
+static uActionGlobal moddedClipAction( "MODDED_CLIP" );
+static bool sg_moddedClipKey( REAL x )
+{
+    if ( x > 0 )
+        rRecorder::SaveClip( 0 );
+
+    return true;
+}
+static uActionGlobalFunc moddedClipActionFunc( &moddedClipAction, &sg_moddedClipKey, true );
+
+static uMenuItemInput moddedClipBinding( &sg_nativeRecorderMenu, &moddedClipAction, 0, "Save clip" );
+
+// ---- Manual recording (takes) ---------------------------------------------
+
+//! Start/stop a recording. It runs while you play, so the key has to work in
+//! game, like the screenshot key does. Audio is included; the rolling buffer
+//! pauses while a take is running.
+static uActionGlobal moddedRecordAction( "MODDED_RECORD" );
+static bool sg_moddedRecordKey( REAL x )
+{
+    if ( x > 0 )
+        rRecorder::Toggle();
+
+    return true;
+}
+static uActionGlobalFunc moddedRecordActionFunc( &moddedRecordAction, &sg_moddedRecordKey, true );
+
+static uMenuItemInput moddedRecordBinding( &sg_nativeRecorderMenu, &moddedRecordAction, 0, "Record toggle" );
+
+//! how many frames per second are captured; the game renders far more than this
+class gMovieRateMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieRateMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Frame rate", "Captured frames per second",
+                                   rRecorder::sr_movieFPS )
+    {
+        NewChoice( tOutput( "30" ),  tOutput( "Lightest on the game" ),    30 );
+        NewChoice( tOutput( "60" ),  tOutput( "Smooth, the default" ),     60 );
+    }
+};
+
+static gMovieRateMenuItem moddedMovieRate( &sg_nativeRecorderMenu );
+
+//! video codec. H.264 is the most compatible; HEVC is smaller and its hardware
+//! encoder is the only one that can do native (over-4K) frame sizes.
+class gMovieCodecMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieCodecMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Codec", "H.264 is the most compatible; HEVC is smaller and supports native resolution",
+                                   rRecorder::sr_movieCodec )
+    {
+        NewChoice( tOutput( "H.264" ), tOutput( "Most compatible; quality control is weak, hardware caps at 4K" ), 0 );
+        NewChoice( tOutput( "HEVC" ),  tOutput( "Smaller, native resolution, quality control works" ),              1 );
+    }
+};
+
+static gMovieCodecMenuItem moddedMovieCodec( &sg_nativeRecorderMenu );
+
+//! tallest the recording may be; captured frames are scaled down to this. With
+//! "Native" the full window is kept, up to what the hardware encoder allows.
+class gMovieHeightMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gMovieHeightMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Max height", "Recordings are scaled down to at most this tall",
+                                   rRecorder::sr_movieMaxHeight )
+    {
+        NewChoice( tOutput( "720p" ),   tOutput( "Smallest files, lightest" ),              720 );
+        NewChoice( tOutput( "1080p" ),  tOutput( "Balanced, the default" ),                1080 );
+        NewChoice( tOutput( "1440p" ),  tOutput( "Sharper, heavier" ),                     1440 );
+        NewChoice( tOutput( "Native" ), tOutput( "Full size (H.264 caps at 4K hardware)" ),   0 );
+    }
+};
+
+static gMovieHeightMenuItem moddedMovieHeight( &sg_nativeRecorderMenu );
+
+//! folder recordings and clips are written to
+static uMenuItemString moddedMovieDir( &sg_nativeRecorderMenu,
+                                       "Storage folder",
+                                       "Where recordings and clips are saved; created if missing",
+                                       rRecorder::sr_movieDir, 512 );
 
 //! re-read the current cockpit file, so layout edits apply without a restart
 static void sg_reloadCockpit()
@@ -990,6 +1181,11 @@ static uMenuItemCockpitBrowser modded_cockpit( &sg_cockpitMenu );
 //! the pointer to the menu, so the submenu's own name ("Cockpits") is the label.
 static uMenuItemSubmenu modded_cockpitEntry( &sg_moddedMenu, &sg_cockpitMenu,
                                              "Choose the HUD cockpit, its version and which parts of it to draw" );
+
+//! The recorder entry. Declared after every other Modded Settings entry on
+//! purpose: the menu draws its list upwards, so this appears at the top.
+static uMenuItemSubmenu moddedNativeRecorder( &sg_moddedMenu, &sg_nativeRecorderMenu,
+                                              "Record video while you play" );
 
 static tConfItemLine c_ext("GL_EXTENSIONS",gl_extensions);
 static tConfItemLine c_ver("GL_VERSION",gl_version);

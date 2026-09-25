@@ -8,8 +8,13 @@ name: Release (macOS)
 #   * run this workflow by hand with a version, which tags the branch it is
 #     run from - the "this change deserves a download" button
 #
+# A release needs curated notes at .github/release-notes/<version>.md (the tag
+# without the mac- prefix); the workflow refuses to publish without them, so a
+# release always says what changed. Re-running for an existing tag refreshes the
+# assets and notes instead of failing.
+#
 # Tags must be mac-* and ours: sync-upstream.yml mirrors upstream's tags into
-# this repository with --force, so a name upstream also uses could be clobbered.
+# this repository, and it skips mac-* tags so it can never clobber a release.
 
 on:
   push:
@@ -74,17 +79,45 @@ jobs:
             Armagetron-*.dmg
           retention-days: 90
 
-      - name: Create the release
+      - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --generate-notes \
-              "Armagetron-${TAG}.zip" "Armagetron-${TAG}.dmg"
+          set -euo pipefail
+
+          # Curated notes are required: a release must say what changed. The tag
+          # is "mac-v<version>", so the file may be named with or without the
+          # "mac-" prefix.
+          NOTES=""
+          for candidate in ".github/release-notes/${TAG}.md" \
+                           ".github/release-notes/${TAG#mac-}.md"; do
+            if [ -f "$candidate" ]; then
+              NOTES="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$NOTES" ]; then
+            echo "::error::No release notes for $TAG. Add .github/release-notes/${TAG#mac-}.md"
+            echo "The workflow refuses to publish a release with no notes."
+            exit 1
+          fi
+          echo "Using release notes from $NOTES"
+
+          ZIP="Armagetron-${TAG}.zip"
+          DMG="Armagetron-${TAG}.dmg"
+
+          # Re-running for a tag that already has a release should refresh the
+          # build rather than fail, so pushing a tag twice is harmless.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refreshing its assets and notes"
+            gh release upload "$TAG" "$ZIP" "$DMG" --clobber
+            gh release edit "$TAG" --notes-file "$NOTES"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --notes-file "$NOTES" "$ZIP" "$DMG"
           else
-            gh release create "$TAG" --generate-notes \
-              "Armagetron-${TAG}.zip" "Armagetron-${TAG}.dmg"
+            gh release create "$TAG" --notes-file "$NOTES" "$ZIP" "$DMG"
           fi
 
       - name: Note the missing signature
@@ -92,7 +125,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
+          set -euo pipefail
+
+          # Append the signature warning once. On a re-release the note is already
+          # there, so leave it alone instead of stacking duplicates.
+          marker="not signed or notarised"
           notes="$(gh release view "$TAG" --json body --jq .body)"
+          if printf '%s' "$notes" | grep -qF "$marker"; then
+            echo "Signature note already present; leaving it as is"
+            exit 0
+          fi
+
           gh release edit "$TAG" --notes "${notes}
 
           The app is not signed or notarised: after unzipping it, right-click and choose Open once, and macOS will let it start from then on."

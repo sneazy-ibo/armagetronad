@@ -3033,7 +3033,10 @@ void gGame::StateUpdate(){
     if ( tResourceManager::consumeFetchCompletions() > 0 )
     {
         rITexture::UnloadAll();
+#ifndef DEDICATED
+        // the cockpit is client only; the dedicated server has no HUD to reload
         cCockpit::SetFile( cCockpit::GetFile() );
+#endif
     }
 
     //	if (state==GS_CREATED)

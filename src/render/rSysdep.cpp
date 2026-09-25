@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "aa_config.h"
 #include <iostream>
 #include "rScreen.h"
+#include "rRecorder.h"
 #include "rTexture.h"
 #include "tCommandLine.h"
 #include "tConfiguration.h"
@@ -1508,6 +1509,12 @@ void rSysDep::SwapGL(){
     else if (s_videoout)
         make_screenshot();
 
+#ifndef DEDICATED
+    // Video recording is fed here, next to the screenshot path: it must see the
+    // same buffer, before motion blur switches render targets.
+    rRecorder::OnFrame( sr_screenWidth, sr_screenHeight );
+#endif
+
     // actiate motion blur (does not use the game state, so it's OK to call here )
     bool shouldSwap = sr_MotionBlur( time, blurTarget );
     sr_SwapTime().Finish( shouldSwap );
@@ -1585,6 +1592,14 @@ void sr_UnlockSDL(){
 
 #ifndef DEDICATED
 void  rSysDep::ClearGL(){
+    // No window/context yet (config loading can reach here through a menu) means
+    // the GL entry points are not resolvable; clearing is a no-op anyway.
+    if ( !sr_screen )
+    {
+        sr_needClear = true;
+        return;
+    }
+
     if (sr_glOut && sr_needClear )
     {
         glClearColor(0.0,0.0,0.0,1.0);

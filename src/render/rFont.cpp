@@ -232,8 +232,9 @@ public:
     FTFont &GetFont(float height) {
         static float size_factor = .8; // guess, then improve
         int size = int(height/sr_lineHeight*size_factor*sr_screenHeight/2.+.5);
-        // A zero height, an unset screen or a failed font used to reach FTGL as an
-        // invalid pixel size and crash it.
+        // Clamp to at least one pixel: FTGL treats a zero pixel size as invalid
+        // and crashes, which a zero height, an unset screen or a failed font can
+        // all produce here.
         if ( size < 1 )
             size = 1;
         FTFont *ret;
@@ -270,7 +271,10 @@ public:
         }
     }
     ~rFontContainer() {
-        clear();
+        // Deliberately does not clear() at static destruction: by the time this
+        // runs, the GL context and FTGL/FreeType may already be gone, and
+        // deleting the fonts then crashes in FT_Done_Face. Fonts are released
+        // explicitly by sr_ReloadFont() while the context is still alive.
     }
 };
 
