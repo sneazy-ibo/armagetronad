@@ -34,19 +34,19 @@ ROOT="$(pwd)"
 
 # Define configurations: name:configure_flags
 DEBUG_CONFIGURATIONS=(
-    "client_debug:DEBUGLEVEL=3 --disable-dedicated --enable-glout --enable-coverage"
+    "client_debug:DEBUGLEVEL=3 --enable-coverage"
     "server_debug:DEBUGLEVEL=3 --enable-master --enable-dedicated --disable-glout --enable-coverage"
 )
 
 CONFIGURATIONS=(
-    "client:--disable-dedicated --enable-glout"
+    "client:"
     "server:--enable-master --enable-dedicated --disable-glout"
     "${DEBUG_CONFIGURATIONS[@]}"
     "minimal:--disable-music --disable-authentication --disable-krawall --disable-respawn --disable-memmanager"
 )
 
 # -Wno-error=deprecated-declarations currently required because libxml deprecated some things
-CXXFLAGS_COMMON='-fmessage-length=0 -D__OPTIMIZE__=1 -Wno-error=deprecated-declarations'
+CXXFLAGS_COMMON='-fmessage-length=0 -Wno-error=deprecated-declarations'
 
 # variations of code strictness flags, the goal is to move down the list
 #PEDANTIC_FLAGS=''
