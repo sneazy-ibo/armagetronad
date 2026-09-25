@@ -170,16 +170,28 @@ endif
 coverage: unit_tests process_coverage
 process_coverage: coverage/lcov.info coverage/html/index.html
 
+# Set up coverage flags based on compiler
+if USING_CLANG_COVERAGE
+GCOV_TOOL = --gcov-tool "$(abs_top_srcdir)/batch/llvm-gcov.sh"
+else
+GCOV_TOOL =
+endif
+
+COV_FLAGS = --ignore-errors inconsistent,format
+if USING_CLANG_COVERAGE
+COV_FLAGS += --ignore-errors unused
+endif
+
 coverage/lcov.info:
 if ENABLE_COVERAGE
 	@echo "Generating coverage report..."
 	@mkdir -p coverage
-	lcov -j 4 --capture --directory . --exclude '/src/thirdparty/' --output-file $@
+	lcov -j 4 $(GCOV_TOOL) $(COV_FLAGS) --capture --directory . --exclude '/src/thirdparty/' --output-file $@
 endif
 
 coverage/html/index.html: coverage/lcov.info
 if ENABLE_COVERAGE
-	genhtml $< --output-directory coverage/html
+	genhtml --ignore-errors inconsistent,format,corrupt,category $< --output-directory coverage/html
 	@echo "Coverage report generated in coverage/html/index.html"
 endif
 

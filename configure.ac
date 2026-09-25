@@ -1108,8 +1108,17 @@ if test x$enable_coverage = xyes; then
     fi
 fi
 
+dnl Determine if we're using clang for coverage
+if test x$enable_coverage = xyes && test -f .coverage_available && grep -q clang .coverage_available; then
+    USING_CLANG_COVERAGE=yes
+else
+    USING_CLANG_COVERAGE=no
+fi
+AC_SUBST(USING_CLANG_COVERAGE)
+
 dnl this conditional is only active if coverage is enabled and we can process it
 AM_CONDITIONAL(ENABLE_COVERAGE, test x$enable_coverage = xyes)
+AM_CONDITIONAL(USING_CLANG_COVERAGE, test x$USING_CLANG_COVERAGE = xyes)
 
 # all include directories added via -I so far should be system level inlcudes, divide them from those added by individual makefiles
 # CPPFLAGS="-I- $CPPFLAGS"
