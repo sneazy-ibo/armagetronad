@@ -34,8 +34,10 @@
 set -euo pipefail
 
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUILD_DIR="${HOME}/Developer/armagetronad-build/macos"
-PREFIX="${HOME}/Developer/arma-trunk-install"
+# build and install output live inside the repo, in one ignored folder, so a
+# rebuild is one place and nothing lands in $HOME
+BUILD_DIR="${SOURCE_DIR}/.local/build"
+PREFIX="${SOURCE_DIR}/.local/install"
 BUNDLE_PATH=""          # derived from --prefix unless given explicitly
 APP_NAME="Armagetron Advanced"
 BUNDLE_ID=""            # derived from APP_NAME unless given explicitly

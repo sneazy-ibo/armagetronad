@@ -15,7 +15,7 @@ set -euo pipefail
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 INSTALLS=(
-    "${HOME}/Developer/arma-trunk-install/share/games/armagetronad"
+    "${SOURCE_DIR}/.local/install/share/games/armagetronad"
     "/Applications/Armagetron Experimental.app/Contents/MacOS/usr/local/share/games/armagetronad"
 )
 

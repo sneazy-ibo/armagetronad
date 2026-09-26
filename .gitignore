@@ -109,6 +109,8 @@ autogen.sh
 *.dmg
 *.tar.gz
 *.zip
+# local build output (macos-build.sh): fully ignored, kept in one place
+/.local/
 src/macosx/build_bundle.sh
 desktop/armagetronad.desktop
 docker/build/setup_ci_test.sh
