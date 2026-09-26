@@ -4929,6 +4929,12 @@ void sg_EnterGameCore( nNetState enter_state ){
         }
 #endif
 
+#ifndef DEDICATED
+        // a script or parent process can drive the client through stdin, the way
+        // it drives a dedicated server
+        sr_ReadClientStdin();
+#endif
+
         // do the regular simulation
         tAdvanceFrame();
 

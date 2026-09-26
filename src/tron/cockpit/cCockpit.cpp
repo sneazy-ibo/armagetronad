@@ -548,9 +548,10 @@ void cCockpit::ProcessCockpit(void) {
     if (cur.IsOfType("Cockpit")) {
         ProcessWidgets(cur);
 
-        // a map the player switched off stays off when the cockpit is loaded again
+        // a map the player switched off stays off when the cockpit is loaded
+        // again. Until they choose otherwise a map starts hidden, so the HUD
+        // stays clean; left/right on the HUD_MAP key reveals it.
         int const storedMapState = sg_storedMapState( cockpit_file );
-        if ( storedMapState >= 0 )
         {
             std::vector< cWidget::Base * > parts;
             GetToggleWidgets( parts );

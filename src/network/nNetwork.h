@@ -174,6 +174,11 @@ const nVersion& sn_MyVersion();			//!< the version this progam maximally support
 const nVersion& sn_CurrentVersion();	//!< the version currently supported by all connected players
 void sn_UpdateCurrentVersion();         //!< updates the sn_CurrentVersion()
 
+//! the protocol version this client advertises to servers, or 0 to advertise the
+//! build's own maximum. Capped at the highest named version, so the label the
+//! other end shows stays meaningful. Setting it can lower compatibility.
+extern int sn_advertisedVersion;
+
 // features that are not available in all currently supported versions
 class nVersionFeature
 {

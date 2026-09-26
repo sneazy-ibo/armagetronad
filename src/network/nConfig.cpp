@@ -598,6 +598,12 @@ int sn_GetCurrentProtocolVersion()
     return (sizeof(sn_versionString)/sizeof(char const *)) - 2;
 }
 
+//! the highest protocol version that has a name in the table
+int sn_GetMaxNamedProtocolVersion()
+{
+    return sn_GetCurrentProtocolVersion();
+}
+
 static char const * sn_GetVersionString( int version )
 {
     tVERIFY ( version * sizeof( char * ) < sizeof sn_versionString );
@@ -607,7 +613,11 @@ static char const * sn_GetVersionString( int version )
 }
 
 tOutput sn_GetClientVersionString(int version) {
-    if(version >= 0 && version * sizeof(char *) < sizeof(sn_versionString)) {
+    // the table is terminated by a null entry, so the last valid index is one
+    // before it. Compare in elements: the old byte comparison let the index of
+    // the terminator through and read it as a string.
+    int const lastValid = int( sizeof(sn_versionString)/sizeof(sn_versionString[0]) ) - 2;
+    if( version >= 0 && version <= lastValid ) {
         tOutput ret;
         ret.AddLiteral(sn_GetVersionString(version));
         return ret;

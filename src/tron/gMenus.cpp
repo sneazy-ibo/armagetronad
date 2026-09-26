@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "rScreen.h"
 #include "rTexture.h"
 #include "nConfig.h"
+#include "nNetwork.h"
 #include "rConsole.h"
 #include "tToDo.h"
 #include "rGL.h"
@@ -337,6 +338,44 @@ static void sg_reloadCockpit()
     cCockpit::SetFile( cCockpit::GetFile() );
     con << "Cockpit reloaded: " << cCockpit::GetFile() << "\n";
 }
+
+//! Which protocol version this client tells servers it speaks. Servers print the
+//! label their own table has for that number, so cycling this finds one that
+//! reads well on the server you play on. Lower numbers can disable features.
+class gAdvertisedVersionMenuItem : public uMenuItemSelection<int>
+{
+public:
+    gAdvertisedVersionMenuItem( uMenu * menu )
+        : uMenuItemSelection<int>( menu, "Client version",
+                                   "Protocol version reported to servers",
+                                   sn_advertisedVersion )
+    {
+        // 0 means "whatever this build is"; that is the same value the setting
+        // uses for automatic, so it is the first choice and not a duplicate.
+        {
+            tString autoHelp;
+            autoHelp << "Report this build's own version ("
+                     << sn_GetClientVersionString( sn_GetMaxNamedProtocolVersion() ) << ")";
+            NewChoice( tOutput( "Automatic" ), tOutput( autoHelp ), 0 );
+        }
+
+        int const maxNamed = sn_GetMaxNamedProtocolVersion();
+        for ( int v = 1; v <= maxNamed; ++v )
+        {
+            tString label( sn_GetClientVersionString( v ) );
+
+            tString help;
+            help << "Report as " << label << " on servers that know it";
+
+            tString name;
+            name << v;
+
+            NewChoice( tOutput( name ), tOutput( help ), v );
+        }
+    }
+};
+
+static gAdvertisedVersionMenuItem moddedAdvertisedVersion( &sg_moddedMenu );
 
 //! Horizontal stretch of all text; 1 is the engine default.
 static uMenuItemReal moddedTextWidth( &sg_moddedMenu,

@@ -119,8 +119,9 @@ static tConfItem<float> sbs("SOUND_BUFFER_SIZE", buffersize);
 //! Silences the speakers while leaving the mixer running. It is applied after the
 //! recorder has taken its copy of the mix, so muting gameplay never costs a
 //! recording its audio, and it is independent of SOUND_QUALITY (which decides
-//! whether the mixer runs at all, and at what rate).
-bool soundMuted = false;
+//! whether the mixer runs at all, and at what rate). On by default: a fresh
+//! install does not blast audio, and recordings still carry sound.
+bool soundMuted = true;
 static tConfItem<bool> sm("SOUND_MUTE", soundMuted);
 
 namespace

@@ -94,6 +94,9 @@ extern rConsole sr_con; // where all the output is directed to
 
 #ifdef DEDICATED
 void sr_Read_stdin();
+#else
+//! reads console commands from stdin on the client, for automation
+void sr_ReadClientStdin();
 #endif
 
 // passes ladderlog output to external scripts

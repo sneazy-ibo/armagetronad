@@ -422,5 +422,8 @@ bool nIConfItemWatcher::Writable( void ) const
 
 tOutput sn_GetClientVersionString(int version);
 
+//! the highest protocol version that has a name in the version table
+int sn_GetMaxNamedProtocolVersion();
+
 #endif
 

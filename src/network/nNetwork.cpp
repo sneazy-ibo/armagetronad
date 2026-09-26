@@ -303,6 +303,29 @@ static tSettingItem<int> sn_mav("MAX_PROTOCOL_VERSION",sn_maxVersion);
 static int sn_newFeatureDelay = 0;
 static tSettingItem<int> sn_nfd("NEW_FEATURE_DELAY",sn_newFeatureDelay);
 
+//! what the client advertises to servers. 0 keeps the build's own maximum; any
+//! other value caps it, so the label the other end prints stays a real one. A
+//! tConfItem so the choice survives a restart. Default 17 (0.2.9_alpha) reads
+//! correctly on the 0.2.9 servers most players are on, whose table ends there.
+int sn_advertisedVersion = 17;
+static tConfItem<int> sn_adv("ADVERTISED_VERSION", sn_advertisedVersion);
+
+//! the version range this client announces: the build's own, capped by
+//! ADVERTISED_VERSION and never above the highest version that has a name, so
+//! the other end always has a label for it.
+static nVersion sn_AdvertisedVersion()
+{
+    int min = sn_MyVersion().Min();
+    int max = sn_MyVersion().Max();
+    if ( sn_advertisedVersion > 0 && max > sn_advertisedVersion )
+        max = sn_advertisedVersion;
+    if ( max > sn_GetMaxNamedProtocolVersion() )
+        max = sn_GetMaxNamedProtocolVersion();
+    if ( max < min )
+        max = min;
+    return nVersion( min, max );
+}
+
 // color code strictness setting from tColor.cpp
 extern bool st_verifyColorCodeStrictly;
 static nSettingItemWatched< bool > stc_verifyColorCodeStrictly( "VERIFY_COLOR_STRICT", st_verifyColorCodeStrictly, nConfItemVersionWatcher::Group_Visual, 21 );
@@ -495,6 +518,11 @@ void sn_UpdateCurrentVersion()
     int max = sn_myVersion.Max() - sn_newFeatureDelay;
     if( sn_maxVersion > 0 && max > sn_maxVersion )
         max = sn_maxVersion;
+    // the advertised version caps it too, and never above the highest named one
+    if( sn_advertisedVersion > 0 && max > sn_advertisedVersion )
+        max = sn_advertisedVersion;
+    if( max > sn_GetMaxNamedProtocolVersion() )
+        max = sn_GetMaxNamedProtocolVersion();
     if ( max < min )
         max = min;
 
@@ -3124,7 +3152,9 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
         big_brother = false;
     }
 
-    sn_MyVersion().WriteSync( *login.mutable_version() );
+    // send what we support, capped by ADVERTISED_VERSION so the other end can
+    // print a real name for it if its table knows the number
+    sn_AdvertisedVersion().WriteSync( *login.mutable_version() );
     login.set_authentication_methods( nKrawall::nMethod::SupportedMethods() );
 
     nKrawall::RandomSalt( loginSalt );
@@ -3143,6 +3173,9 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
     case Login_Protobuf:
         // switch server connection to protobuf capable version
         sn_Connections[0].version = sn_myVersion;
+        // the login already capped the advertised range; keep the connection's
+        // local view consistent with it instead of the build maximum
+        sn_Connections[0].version = sn_AdvertisedVersion();
         // [[fallthrough]];
         // fallthrough on purpose
     case Login_Pre0252:
@@ -3164,7 +3197,7 @@ nConnectError sn_Connect( nAddress const & server, nLoginType loginType, nSocket
         }
         
         // write our version
-        (*stream) << sn_MyVersion();
+        (*stream) << sn_AdvertisedVersion();
         
         // write our supported authentication methods
         (*stream) << nKrawall::nMethod::SupportedMethods();

@@ -39,6 +39,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "tConfiguration.h"
 #include "rDisplayList.h"
 
+#include <cstdio>
+#include <sstream>
+#include <string>
+
+#ifndef WIN32
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 static tColoredString sr_centerString;
 static REAL center_r,center_g,center_b,center_fadetime;
 
@@ -58,6 +67,49 @@ static void sr_ConsolePerFrame(){
 }
 
 static rPerFrameTask console_pf(&sr_ConsolePerFrame);
+
+
+//! Lets a script or parent process drive the client: read console commands from
+//! stdin and execute them, exactly as the dedicated server's console does. Used
+//! for automation (e.g. sending chat and reading the reply).
+void sr_ReadClientStdin()
+{
+#ifndef WIN32
+    static bool inited = false;
+    static std::string pending;
+    if ( !inited )
+    {
+        inited = true;
+        // make stdin non-blocking so this never stalls the game loop
+        int const fd = fileno( stdin );
+        int const flags = fcntl( fd, F_GETFL );
+        if ( flags != -1 )
+            fcntl( fd, F_SETFL, flags | O_NONBLOCK );
+    }
+
+    char buffer[1024];
+    ssize_t n = read( fileno( stdin ), buffer, sizeof buffer );
+    if ( n <= 0 )
+        return;
+    pending.append( buffer, (size_t)n );
+
+    // execute every complete line; commands run at owner level, like a server
+    size_t pos;
+    while ( ( pos = pending.find( '\n' ) ) != std::string::npos )
+    {
+        std::string line = pending.substr( 0, pos );
+        pending.erase( 0, pos + 1 );
+
+        tString command( line.c_str() );
+        if ( command.Len() > 0 )
+        {
+            tCurrentAccessLevel level( tAccessLevel_Owner, true );
+            std::istringstream in( command.c_str() );
+            tConfItemBase::LoadLine( in );
+        }
+    }
+#endif
+}
 
 
 void rConsole::DisplayAtNewline(){
