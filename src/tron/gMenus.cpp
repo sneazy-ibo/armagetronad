@@ -2128,6 +2128,14 @@ static uMenuItemSubmenu modded_colorsEntry( &sg_moddedMenu, &sg_colorsMenu,
 static uMenuItemSubmenu modded_cockpitEntry( &sg_moddedMenu, &sg_cockpitMenu,
                                              "Choose the HUD cockpit, its version and which parts of it to draw" );
 
+//! Ghost client: connect and observe without creating a player, so the other
+//! players see neither a list entry nor a join/leave message.
+static uMenuItemToggle moddedGhostClient(
+    &sg_moddedMenu,
+    "Ghost client",
+    "Connect without a player: no player list entry and no join or leave message",
+    se_ghostClient );
+
 //! The recorder entry. Declared after every other Modded Settings entry on
 //! purpose: the menu draws its list upwards, so this appears at the top.
 static uMenuItemSubmenu moddedNativeRecorder( &sg_moddedMenu, &sg_nativeRecorderMenu,

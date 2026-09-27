@@ -162,6 +162,34 @@ static tSettingItem< bool > se_assignTeamAutomaticallyConf( "AUTO_TEAM", se_assi
 static bool se_specSpam = true;
 static tSettingItem< bool > se_specSpamConf( "AUTO_TEAM_SPEC_SPAM", se_specSpam );
 
+//! Ghost client: connect and observe, but never create a player. The server
+//! then sees a machine without players, so the other players get no player list
+//! entry and no join/leave message. Only meaningful on a client.
+bool se_ghostClient = false;
+static tSettingItem< bool > se_ghostClientConf( "GHOST_CLIENT", se_ghostClient );
+
+//! does the ghost setting apply here? (client side only)
+static bool se_GhostClientActive()
+{
+    return se_ghostClient && sn_GetNetState() == nCLIENT;
+}
+
+//! are we actually ghosting right now? Only once the local player entity has
+//! really been removed; flipping the switch alone is not enough.
+bool se_GhostingNow()
+{
+    if ( !se_GhostClientActive() )
+        return false;
+
+    for ( int i = 0; i < MAX_PLAYERS; ++i )
+    {
+        ePlayer * p = ePlayer::PlayerConfig( i );
+        if ( p && p->netPlayer )
+            return false;
+    }
+    return true;
+}
+
 static bool se_allowTeamChanges = true;
 static tSettingItem< bool > se_allowTeamChangesConf( "ALLOW_TEAM_CHANGE", se_allowTeamChanges );
 
@@ -7393,6 +7421,11 @@ void ePlayerNetID::ClearAll(){
 
 static bool se_VisibleSpectatorsSupported()
 {
+    // in ghost mode a client never has a player, exactly like the older clients
+    // that did not know visible spectators
+    if ( se_GhostClientActive() )
+        return false;
+
     static nVersionFeature se_visibleSpectator(13);
     return sn_GetNetState() != nCLIENT || se_visibleSpectator.Supported(0);
 }
@@ -7572,7 +7605,10 @@ void ePlayerNetID::Update(){
             tASSERT(local_p);
             tCONTROLLED_PTR(ePlayerNetID) &p=local_p->netPlayer;
 
-            if (!p && in_game && ( !local_p->spectate || se_VisibleSpectatorsSupported() ) ) // insert new player
+            // in ghost mode we behave like a spectator that the server cannot see
+            bool const spectating = local_p->spectate || se_GhostClientActive();
+
+            if (!p && in_game && ( !spectating || se_VisibleSpectatorsSupported() ) ) // insert new player
             {
                 // reset last time so idle time in the menus does not count as play time
                 lastTime = tSysTimeFloat();

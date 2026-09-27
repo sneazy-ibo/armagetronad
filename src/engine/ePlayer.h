@@ -584,6 +584,13 @@ tColoredString & operator << (tColoredString &s,const ePlayerNetID &p);
 
 extern int pingCharity;
 
+//! Ghost client: on a client, observe without ever creating a player, so the
+//! other players see neither a player list entry nor a join/leave message.
+extern bool se_ghostClient;
+
+//! true only while the ghost setting is on AND our player entity is really gone
+bool se_GhostingNow();
+
 void se_AutoShowScores(); // show scores based on automated decision
 void se_UserShowScores(bool show); // show scores based on user input
 void se_SetShowScoresAuto(bool a); // disable/enable auto show scores

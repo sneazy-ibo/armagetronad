@@ -1425,6 +1425,33 @@ void RenderAllViewports(eGrid *grid){
 #endif
 
 
+//! Ghost client: a small white triangle at the top of the screen, so it is
+//! obvious that we are observing without appearing to the other players.
+static void sg_DisplayGhostIndicator()
+{
+#ifndef DEDICATED
+    if ( !se_GhostingNow() || !sr_glOut )
+        return;
+
+    REAL const y = .88f;
+    REAL const half = .03f;
+
+    glPushAttrib(GL_ENABLE_BIT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+
+    Color(1,1,1,1);
+    BeginTriangles();
+    Vertex(0, y + half);
+    Vertex(-half, y - half);
+    Vertex(half, y - half);
+    RenderEnd();
+
+    glPopAttrib();
+#endif
+}
+
 void Render(eGrid *grid, REAL time, bool swap=true){
 #ifdef DEBUG
     //  eFace::UpdateVisAll(10);
@@ -1449,6 +1476,7 @@ void Render(eGrid *grid, REAL time, bool swap=true){
 
         sr_ResetRenderState(true);
         gLogo::Display();
+        sg_DisplayGhostIndicator();
 
         if (swap){
             rSysDep::SwapGL();
