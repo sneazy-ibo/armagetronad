@@ -113,11 +113,11 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; refreshing its assets and notes"
             gh release upload "$TAG" "$ZIP" "$DMG" --clobber
-            gh release edit "$TAG" --notes-file "$NOTES"
+            gh release edit "$TAG" --title "$TAG" --notes-file "$NOTES"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --notes-file "$NOTES" "$ZIP" "$DMG"
+            gh release create "$TAG" --title "$TAG" --target "$GITHUB_SHA" --notes-file "$NOTES" "$ZIP" "$DMG"
           else
-            gh release create "$TAG" --notes-file "$NOTES" "$ZIP" "$DMG"
+            gh release create "$TAG" --title "$TAG" --notes-file "$NOTES" "$ZIP" "$DMG"
           fi
 
       - name: Note the missing signature
