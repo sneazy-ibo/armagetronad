@@ -120,6 +120,20 @@ public:
     gServerMenu(const char *title);
     ~gServerMenu();
 
+    //! Put the cursor on the filter field. Finds it by type, so it does not
+    //! depend on the order the rows ended up in.
+    void SelectFilter();
+
+    //! Draws the shared list chrome: the background, the server count queries and
+    //! the column headers. Every row that belongs to the browser runs this, so the
+    //! headers and the ongoing polling do not stop when the filter has the cursor.
+    void RenderListBackground();
+
+    //! Forces the two fixed rows to the top of the list, host game above the
+    //! filter, wherever ReverseItems() happened to shuffle them. Positions are
+    //! assigned by identity, so they no longer depend on list length.
+    void PinFixedItems();
+
     virtual void HandleEvent( SDL_Event event );
 
     void Render(REAL y,
@@ -162,13 +176,18 @@ class gServerFilterMenuItem: public uMenuItemString
 {
 public:
     gServerFilterMenuItem(gServerMenu *M)
-        :uMenuItemString(M,"$network_master_filter","",M->filter_string)
+        :uMenuItemString(M,"0xffffffF0xccf5ffi0x99ebffl0x66e0fft0x33d6ffe0x00ccffr","",M->filter_string)
     {}
         
     virtual ~gServerFilterMenuItem(){}
     
     virtual void Render(REAL x,REAL y,REAL alpha=1, bool selected=0);
     virtual bool Event( SDL_Event& event );
+
+    //! the filter row must keep drawing the shared list chrome (background,
+    //! column headers, query polling) while it has the cursor, exactly like a
+    //! server row does. Otherwise the headers vanish and the list stops loading.
+    virtual void RenderBackground();
 };
 
 class gServerMenuItem: public gBrowserMenuItem
@@ -352,6 +371,11 @@ void gServerBrowser::BrowseServers()
     */
     browser.Update();
 
+    // Open with the cursor on the filter field, so typing a search works right
+    // away. Done after Update(), which reverses the rows and would otherwise
+    // move the field out from under the cursor.
+    browser.SelectFilter();
+
     // eat excess input the user made while the list was fetched
     SDL_Event ignore;
     REAL time;
@@ -369,8 +393,11 @@ void gServerBrowser::BrowseServers()
 void gServerMenu::HandleEvent( SDL_Event event )
 {
 #ifndef DEDICATED
-    // Ignore event when we have the filter menu item
-    if(items.Len() - selected == 1)
+    // When the cursor is on the filter row, let it handle the keys itself: the
+    // sort shortcuts below (left/right, home/end, M) would otherwise steal the
+    // letters being typed into the search box.
+    if ( selected >= 0 && selected < items.Len()
+         && dynamic_cast<gServerFilterMenuItem*>( items(selected) ) )
     {
         return uMenu::HandleEvent( event );
     }
@@ -404,6 +431,10 @@ void gServerMenu::HandleEvent( SDL_Event event )
         case(SDLK_END):
             SetSelected(0);
             Update();
+            return;
+        case(SDLK_f):
+            // jump straight to the search box from anywhere in the list
+            SelectFilter();
             return;
         default:
             break;
@@ -539,6 +570,9 @@ void gServerMenu::Update()
 
     ReverseItems();
 
+    // host game on top, filter below it, whatever the reversal above did
+    PinFixedItems();
+
     // keep the cursor position relative to the top, if possible ( calling function will handle the clamping )
     selected = items.Len() - selectedFromTop;
 
@@ -565,6 +599,47 @@ void gServerMenu::Update()
     }
 }
 
+void gServerMenu::SelectFilter()
+{
+    for ( int i = items.Len() - 1; i >= 0; --i )
+    {
+        if ( dynamic_cast<gServerFilterMenuItem*>( items(i) ) )
+        {
+            selected = i;
+            return;
+        }
+    }
+}
+
+void gServerMenu::PinFixedItems()
+{
+    // find the two fixed rows by type
+    gServerStartMenuItem  *startItem  = NULL;
+    gServerFilterMenuItem *filterItem = NULL;
+    for ( int i = 0; i < items.Len(); ++i )
+    {
+        if ( !startItem )
+            startItem = dynamic_cast<gServerStartMenuItem*>( items(i) );
+        if ( !filterItem )
+            filterItem = dynamic_cast<gServerFilterMenuItem*>( items(i) );
+    }
+
+    if ( !startItem || !filterItem || items.Len() < 2 )
+        return;
+
+    // They are already the top two rows and in the right order: nothing to do.
+    if ( items( items.Len() - 1 ) == startItem && items( items.Len() - 2 ) == filterItem )
+        return;
+
+    // otherwise pull both out and re-append them, filter first so the start row
+    // ends up as the very top entry. RemoveItem/AddItem keep idnum in step, which
+    // poking at the array directly would not.
+    RemoveItem( startItem );
+    RemoveItem( filterItem );
+    AddItem( filterItem );
+    AddItem( startItem );
+}
+
 gServerMenu::gServerMenu(const char *title)
         : uMenu(title, false)
 {
@@ -579,13 +654,9 @@ gServerMenu::gServerMenu(const char *title)
 
     ReverseItems();
 
+    // With no servers yet, keep a placeholder row so the menu is not empty.
     if (items.Len() <= 0)
-    {
-        selected = 1;
         tNEW(gServerMenuItem)(this);
-    }
-    else
-        selected = items.Len();
 }
 
 gServerMenu::~gServerMenu()
@@ -925,9 +996,8 @@ bool gServerMenuItem::Event( SDL_Event& event )
     return gBrowserMenuItem::Event( event );
 }
 
-void gBrowserMenuItem::RenderBackground()
+void gServerMenu::RenderListBackground()
 {
-    if( menu )
     {
         double now = tSysTimeFloat();
         static double lastTime = now;
@@ -941,16 +1011,19 @@ void gBrowserMenuItem::RenderBackground()
             sg_menuBottom = sg_requestBottom;
         }
 
-        menu->SetBot( sg_menuBottom );
+        SetBot( sg_menuBottom );
         sg_requestBottom = -.9;
     }
 
     sn_Receive();
     sn_SendPlanned();
 
-    menu->GenericBackground();
+    GenericBackground();
     if (continuePoll)
     {
+        // keep filling the list in while any browser row has the cursor: the
+        // query loop used to live only in the server rows, so it stalled whenever
+        // the cursor sat on the filter.
         continuePoll = nServerInfo::DoQueryAll(sg_simultaneous);
         sn_Receive();
         sn_SendPlanned();
@@ -963,12 +1036,17 @@ void gBrowserMenuItem::RenderBackground()
     if (getFriendsEnabled()) //display that friends filter is on
         sn2 << " - " << tOutput("$friends_enable");
 
-    static_cast<gServerMenu*>(menu)->Render(.62,
-                                            sn2,
-                                            tOutput("$network_master_score"),
-                                            tOutput("$network_master_users"),
-                                            tOutput("$network_master_ping"));
+    Render(.62,
+           sn2,
+           tOutput("$network_master_score"),
+           tOutput("$network_master_users"),
+           tOutput("$network_master_ping"));
 #endif
+}
+
+void gBrowserMenuItem::RenderBackground()
+{
+    static_cast<gServerMenu*>(menu)->RenderListBackground();
 }
 
 void gServerMenuItem::Enter()
@@ -1075,20 +1153,27 @@ void gServerStartMenuItem::Enter()
 }
 
 
+void gServerFilterMenuItem::RenderBackground()
+{
+    static_cast<gServerMenu*>(menu)->RenderListBackground();
+}
+
 void gServerFilterMenuItem::Render(REAL x,REAL y,REAL alpha, bool selected)
 {
 #ifndef DEDICATED
-    SetColor( selected, alpha );
-    
-    tString s;
-    s << description;
-    
+    // The label carries its own gradient (white to blue), so use it as-is rather
+    // than overriding it with a menu colour. Only the invisible part matters here.
+    tColoredString label( description );
+
+    // the colour codes must not count towards where the typed text starts
+    tString visible( tColoredString::RemoveColors( description, false ) );
+
     x = -.9f;
-    REAL x2 = s.Len() * 0.018 + x;
-    
+    REAL x2 = visible.Len() * 0.018 + x;
+
     int cMode = selected ? 1 : 0;
-    
-    static_cast<gServerMenu*>(menu)->Render(x, y*shrink + displace, s);
+
+    static_cast<gServerMenu*>(menu)->Render(x, y*shrink + displace, label);
     static_cast<gServerMenu*>(menu)->Render(x2, y*shrink + displace, *content, 1, cMode, realCursorPos);
 #endif
 }
