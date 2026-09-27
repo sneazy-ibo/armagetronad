@@ -399,11 +399,15 @@ Console commands (also usable from chat with `/`):
 | `DELCOLOR <name>` | remove a saved colour |
 | `NEXTCOLOR` | apply the next saved colour, wrapping |
 
-In the `Colors` menu:
+In the `Colors` menu the saved colours live in three lists, drawn as three
+columns. A `+` marks the skin chosen locally, a `#` the skin the server has.
 
 | key | effect |
 |---|---|
-| `up` / `down` | move the highlight |
+| `up` / `down` | move within the current list |
+| `left` / `right` | move the cursor to the neighbouring list |
+| `shift+up` / `shift+down` | move the colour within its list |
+| `shift+left` / `shift+right` | move the colour into the neighbouring list |
 | `enter` | apply the highlighted colour |
 | `delete` / `backspace` | remove the highlighted colour |
 | `n` | create a new colour (starts from the highlighted one) |
@@ -413,15 +417,16 @@ In the `Colors` menu:
 In the creator: `left`/`right` pick a channel, `up`/`down` change it, digits and `-`
 edit it directly, `enter` saves, `esc` leaves.
 
-The file is plain text; lines starting with `#` are comments:
+The file is plain text; lines starting with `#` are comments. The trailing column
+(0..2) says which list the colour belongs to and may be omitted:
 
 ```
-# name red green blue
-gold    15 15 0
-cyan    0 15 15
-violet  15 0 15
-wrapped 60 15 0
-cool    15 15 -1
+# name red green blue column
+gold    15 15 0  0
+cyan    0 15 15  1
+violet  15 0 15  2
+wrapped 60 15 0  0
+cool    15 15 -1 1
 ```
 
 ---

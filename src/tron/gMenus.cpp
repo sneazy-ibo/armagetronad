@@ -1235,8 +1235,13 @@ static int sg_colorSelected = 0;
 static REAL const sg_colorHText = .06f;
 static REAL const sg_colorLine  = .08f;
 static REAL const sg_colorLeft  = -.9f;
-static REAL const sg_colorTop   = .60f;
-static int  const sg_colorMaxRows = 12;
+static REAL const sg_colorTop   = .54f;      //!< first list row, a gap below the hints
+static int  const sg_colorMaxRows = 10;      //!< rows per list that fit above the preview
+
+//! the saved colours are laid out in one column per list
+static REAL const sg_colorColW    = .64f;     //!< width of one column
+static REAL const sg_colorCol0    = -.96f;    //!< left edge of the first column
+static REAL const sg_colorMarkerW = .045f;    //!< gap between a marker and its name
 
 //! the preview strip of the highlighted colour, at the bottom of the menu
 static REAL const sg_colorPreviewY1 = -.34f;   // top of the fields
@@ -1261,6 +1266,18 @@ static int sg_colorClampedSelection()
 static bool sg_colorHasSelection()
 {
     return sg_colorSelected >= 0 && sg_colorSelected < (int)eColorPalette::All().size();
+}
+
+//! Draws the marker text for a saved colour: '+' for the skin chosen locally,
+//! '#' for the skin the server has, both in the menu's own colour.
+static void sg_drawSkinMarker( REAL x, REAL y, bool local, bool server )
+{
+    if ( !local && !server )
+        return;
+
+    tString mark;
+    mark << ( local ? '+' : ' ' ) << ( server ? '#' : ' ' );
+    ::DisplayText( x, y, sg_colorHText * .8f, mark, sr_fontMenu, -1 );
 }
 
 //! Draws the three preview fields for a colour at the bottom of a menu and
@@ -1683,10 +1700,11 @@ void uMenuItemColorPalette::Render( REAL, REAL, REAL alpha, bool )
 
     eColorPalette::Entries const & entries = eColorPalette::All();
 
-    // key hint under the title
+    // key hint under the title, with the marker legend at its end; one string so
+    // the two can never overlap
     SetColor( false, alpha * .7f );
-    ::DisplayText( sg_colorLeft, .66f, sg_colorHText,
-                   "up/down choose   enter use   del remove   n new   e edit   r rename",
+    ::DisplayText( sg_colorLeft, .66f, sg_colorHText * .85f,
+                   "arrows move/sort+shift   enter use   del remove   n new   e edit   r rename   + local   # server",
                    sr_fontMenu, -1 );
 
     // the name of the highlighted colour, above the preview strip at the bottom
@@ -1708,32 +1726,99 @@ void uMenuItemColorPalette::Render( REAL, REAL, REAL alpha, bool )
 
     sg_colorClampedSelection();
 
-    int first = 0;
-    if ( sg_colorSelected >= sg_colorMaxRows )
-        first = sg_colorSelected - sg_colorMaxRows + 1;
+    int const count = (int)entries.size();
+    int const columns = eColorPalette::ColumnCount;
 
-    for ( int row = 0; row < sg_colorMaxRows && first + row < (int)entries.size(); ++row )
+    // the cursor's place in its own list, so the window follows it
+    int const cursor = sg_colorSelected < 0 ? 0
+                     : ( sg_colorSelected >= count ? count - 1 : sg_colorSelected );
+    int const cursorColumn = entries[ cursor ].column;
+    int const cursorPos = cursor - eColorPalette::ColumnStart( cursorColumn );
+
+    int firstRow = 0;
+    if ( cursorPos >= sg_colorMaxRows )
+        firstRow = cursorPos - sg_colorMaxRows + 1;
+
+    // the colour chosen locally and the one the server last reported, so a row
+    // can be marked as the local skin and/or the server's skin
+    ePlayer * me = ePlayer::PlayerConfig( 0 );
+    bool const haveLocal  = me != NULL;
+    bool const haveServer = me != NULL && bool( me->netPlayer );
+    unsigned char lr = 0, lg = 0, lb = 0, sr = 0, sg = 0, sb = 0;
+    if ( haveLocal )
     {
-        eColorPalette::Entry const & e = entries[ first + row ];
-        bool const highlighted = ( first + row ) == sg_colorSelected;
-
-        REAL const y = sg_colorTop - sg_colorLine * row;
-
-        // the name, and the channels so they can be typed elsewhere
-        tString label;
-        label << e.name << "   (" << e.r << ' ' << e.g << ' ' << e.b << ")";
-        SetColor( highlighted, alpha );
-        ::DisplayText( sg_colorLeft, y, sg_colorHText, label, sr_fontMenu, -1 );
+        lr = static_cast<unsigned char>( me->rgb[0] );
+        lg = static_cast<unsigned char>( me->rgb[1] );
+        lb = static_cast<unsigned char>( me->rgb[2] );
+    }
+    if ( haveServer )
+    {
+        sr = me->netPlayer->serverColor_.r_;
+        sg = me->netPlayer->serverColor_.g_;
+        sb = me->netPlayer->serverColor_.b_;
     }
 
-    if ( first + sg_colorMaxRows < (int)entries.size() )
+    // each column is a list of its own; draw a shared row window over them
+    for ( int c = 0; c < columns; ++c )
     {
-        tString more;
-        int const remaining = (int)entries.size() - ( first + sg_colorMaxRows );
-        more << "v  " << remaining << " more";
-        SetColor( false, alpha * .55f );
-        ::DisplayText( sg_colorLeft, sg_colorTop - sg_colorLine * ( sg_colorMaxRows + .6f ),
-                       sg_colorHText, more, sr_fontMenu, -1 );
+        int const start = eColorPalette::ColumnStart( c );
+        int const size = eColorPalette::ColumnSize( c );
+        REAL const cellX = sg_colorCol0 + c * sg_colorColW;
+
+        for ( int row = 0; row < sg_colorMaxRows; ++row )
+        {
+            int const r = firstRow + row;
+            if ( r >= size )
+                break;
+
+            eColorPalette::Entry const & e = entries[ start + r ];
+            bool const highlighted = ( c == cursorColumn && r == cursorPos );
+
+            REAL const y = sg_colorTop - sg_colorLine * row;
+
+            unsigned char const cr = static_cast<unsigned char>( e.r & 0xFF );
+            unsigned char const cg = static_cast<unsigned char>( e.g & 0xFF );
+            unsigned char const cb = static_cast<unsigned char>( e.b & 0xFF );
+
+            bool const isLocal  = haveLocal  && cr == lr && cg == lg && cb == lb;
+            bool const isServer = haveServer && cr == sr && cg == sg && cb == sb;
+
+            // markers, in the same colour as the row: '+' local, '#' server
+            SetColor( highlighted, alpha );
+            sg_drawSkinMarker( cellX, y, isLocal, isServer );
+
+            // the name, and the channels so they can be typed elsewhere
+            tString label;
+            label << e.name << " (" << e.r << ' ' << e.g << ' ' << e.b << ")";
+            SetColor( highlighted, alpha );
+            ::DisplayText( cellX + sg_colorMarkerW, y, sg_colorHText, label, sr_fontMenu, -1 );
+        }
+    }
+
+    // one line telling how much is scrolled out of view, over all lists
+    {
+        int below = 0;
+        for ( int c = 0; c < columns; ++c )
+        {
+            int const r = eColorPalette::ColumnSize( c ) - ( firstRow + sg_colorMaxRows );
+            if ( r > below )
+                below = r;
+        }
+
+        if ( firstRow > 0 || below > 0 )
+        {
+            tString more;
+            if ( firstRow > 0 )
+                more << "^ " << firstRow << " above";
+            if ( firstRow > 0 && below > 0 )
+                more << "     ";
+            if ( below > 0 )
+                more << "v " << below << " below";
+
+            SetColor( false, alpha * .55f );
+            ::DisplayText( sg_colorLeft, sg_colorTop - sg_colorLine * sg_colorMaxRows,
+                           sg_colorHText * .9f, more, sr_fontMenu, -1 );
+        }
     }
 #else
     (void)alpha; (void)selected;
@@ -1877,18 +1962,80 @@ bool uMenuItemColorPalette::Event( SDL_Event & event )
     if ( entries.empty() )
         return false;
 
+    // holding shift moves the colour instead of only moving the cursor
+    bool const sort = ( event.key.keysym.mod & KMOD_SHIFT ) != 0;
+    int const count = (int)entries.size();
+    int const columns = eColorPalette::ColumnCount;
+
+    int const cursor = sg_colorSelected < 0 ? 0
+                     : ( sg_colorSelected >= count ? count - 1 : sg_colorSelected );
+    int const column = entries[ cursor ].column;
+    int const position = cursor - eColorPalette::ColumnStart( column );
+
     switch ( event.key.keysym.sym )
     {
     case SDLK_UP:
     case SDLK_KP_8:
-        if ( --sg_colorSelected < 0 )
-            sg_colorSelected = (int)entries.size() - 1;
+        // up/down change the position inside the current list
+        if ( sort )
+        {
+            sg_colorSelected = eColorPalette::MoveWithinColumn( cursor, -1 );
+        }
+        else if ( position > 0 )
+        {
+            sg_colorSelected = cursor - 1;
+        }
         return true;
 
     case SDLK_DOWN:
     case SDLK_KP_2:
-        if ( ++sg_colorSelected >= (int)entries.size() )
-            sg_colorSelected = 0;
+        if ( sort )
+        {
+            sg_colorSelected = eColorPalette::MoveWithinColumn( cursor, 1 );
+        }
+        else if ( position + 1 < eColorPalette::ColumnSize( column ) )
+        {
+            sg_colorSelected = cursor + 1;
+        }
+        return true;
+
+    case SDLK_LEFT:
+    case SDLK_KP_4:
+        // left/right transfer the colour to the neighbouring list
+        if ( column > 0 )
+        {
+            int const target = column - 1;
+            if ( sort )
+            {
+                sg_colorSelected = eColorPalette::MoveToColumn( cursor, target );
+            }
+            else
+            {
+                int const targetPos = position < eColorPalette::ColumnSize( target )
+                                    ? position : eColorPalette::ColumnSize( target ) - 1;
+                if ( targetPos >= 0 )
+                    sg_colorSelected = eColorPalette::ColumnStart( target ) + targetPos;
+            }
+        }
+        return true;
+
+    case SDLK_RIGHT:
+    case SDLK_KP_6:
+        if ( column + 1 < columns )
+        {
+            int const target = column + 1;
+            if ( sort )
+            {
+                sg_colorSelected = eColorPalette::MoveToColumn( cursor, target );
+            }
+            else
+            {
+                int const targetPos = position < eColorPalette::ColumnSize( target )
+                                    ? position : eColorPalette::ColumnSize( target ) - 1;
+                if ( targetPos >= 0 )
+                    sg_colorSelected = eColorPalette::ColumnStart( target ) + targetPos;
+            }
+        }
         return true;
 
     case SDLK_DELETE:
@@ -1943,9 +2090,11 @@ static void sg_refreshLocalColor( int r, int g, int b )
         return;
 
     // On a client the colour reaches the server asynchronously. Flag our own
-    // cycle until the server confirms it (cleared in ePlayerNetID::ReadSync).
+    // cycle only while it actually differs from what the server last reported;
+    // re-applying the colour we already wear must not raise the marker.
     if ( sn_GetNetState() == nCLIENT )
-        me->netPlayer->SetLocalColorPending( true );
+        me->netPlayer->SetLocalColorPending(
+            me->netPlayer->LocalColorDiffers( r, g, b ) );
 
     eNetGameObject * object = me->netPlayer->Object();
     if ( !object )

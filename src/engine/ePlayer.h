@@ -295,8 +295,15 @@ public:
     //! (client only). Used to mark our own cycle with a small white triangle.
     bool localColorPending_;
 
+    //! the last colour the server reported for us (client only), so a locally
+    //! chosen colour can be compared against what the server actually knows
+    tShortColor serverColor_;
+
     bool LocalColorPending() const { return localColorPending_; }
     void SetLocalColorPending( bool pending ) { localColorPending_ = pending; }
+
+    //! does a local colour differ from the last colour the server sent us?
+    bool LocalColorDiffers( int r, int g, int b ) const;
 
     bool ready;
 

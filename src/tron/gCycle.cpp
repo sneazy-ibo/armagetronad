@@ -2350,13 +2350,13 @@ void gCycle::MyInitAfterCreation(){
         se_MakeColorValid( color_.r_, color_.g_, color_.b_, 1.0f );
         se_MakeColorValid( trailColor_.r_, trailColor_.g_, trailColor_.b_, .5f );
     }
-    else if ( player && player->LocalColorPending() )
+    else if ( player )
     {
-        // Only when a colour we picked locally has not reached the server yet:
-        // the server sends the colour with the cycle's creation sync and may not
-        // know ours yet, so a respawn would snap us back. Use the same raw skin
-        // the palette applied, and leave every other cycle (and every confirmed
-        // colour) on the server's value exactly as before.
+        // On a client the colour arrives with the cycle's creation sync, but the
+        // server may not have caught up with a colour we just picked (the round
+        // can start before it processed it). Our own cycle always uses the local
+        // skin, so the selected colour survives every round; other players'
+        // cycles still use the server's colour.
         for ( int i = 0; i < MAX_PLAYERS; ++i )
         {
             ePlayer * me = ePlayer::PlayerConfig( i );

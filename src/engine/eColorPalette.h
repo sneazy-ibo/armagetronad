@@ -38,16 +38,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //! differ (see PreviewColors). Entries are kept in the full -255..255 range.
 namespace eColorPalette
 {
+    //! the saved colours live in this many independent lists (the menu columns)
+    int const ColumnCount = 3;
+
     //! one saved colour
     struct Entry
     {
         tString name;
         int r, g, b;    //!< -255..255, as the COLOR_R/G/B settings accept
+        int column;     //!< which list (0..ColumnCount-1) it belongs to
     };
 
-    //! all saved entries, in the order they were added
+    //! all saved entries, stored column by column
     typedef std::vector<Entry> Entries;
     Entries const & All();
+
+    //! flat index of the first entry in a list (entries are stored column-major)
+    int ColumnStart( int column );
+    //! number of entries in a list
+    int ColumnSize( int column );
 
     //! the colour currently set for the local player
     void GetCurrent( int & r, int & g, int & b );
@@ -76,6 +85,12 @@ namespace eColorPalette
 
     //! removes a saved colour. false if the name is unknown
     bool Remove( tString const & name );
+
+    //! moves a saved colour one step within its own list. returns the new index.
+    int MoveWithinColumn( int index, int delta );
+    //! moves a saved colour into another list, keeping its position. returns the
+    //! new index.
+    int MoveToColumn( int index, int column );
 
     //! looks an entry up by name, or NULL
     Entry const * Find( tString const & name );

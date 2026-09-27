@@ -56,6 +56,36 @@ namespace eColorPalette
     //! "nothing applied yet", so the first cycle starts at the beginning.
     static int         sr_lastApplied = -1;
 
+    //! keep the storage column-major, so a list is a contiguous range
+    static bool ColumnLess( Entry const & a, Entry const & b )
+    {
+        return a.column < b.column;
+    }
+    static void SortByColumn()
+    {
+        std::stable_sort( sr_entries.begin(), sr_entries.end(), ColumnLess );
+    }
+
+    int ColumnStart( int column )
+    {
+        Load();
+        int start = 0;
+        for ( Entries::const_iterator i = sr_entries.begin(); i != sr_entries.end(); ++i )
+            if ( i->column < column )
+                ++start;
+        return start;
+    }
+
+    int ColumnSize( int column )
+    {
+        Load();
+        int size = 0;
+        for ( Entries::const_iterator i = sr_entries.begin(); i != sr_entries.end(); ++i )
+            if ( i->column == column )
+                ++size;
+        return size;
+    }
+
     Entries const & All()
     {
         Load();
@@ -97,9 +127,14 @@ namespace eColorPalette
 
             std::istringstream ls( line );
             std::string name;
-            int r, g, b;
+            int r, g, b, column = -1;
             if ( ls >> name >> r >> g >> b )
             {
+                // the column is optional; older files without it spread the
+                // colours over the lists in reading order
+                if ( !( ls >> column ) )
+                    column = (int)sr_entries.size() % ColumnCount;
+
                 Entry e;
                 e.name = name.c_str();
                 // keep the full range the game accepts: colours can overflow
@@ -108,9 +143,12 @@ namespace eColorPalette
                 e.r = ClampChannel( r );
                 e.g = ClampChannel( g );
                 e.b = ClampChannel( b );
+                e.column = column < 0 ? 0 : ( column >= ColumnCount ? ColumnCount - 1 : column );
                 sr_entries.push_back( e );
             }
         }
+
+        SortByColumn();
     }
 
     void SaveToDisk()
@@ -122,10 +160,10 @@ namespace eColorPalette
             return;
         }
 
-        out << "# Named player colours, one per line: name red green blue (each -255..255;\n"
+        out << "# Named player colours, one per line: name red green blue column (each -255..255;\n"
                "# outside 0..15 the bike wraps and the trail saturates, giving two colours)\n";
         for ( Entries::const_iterator i = sr_entries.begin(); i != sr_entries.end(); ++i )
-            out << i->name << ' ' << i->r << ' ' << i->g << ' ' << i->b << '\n';
+            out << i->name << ' ' << i->r << ' ' << i->g << ' ' << i->b << ' ' << i->column << '\n';
     }
 
     void GetCurrent( int & r, int & g, int & b )
@@ -256,9 +294,11 @@ namespace eColorPalette
             Entry e;
             e.name = name;
             e.r = r; e.g = g; e.b = b;
+            e.column = 0;
             sr_entries.push_back( e );
         }
 
+        SortByColumn();
         SaveToDisk();
         con << ( replaced ? "Updated" : "Saved" ) << " colour " << name
             << " (" << r << ' ' << g << ' ' << b << ")\n";
@@ -280,6 +320,65 @@ namespace eColorPalette
         }
         con << "No saved colour called \"" << name << "\"\n";
         return false;
+    }
+
+    int MoveWithinColumn( int index, int delta )
+    {
+        Load();
+        int const size = (int)sr_entries.size();
+        if ( index < 0 || index >= size || delta == 0 )
+            return index;
+
+        int const column = sr_entries[index].column;
+        int const start = ColumnStart( column );
+        int const stop = start + ColumnSize( column ) - 1;
+        int const to = index + delta;
+        if ( to < start || to > stop )
+            return index;
+
+        Entry const moved = sr_entries[index];
+        sr_entries.erase( sr_entries.begin() + index );
+        sr_entries.insert( sr_entries.begin() + to, moved );
+
+        sr_lastApplied = -1;
+        SaveToDisk();
+        return to;
+    }
+
+    int MoveToColumn( int index, int column )
+    {
+        Load();
+        int const size = (int)sr_entries.size();
+        if ( index < 0 || index >= size || column < 0 || column >= ColumnCount )
+            return index;
+
+        int const oldColumn = sr_entries[index].column;
+        if ( oldColumn == column )
+            return index;
+
+        // keep the position within the list, clamped to the target's length
+        int const position = index - ColumnStart( oldColumn );
+
+        Entry moved = sr_entries[index];
+        sr_entries.erase( sr_entries.begin() + index );
+
+        int start = 0, target = 0;
+        for ( Entries::const_iterator i = sr_entries.begin(); i != sr_entries.end(); ++i )
+        {
+            if ( i->column < column )
+                ++start;
+            else if ( i->column == column )
+                ++target;
+        }
+
+        int const insertPos = start + std::min( position, target );
+
+        moved.column = column;
+        sr_entries.insert( sr_entries.begin() + insertPos, moved );
+
+        sr_lastApplied = -1;
+        SaveToDisk();
+        return insertPos;
     }
 
     tString Next()

@@ -5072,6 +5072,7 @@ ePlayerNetID::ePlayerNetID(int p):nNetObject(),listID(-1), teamListID(-1), timeC
 
     color.r_ = color.g_ = color.b_ = 15;
 
+    serverColor_        = color;
     localColorPending_  = false;
 
     greeted             = false;
@@ -6691,20 +6692,17 @@ void ePlayerNetID::ReadSync( Engine::PlayerNetIDSync const & sync, nSenderInfo c
 
     if ( sn_GetNetState() == nCLIENT )
     {
-        // This is the colour the server has for us. Once it matches the colour
-        // we picked locally, our local skin has made it to the server, so drop
-        // the "not synced" marker.
+        // This is the colour the server has for us. Remember it, then recompute
+        // whether our locally chosen colour still differs from it. That keeps
+        // the "not synced" marker honest: re-applying the colour we already wear
+        // does not light it up.
+        serverColor_ = color;
         for ( int i = 0; i < MAX_PLAYERS; ++i )
         {
             ePlayer * me = ePlayer::PlayerConfig( i );
             if ( me && me->netPlayer == this )
             {
-                if ( color.r_ == static_cast<unsigned char>( me->rgb[0] )
-                  && color.g_ == static_cast<unsigned char>( me->rgb[1] )
-                  && color.b_ == static_cast<unsigned char>( me->rgb[2] ) )
-                {
-                    localColorPending_ = false;
-                }
+                localColorPending_ = LocalColorDiffers( me->rgb[0], me->rgb[1], me->rgb[2] );
                 break;
             }
         }
@@ -6881,6 +6879,7 @@ ePlayerNetID::ePlayerNetID( Engine::PlayerNetIDSync const & sync, nSenderInfo co
 
     color = tShortColor(15,15,15);
 
+    serverColor_       = color;
     localColorPending_ = false;
 
     nameTeamAfterMe = false;
@@ -7531,6 +7530,13 @@ ePrejoinPair;
 static ePrejoinShuffleMap se_prejoinShuffles;
 
 // Update the netPlayer_id list
+bool ePlayerNetID::LocalColorDiffers( int r, int g, int b ) const
+{
+    return serverColor_.r_ != static_cast<unsigned char>( r ) ||
+           serverColor_.g_ != static_cast<unsigned char>( g ) ||
+           serverColor_.b_ != static_cast<unsigned char>( b );
+}
+
 void ePlayerNetID::Update(){
 #ifdef KRAWALL_SERVER
     // update access level
@@ -7576,7 +7582,7 @@ void ePlayerNetID::Update(){
                 p->RequestSync();
             }
 
-            if (bool(p) && (!in_game || ( local_p->spectate && !se_VisibleSpectatorsSupported() ) ) && // remove player
+            if (bool(p) && (!in_game || ( spectating && !se_VisibleSpectatorsSupported() ) ) && // remove player
                     p->Owner() == ::sn_myNetID )
             {
                 p->RemoveFromGame();
@@ -7597,9 +7603,15 @@ void ePlayerNetID::Update(){
                     se_RandomizeColor(local_p,p);
                 }
 
+                // push a colour change to the server right away instead of
+                // waiting for the next periodic sync, so our skin reaches it
+                // (and the next round) promptly
+                tShortColor const oldColor = p->color;
                 p->color.r_=ePlayer::PlayerConfig(i)->rgb[0];
                 p->color.g_=ePlayer::PlayerConfig(i)->rgb[1];
                 p->color.b_=ePlayer::PlayerConfig(i)->rgb[2];
+                if ( p->color.r_ != oldColor.r_ || p->color.g_ != oldColor.g_ || p->color.b_ != oldColor.b_ )
+                    p->RequestSync();
 
                 sg_ClampPingCharity();
                 p->pingCharity=::pingCharity;
