@@ -2362,6 +2362,16 @@ void gCycle::MyInitAfterCreation(){
             ePlayer * me = ePlayer::PlayerConfig( i );
             if ( me && me->netPlayer == player )
             {
+                // The cycle arrived with the colour the server had for us. If it
+                // already matches our local pick, the local skin is on the
+                // server, so drop the pending marker right away instead of
+                // waiting for the next periodic player sync.
+                bool const serverHasIt =
+                    ( ( ( int )( color_.r_ * 15.0f + .5f ) ) & 0xFF ) == ( me->rgb[0] & 0xFF ) &&
+                    ( ( ( int )( color_.g_ * 15.0f + .5f ) ) & 0xFF ) == ( me->rgb[1] & 0xFF ) &&
+                    ( ( ( int )( color_.b_ * 15.0f + .5f ) ) & 0xFF ) == ( me->rgb[2] & 0xFF );
+                player->SetLocalColorPending( !serverHasIt );
+
                 color_.r_ = ( me->rgb[0] & 0xFF ) / 15.0f;
                 color_.g_ = ( me->rgb[1] & 0xFF ) / 15.0f;
                 color_.b_ = ( me->rgb[2] & 0xFF ) / 15.0f;
