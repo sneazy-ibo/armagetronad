@@ -5072,6 +5072,8 @@ ePlayerNetID::ePlayerNetID(int p):nNetObject(),listID(-1), teamListID(-1), timeC
 
     color.r_ = color.g_ = color.b_ = 15;
 
+    localColorPending_  = false;
+
     greeted             = false;
     chatting_           = false;
     spectating_         = false;
@@ -6687,6 +6689,27 @@ void ePlayerNetID::ReadSync( Engine::PlayerNetIDSync const & sync, nSenderInfo c
         Clamp(color.b_);
     }
 
+    if ( sn_GetNetState() == nCLIENT )
+    {
+        // This is the colour the server has for us. Once it matches the colour
+        // we picked locally, our local skin has made it to the server, so drop
+        // the "not synced" marker.
+        for ( int i = 0; i < MAX_PLAYERS; ++i )
+        {
+            ePlayer * me = ePlayer::PlayerConfig( i );
+            if ( me && me->netPlayer == this )
+            {
+                if ( color.r_ == static_cast<unsigned char>( me->rgb[0] )
+                  && color.g_ == static_cast<unsigned char>( me->rgb[1] )
+                  && color.b_ == static_cast<unsigned char>( me->rgb[2] ) )
+                {
+                    localColorPending_ = false;
+                }
+                break;
+            }
+        }
+    }
+
     pingCharity = sync.ping_charity();
     sg_ClampPingCharity(pingCharity);
 
@@ -6857,6 +6880,8 @@ ePlayerNetID::ePlayerNetID( Engine::PlayerNetIDSync const & sync, nSenderInfo co
     ready       =false;
 
     color = tShortColor(15,15,15);
+
+    localColorPending_ = false;
 
     nameTeamAfterMe = false;
     teamname = "";

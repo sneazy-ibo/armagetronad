@@ -200,6 +200,10 @@ public:
     gRealColor color_;
     gRealColor trailColor_;
 
+    //! set both colours and re-bake the bike textures at once, so a colour
+    //! change shows up this round instead of the next
+    void SetColor( gRealColor const & color );
+
     // smooth corrections
     // pos is always the correct simulated position; the displayed position is calculated as pos + correctPosSmooth
     // and correctPosSmooth decays with time.

@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "rSysdep.h"
 #include "rRecorder.h"
 #include "uInput.h"
+#include "eColorPalette.h"
 
 #include <sstream>
 #include <set>
@@ -1215,6 +1216,763 @@ void uMenuItemCockpitBrowser::Enter()
 }
 
 static uMenuItemCockpitBrowser modded_cockpit( &sg_cockpitMenu );
+
+// ---------------------------------------------------------------------------
+// Named colour palette
+//
+// Colors are the three 0..15 channels every player already carries, so a saved
+// colour is just a name and three numbers. This menu lists what is saved with a
+// preview of the colour itself: enter applies it, delete removes it, and N opens
+// the creator. The same list is driven by SAVECOLOR / SETCOLOR / DELCOLOR /
+// NEXTCOLOR from the console.
+
+uMenu sg_colorsMenu( "Colors", false );
+
+//! row the colour palette menu is on
+static int sg_colorSelected = 0;
+
+//! layout shared by the text and the swatches of the colour palette menu
+static REAL const sg_colorHText = .06f;
+static REAL const sg_colorLine  = .08f;
+static REAL const sg_colorLeft  = -.9f;
+static REAL const sg_colorTop   = .60f;
+static int  const sg_colorMaxRows = 12;
+
+//! the preview strip of the highlighted colour, at the bottom of the menu
+static REAL const sg_colorPreviewY1 = -.34f;   // top of the fields
+static REAL const sg_colorPreviewY0 = -.50f;   // bottom
+
+//! the highlighted row, clamped to what is actually saved. 0 when empty.
+static int sg_colorClampedSelection()
+{
+    int const size = (int)eColorPalette::All().size();
+    if ( size <= 0 )
+        return 0;
+
+    if ( sg_colorSelected < 0 )
+        sg_colorSelected = 0;
+    if ( sg_colorSelected >= size )
+        sg_colorSelected = size - 1;
+
+    return sg_colorSelected;
+}
+
+//! is there a saved colour under the cursor?
+static bool sg_colorHasSelection()
+{
+    return sg_colorSelected >= 0 && sg_colorSelected < (int)eColorPalette::All().size();
+}
+
+//! Draws the three preview fields for a colour at the bottom of a menu and
+//! labels them: the bike, and the trail running horizontally and vertically.
+//! Used by both the palette list and the colour creator.
+static void sg_drawColorPreview( int r, int g, int b, REAL alpha )
+{
+#ifndef DEDICATED
+    float br, bg, bb;
+    float hr, hg, hb;
+    float vr, vg, vb;
+    eColorPalette::PreviewColors( r, g, b, br, bg, bb, hr, hg, hb, vr, vg, vb );
+
+    REAL const fieldW = .16f;
+    REAL const gap    = .02f;
+    REAL const totalW = fieldW * 3 + gap * 2;
+    REAL const left   = -totalW * .5f;
+
+    struct Field { float r, g, b; };
+    Field const fields[3] = {
+        { br, bg, bb },
+        { hr, hg, hb },
+        { vr, vg, vb }
+    };
+
+    RenderEnd();
+    for ( int i = 0; i < 3; ++i )
+    {
+        REAL const x0 = left + i * ( fieldW + gap );
+        REAL const x1 = x0 + fieldW;
+
+        Color( fields[i].r, fields[i].g, fields[i].b, alpha );
+        BeginQuads();
+        Vertex( x0, sg_colorPreviewY0 );
+        Vertex( x1, sg_colorPreviewY0 );
+        Vertex( x1, sg_colorPreviewY1 );
+        Vertex( x0, sg_colorPreviewY1 );
+        RenderEnd();
+    }
+
+    REAL const captionY = sg_colorPreviewY0 - .07f;
+    rTextField::SetDefaultColor( tColor( 1, 1, 1, alpha * .6f ) );
+    ::DisplayText( left, captionY, sg_colorHText * .8f, "bike", sr_fontMenu, -1 );
+    ::DisplayText( left + fieldW + gap, captionY, sg_colorHText * .8f, "trail -", sr_fontMenu, -1 );
+    ::DisplayText( left + 2 * ( fieldW + gap ), captionY, sg_colorHText * .8f, "trail |", sr_fontMenu, -1 );
+
+    // Flag colours whose channels overflow: that is when the bike wraps to a
+    // shade the trail does not share, which is the whole point of the trick.
+    if ( r > 15 || g > 15 || b > 15 || r < 0 || g < 0 || b < 0 )
+    {
+        REAL const ty = sg_colorPreviewY1 + .06f;
+        REAL const ts = .035f;
+        REAL const tx = -.13f;
+
+        RenderEnd();
+        Color( 1.0f, .82f, .15f, alpha );
+        BeginTriangles();
+        Vertex( tx, ty + ts );
+        Vertex( tx - ts, ty - ts );
+        Vertex( tx + ts, ty - ts );
+        RenderEnd();
+
+        rTextField::SetDefaultColor( tColor( 1.0f, .82f, .15f, alpha ) );
+        ::DisplayText( tx + ts + .015f, ty, sg_colorHText * .9f, "overflow", sr_fontMenu, -1 );
+    }
+#else
+    (void)r; (void)g; (void)b; (void)alpha;
+#endif
+}
+
+// ---------------------------------------------------------------------------
+// Colour creator
+//
+// A view of the palette menu, opened with N, not a second menu: the item draws
+// either the saved list or the three channel columns. Left/right pick a column,
+// up/down change the value, and typing a number edits it directly. Enter asks
+// for a name and saves the colour; the same preview the list uses sits under
+// the columns, so nothing is drawn twice.
+
+uMenu sg_colorNameMenu( "Save color", false );
+
+static bool      sg_creatorActive = false;   //!< is the creator view open?
+static int       sg_creatorChannel = 0;      //!< 0 = red, 1 = green, 2 = blue
+static int       sg_creatorValue[3] = { 15, 15, 0 };
+static bool      sg_creatorEditing = false;  //!< is a value being typed?
+static int       sg_creatorEditBase = 0;     //!< value before the typed one
+static tString   sg_creatorEdit;             //!< digits typed so far
+static tString   sg_creatorName;
+static bool      sg_creatorNameConfirmed = false;
+static tString   sg_creatorEditName;         //!< saved colour being changed, empty when creating
+
+//! the channel names, in column order
+static char const * const sg_creatorChannelName[3] = { "R", "G", "B" };
+
+//! clamp to the range the game accepts; channels may go negative and wrap
+static int sg_creatorClamp( int v )
+{
+    return v < -255 ? -255 : ( v > 255 ? 255 : v );
+}
+
+//! the digit a key stands for, or -1
+static int sg_creatorDigit( int sym )
+{
+    switch ( sym )
+    {
+    case SDLK_0: return 0;
+    case SDLK_1: return 1;
+    case SDLK_2: return 2;
+    case SDLK_3: return 3;
+    case SDLK_4: return 4;
+    case SDLK_5: return 5;
+    case SDLK_6: return 6;
+    case SDLK_7: return 7;
+    case SDLK_8: return 8;
+    case SDLK_9: return 9;
+    case SDLK_KP_0: return 0;
+    case SDLK_KP_1: return 1;
+    case SDLK_KP_2: return 2;
+    case SDLK_KP_3: return 3;
+    case SDLK_KP_4: return 4;
+    case SDLK_KP_5: return 5;
+    case SDLK_KP_6: return 6;
+    case SDLK_KP_7: return 7;
+    case SDLK_KP_8: return 8;
+    case SDLK_KP_9: return 9;
+    default: break;
+    }
+    return -1;
+}
+
+//! open the creator on a copy of the highlighted colour, or on 15/15/15 when
+//! the palette is empty
+static void sg_creatorOpen()
+{
+    eColorPalette::Entries const & entries = eColorPalette::All();
+    if ( sg_colorHasSelection() )
+    {
+        eColorPalette::Entry const & e = entries[ sg_colorSelected ];
+        sg_creatorValue[0] = e.r;
+        sg_creatorValue[1] = e.g;
+        sg_creatorValue[2] = e.b;
+    }
+    else
+    {
+        sg_creatorValue[0] = sg_creatorValue[1] = sg_creatorValue[2] = 15;
+    }
+
+    sg_creatorActive = true;
+    sg_creatorChannel = 0;
+    sg_creatorEditing = false;
+    sg_creatorEdit = tString();
+    sg_creatorName = tString();
+    sg_creatorEditName = tString();
+}
+
+//! open the creator on a saved colour, to change and overwrite it
+static void sg_creatorEditSaved( tString const & name )
+{
+    eColorPalette::Entry const * e = eColorPalette::Find( name );
+    if ( !e )
+        return;
+
+    sg_creatorValue[0] = e->r;
+    sg_creatorValue[1] = e->g;
+    sg_creatorValue[2] = e->b;
+    sg_creatorActive = true;
+    sg_creatorChannel = 0;
+    sg_creatorEditing = false;
+    sg_creatorEdit = tString();
+    sg_creatorName = tString();
+    sg_creatorEditName = name;
+}
+
+//! stop typing a value, keeping what is on screen
+static void sg_creatorCommitEdit()
+{
+    sg_creatorEdit = tString();
+    sg_creatorEditing = false;
+}
+
+//! the value the typed text stands for; an empty text or a lone minus is zero
+static int sg_creatorEditValue()
+{
+    if ( sg_creatorEdit.size() == 0 || sg_creatorEdit == "-" )
+        return 0;
+    return sg_creatorClamp( sg_creatorEdit.ToInt() );
+}
+
+//! the item that asks for the name; enter confirms a non-empty name
+class uMenuItemColorName : public uMenuItemString
+{
+public:
+    uMenuItemColorName( uMenu * menu, tString & name )
+        : uMenuItemString( menu, "Name", "Type a name for the colour, then press enter",
+                           name, 32 )
+    {
+    }
+
+    //! every time the menu opens, type at the end of the name again
+    virtual void Select()
+    {
+        realCursorPos = content->size();
+        uMenuItemString::Select();
+    }
+
+    virtual bool Event( SDL_Event & event )
+    {
+        if ( event.type == SDL_KEYDOWN &&
+             ( event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_KP_ENTER ) )
+        {
+            // an empty name is not worth saving; stay here until one is typed
+            if ( content->Len() > 1 )
+            {
+                sg_creatorNameConfirmed = true;
+                menu->Exit();
+            }
+            return true;
+        }
+        return uMenuItemString::Event( event );
+    }
+};
+
+static uMenuItemColorName modded_colorName( &sg_colorNameMenu, sg_creatorName );
+
+//! save what the creator holds and leave it. A colour opened with E overwrites
+//! the saved entry; a new one asks for a name first.
+static void sg_creatorSave()
+{
+    if ( sg_creatorEditName.Len() > 1 )
+    {
+        eColorPalette::Save( sg_creatorEditName,
+                             sg_creatorValue[0], sg_creatorValue[1], sg_creatorValue[2] );
+        eColorPalette::Apply( sg_creatorEditName );
+        sg_creatorActive = false;
+        return;
+    }
+
+    sg_colorNameMenu.title = "Save color";
+    sg_creatorName = tString();
+    sg_creatorNameConfirmed = false;
+    sg_colorNameMenu.SetSelected(0);
+    sg_colorNameMenu.Enter();
+
+    if ( sg_creatorNameConfirmed && sg_creatorName.Len() > 1 )
+    {
+        eColorPalette::Save( sg_creatorName,
+                             sg_creatorValue[0], sg_creatorValue[1], sg_creatorValue[2] );
+        eColorPalette::Apply( sg_creatorName );
+        sg_creatorActive = false;
+    }
+}
+
+//! rename the highlighted saved colour: reuse the name prompt, then move the
+//! entry to the new name
+static void sg_colorRename()
+{
+    if ( !sg_colorHasSelection() )
+        return;
+
+    eColorPalette::Entries const & entries = eColorPalette::All();
+    tString const oldName = entries[ sg_colorSelected ].name;
+    int const r = entries[ sg_colorSelected ].r;
+    int const g = entries[ sg_colorSelected ].g;
+    int const b = entries[ sg_colorSelected ].b;
+
+    sg_colorNameMenu.title = "Rename color";
+    sg_creatorName = oldName;
+    sg_creatorNameConfirmed = false;
+    sg_colorNameMenu.SetSelected(0);
+    sg_colorNameMenu.Enter();
+
+    if ( sg_creatorNameConfirmed && sg_creatorName.Len() > 1 && sg_creatorName != oldName )
+    {
+        eColorPalette::Save( sg_creatorName, r, g, b );
+        eColorPalette::Remove( oldName );
+
+        // point the cursor at the renamed entry
+        eColorPalette::Entries const & now = eColorPalette::All();
+        for ( size_t i = 0; i < now.size(); ++i )
+            if ( now[i].name == sg_creatorName )
+                sg_colorSelected = (int)i;
+    }
+}
+
+class uMenuItemColorPalette : public uMenuItem
+{
+public:
+    uMenuItemColorPalette( uMenu * menu )
+        : uMenuItem( menu, tOutput() )
+    {
+        // leave room under the list for the preview fields
+        if ( menu )
+            menu->RequestSpaceBelow( .2f );
+    }
+
+    //! reset the cursor on entry, so colours saved outside the menu show up
+    virtual void Select()
+    {
+        sg_colorSelected = 0;
+    }
+
+    //! the list draws its own footer hint, which does not fit the help box
+    virtual bool DisplayHelp( bool, REAL, REAL ) { return false; }
+
+    virtual void RenderBackground();
+
+    virtual void Render( REAL, REAL, REAL alpha, bool selected );
+
+    virtual bool Event( SDL_Event & event );
+
+    virtual void Enter();
+
+private:
+    //! geometry lives here: the menu only calls RenderBackground() for the row
+    //! under the cursor, and swatches drawn from Render() did not show up
+    void RenderSwatches( REAL alpha );
+    //! the creator view, drawn instead of the list while it is open
+    void RenderCreator( REAL alpha );
+    //! keys while the creator view is open; returns true when used
+    bool CreatorEvent( SDL_Event & event );
+};
+
+void uMenuItemColorPalette::RenderBackground()
+{
+#ifndef DEDICATED
+    menu->GenericBackground();
+
+    if ( !sr_glOut )
+        return;
+
+    // the same preview either way: the highlighted entry, or what is being built
+    if ( sg_creatorActive )
+        sg_drawColorPreview( sg_creatorValue[0], sg_creatorValue[1], sg_creatorValue[2], 1.0f );
+    else
+        RenderSwatches( 1.0f );
+#endif
+}
+
+void uMenuItemColorPalette::RenderSwatches( REAL alpha )
+{
+#ifndef DEDICATED
+    eColorPalette::Entries const & entries = eColorPalette::All();
+    if ( entries.empty() )
+        return;
+
+    eColorPalette::Entry const & e = entries[ sg_colorClampedSelection() ];
+    sg_drawColorPreview( e.r, e.g, e.b, alpha );
+#endif
+}
+
+void uMenuItemColorPalette::RenderCreator( REAL alpha )
+{
+#ifndef DEDICATED
+    if ( !sr_glOut )
+        return;
+
+    SetColor( false, alpha * .7f );
+    ::DisplayText( sg_colorLeft, .66f, sg_colorHText,
+                   "left/right pick a channel   up/down change the value",
+                   sr_fontMenu, -1 );
+    ::DisplayText( sg_colorLeft, .58f, sg_colorHText,
+                   "type a number or - to edit it   enter saves",
+                   sr_fontMenu, -1 );
+
+    REAL const colW   = .18f;
+    REAL const gap    = .04f;
+    REAL const totalW = colW * 3 + gap * 2;
+    REAL const left   = -totalW * .5f;
+    REAL const yNum   = .24f;
+    REAL const yUp    = yNum + .16f;
+    REAL const yDown  = yNum - .16f;
+
+    for ( int c = 0; c < 3; ++c )
+    {
+        REAL const cx = left + c * ( colW + gap ) + colW * .5f;
+        bool const active = ( c == sg_creatorChannel );
+
+        // heading
+        rTextField::SetDefaultColor( tColor( 1, 1, 1, active ? 1.0f : .55f ) );
+        ::DisplayText( cx, yUp + .08f, sg_colorHText, sg_creatorChannelName[c], sr_fontMenu, 0 );
+
+        // the value; while typing, show the digits (and sign) as entered
+        tString value;
+        if ( active && sg_creatorEditing )
+            value << sg_creatorEdit;
+        else
+            value << sg_creatorValue[c];
+        ::DisplayText( cx, yNum, sg_colorHText * 1.4f, value, sr_fontMenu, 0 );
+
+        // chevrons; the highlighted column shows them brightly
+        rTextField::SetDefaultColor( tColor( 1, 1, 1, active ? 1.0f : .3f ) );
+        ::DisplayText( cx, yUp, sg_colorHText * 1.3f, "^", sr_fontMenu, 0 );
+        ::DisplayText( cx, yDown, sg_colorHText * 1.3f, "v", sr_fontMenu, 0 );
+    }
+
+    // say what is being changed, above the preview
+    if ( sg_creatorEditName.Len() > 1 )
+    {
+        tString label;
+        label << "editing " << sg_creatorEditName;
+        SetColor( false, alpha * .85f );
+        ::DisplayText( sg_colorLeft, sg_colorPreviewY1 + .04f, sg_colorHText, label, sr_fontMenu, -1 );
+    }
+#else
+    (void)alpha;
+#endif
+}
+
+void uMenuItemColorPalette::Render( REAL, REAL, REAL alpha, bool )
+{
+#ifndef DEDICATED
+    if ( !sr_glOut )
+        return;
+
+    if ( sg_creatorActive )
+    {
+        RenderCreator( alpha );
+        return;
+    }
+
+    eColorPalette::Entries const & entries = eColorPalette::All();
+
+    // key hint under the title
+    SetColor( false, alpha * .7f );
+    ::DisplayText( sg_colorLeft, .66f, sg_colorHText,
+                   "up/down choose   enter use   del remove   n new   e edit   r rename",
+                   sr_fontMenu, -1 );
+
+    // the name of the highlighted colour, above the preview strip at the bottom
+    if ( !entries.empty() )
+    {
+        SetColor( false, alpha * .85f );
+        ::DisplayText( sg_colorLeft, sg_colorPreviewY1 + .04f, sg_colorHText,
+                       entries[ sg_colorClampedSelection() ].name, sr_fontMenu, -1 );
+    }
+
+    if ( entries.empty() )
+    {
+        SetColor( false, alpha );
+        ::DisplayText( sg_colorLeft, sg_colorTop, sg_colorHText,
+                       "No colours saved yet. Press N to create one from your current colour.",
+                       sr_fontMenu, -1 );
+        return;
+    }
+
+    sg_colorClampedSelection();
+
+    int first = 0;
+    if ( sg_colorSelected >= sg_colorMaxRows )
+        first = sg_colorSelected - sg_colorMaxRows + 1;
+
+    for ( int row = 0; row < sg_colorMaxRows && first + row < (int)entries.size(); ++row )
+    {
+        eColorPalette::Entry const & e = entries[ first + row ];
+        bool const highlighted = ( first + row ) == sg_colorSelected;
+
+        REAL const y = sg_colorTop - sg_colorLine * row;
+
+        // the name, and the channels so they can be typed elsewhere
+        tString label;
+        label << e.name << "   (" << e.r << ' ' << e.g << ' ' << e.b << ")";
+        SetColor( highlighted, alpha );
+        ::DisplayText( sg_colorLeft, y, sg_colorHText, label, sr_fontMenu, -1 );
+    }
+
+    if ( first + sg_colorMaxRows < (int)entries.size() )
+    {
+        tString more;
+        int const remaining = (int)entries.size() - ( first + sg_colorMaxRows );
+        more << "v  " << remaining << " more";
+        SetColor( false, alpha * .55f );
+        ::DisplayText( sg_colorLeft, sg_colorTop - sg_colorLine * ( sg_colorMaxRows + .6f ),
+                       sg_colorHText, more, sr_fontMenu, -1 );
+    }
+#else
+    (void)alpha; (void)selected;
+#endif
+}
+
+bool uMenuItemColorPalette::CreatorEvent( SDL_Event & event )
+{
+    if ( event.type != SDL_KEYDOWN )
+        return false;
+
+    int const sym = event.key.keysym.sym;
+
+    // a digit or a minus starts, or continues, editing the active channel
+    int const digit = sg_creatorDigit( sym );
+    bool const minus = ( sym == SDLK_MINUS || sym == SDLK_KP_MINUS );
+
+    if ( digit >= 0 || minus )
+    {
+        if ( !sg_creatorEditing )
+        {
+            sg_creatorEditing = true;
+            sg_creatorEditBase = sg_creatorValue[ sg_creatorChannel ];
+            sg_creatorEdit = tString();
+        }
+
+        if ( minus )
+        {
+            // toggle the sign of what is being typed
+            if ( sg_creatorEdit.size() > 0 && sg_creatorEdit[0] == '-' )
+                sg_creatorEdit = sg_creatorEdit.SubStr( 1 );
+            else
+                sg_creatorEdit = tString( "-" ) + sg_creatorEdit;
+        }
+        else
+        {
+            // three digits at most, not counting the sign
+            int const digits = sg_creatorEdit.size()
+                             - ( sg_creatorEdit.size() > 0 && sg_creatorEdit[0] == '-' ? 1 : 0 );
+            if ( digits < 3 )
+                sg_creatorEdit << char( '0' + digit );
+        }
+
+        sg_creatorValue[ sg_creatorChannel ] = sg_creatorEditValue();
+        return true;
+    }
+
+    switch ( sym )
+    {
+    case SDLK_BACKSPACE:
+    case SDLK_DELETE:
+        if ( sg_creatorEditing )
+        {
+            if ( sg_creatorEdit.size() > 0 )
+                sg_creatorEdit.erase( sg_creatorEdit.size() - 1 );
+
+            if ( sg_creatorEdit.size() == 0 )
+            {
+                // nothing left: go back to the value we started from
+                sg_creatorValue[ sg_creatorChannel ] = sg_creatorEditBase;
+                sg_creatorCommitEdit();
+            }
+            else
+            {
+                sg_creatorValue[ sg_creatorChannel ] = sg_creatorEditValue();
+            }
+            return true;
+        }
+        return false;
+
+    case SDLK_UP:
+    case SDLK_KP_8:
+        sg_creatorCommitEdit();
+        if ( sg_creatorValue[ sg_creatorChannel ] < 255 )
+            ++sg_creatorValue[ sg_creatorChannel ];
+        return true;
+
+    case SDLK_DOWN:
+    case SDLK_KP_2:
+        sg_creatorCommitEdit();
+        // the game accepts negative channels; the trail clamps and the bike wraps
+        if ( sg_creatorValue[ sg_creatorChannel ] > -255 )
+            --sg_creatorValue[ sg_creatorChannel ];
+        return true;
+
+    case SDLK_LEFT:
+    case SDLK_KP_4:
+        sg_creatorCommitEdit();
+        if ( --sg_creatorChannel < 0 )
+            sg_creatorChannel = 2;
+        return true;
+
+    case SDLK_RIGHT:
+    case SDLK_KP_6:
+        sg_creatorCommitEdit();
+        if ( ++sg_creatorChannel > 2 )
+            sg_creatorChannel = 0;
+        return true;
+
+    case SDLK_RETURN:
+    case SDLK_KP_ENTER:
+        // finish any typed value, then ask for a name
+        sg_creatorCommitEdit();
+        sg_creatorSave();
+        return true;
+
+    case SDLK_ESCAPE:
+        if ( sg_creatorEditing )
+        {
+            // cancel the typed value
+            sg_creatorValue[ sg_creatorChannel ] = sg_creatorEditBase;
+            sg_creatorCommitEdit();
+            return true;
+        }
+        sg_creatorActive = false;
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool uMenuItemColorPalette::Event( SDL_Event & event )
+{
+    if ( sg_creatorActive )
+        return CreatorEvent( event );
+
+    if ( event.type != SDL_KEYDOWN )
+        return false;
+
+    // creating a colour works even when none are saved yet
+    if ( event.key.keysym.sym == SDLK_n )
+    {
+        sg_creatorOpen();
+        return true;
+    }
+
+    eColorPalette::Entries const & entries = eColorPalette::All();
+    if ( entries.empty() )
+        return false;
+
+    switch ( event.key.keysym.sym )
+    {
+    case SDLK_UP:
+    case SDLK_KP_8:
+        if ( --sg_colorSelected < 0 )
+            sg_colorSelected = (int)entries.size() - 1;
+        return true;
+
+    case SDLK_DOWN:
+    case SDLK_KP_2:
+        if ( ++sg_colorSelected >= (int)entries.size() )
+            sg_colorSelected = 0;
+        return true;
+
+    case SDLK_DELETE:
+    case SDLK_BACKSPACE:
+        {
+            tString const name = entries[ sg_colorClampedSelection() ].name;
+            eColorPalette::Remove( name );
+            sg_colorClampedSelection();
+        }
+        return true;
+
+    case SDLK_e:
+        if ( sg_colorHasSelection() )
+            sg_creatorEditSaved( entries[ sg_colorSelected ].name );
+        return true;
+
+    case SDLK_r:
+        sg_colorRename();
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+void uMenuItemColorPalette::Enter()
+{
+    // the creator handles enter itself, in CreatorEvent
+    if ( sg_creatorActive )
+        return;
+
+    if ( sg_colorHasSelection() )
+        eColorPalette::Apply( eColorPalette::All()[ sg_colorSelected ].name );
+}
+
+static uMenuItemColorPalette modded_colors( &sg_colorsMenu );
+
+//! Push an applied colour onto the local cycle at once. Without this, the bike
+//! colour only shows up when the next round recreates the cycle, because it is
+//! baked into the cycle texture at spawn.
+//!
+//! The channels are turned into floats exactly the way the preview and the
+//! renderer do (each stored in an unsigned char, so values wrap), so the live
+//! colour matches the preview rather than going through the team blend.
+static void sg_refreshLocalColor( int r, int g, int b )
+{
+#ifndef DEDICATED
+    ePlayer * me = ePlayer::PlayerConfig( 0 );
+    if ( !me || !me->netPlayer )
+        return;
+
+    // On a client the colour reaches the server asynchronously. Flag our own
+    // cycle until the server confirms it (cleared in ePlayerNetID::ReadSync).
+    if ( sn_GetNetState() == nCLIENT )
+        me->netPlayer->SetLocalColorPending( true );
+
+    eNetGameObject * object = me->netPlayer->Object();
+    if ( !object )
+        return;
+
+    gCycle * cycle = dynamic_cast< gCycle * >( object );
+    if ( !cycle )
+        return;
+
+    gRealColor color;
+    color.r_ = ( r & 0xFF ) / 15.0f;
+    color.g_ = ( g & 0xFF ) / 15.0f;
+    color.b_ = ( b & 0xFF ) / 15.0f;
+    cycle->SetColor( color );
+#endif
+}
+
+//! register the hook the palette calls after it applies a colour
+static struct gColorApplyHook
+{
+    gColorApplyHook() { eColorPalette::SetApplyCallback( &sg_refreshLocalColor ); }
+} sg_colorApplyHook;
+
+//! Named colour palette entry. Declared before the cockpit entry on purpose:
+//! the menu draws its list upwards, so this appears below Cockpits.
+static uMenuItemSubmenu modded_colorsEntry( &sg_moddedMenu, &sg_colorsMenu,
+                                            "Saved player colours you can apply or cycle through" );
 
 //! the entry that puts the cockpit browser into Modded Settings. It only stores
 //! the pointer to the menu, so the submenu's own name ("Cockpits") is the label.

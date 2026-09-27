@@ -125,6 +125,7 @@ libengine_a_SOURCES=engine/eAdvWall.cpp engine/eAdvWall.h engine/eAuthentication
 	engine/eChat.cpp engine/eChat.h \
 	engine/eEventNotification.h engine/eEventNotification.cpp \
 	engine/eWarmup.h engine/eWarmup.cpp \
+	engine/eColorPalette.cpp engine/eColorPalette.h \
 	engine/eLadderLog.h engine/eLadderLog.cpp
 
 

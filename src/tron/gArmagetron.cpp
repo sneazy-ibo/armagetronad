@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "rScreen.h"
 #include "rFont.h"
 #include "rRecorder.h"
+#include "eColorPalette.h"
 #include "rSysdep.h"
 #include "uInputQueue.h"
 //#include "eTess.h"
@@ -710,6 +711,9 @@ int main(int argc,char **argv){
         // tERR_MESSAGE( "Analyzing command line." );
         if ( !commandLine.Analyse(argc, argv) )
             return 0;
+
+        // the colour palette commands exist in both builds
+        eColorPalette::RegisterCommands();
 
 
         {

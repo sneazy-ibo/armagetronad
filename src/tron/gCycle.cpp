@@ -251,6 +251,10 @@ public:
 
     virtual void OnSelect(bool enforce);
     using rSurfaceTexture::OnSelect;
+
+    //! re-bake this texture with a new player colour. The colour is baked in at
+    //! upload time, so unloading makes the next select produce it again.
+    void Recolor( gRealColor const & color ) { color_ = color; Unload(); }
 };
 
 gTextureCycle::gTextureCycle(rSurface const & surface, const gRealColor& color,bool repx,bool repy,bool w)
@@ -2346,6 +2350,29 @@ void gCycle::MyInitAfterCreation(){
         se_MakeColorValid( color_.r_, color_.g_, color_.b_, 1.0f );
         se_MakeColorValid( trailColor_.r_, trailColor_.g_, trailColor_.b_, .5f );
     }
+    else if ( player && player->LocalColorPending() )
+    {
+        // Only when a colour we picked locally has not reached the server yet:
+        // the server sends the colour with the cycle's creation sync and may not
+        // know ours yet, so a respawn would snap us back. Use the same raw skin
+        // the palette applied, and leave every other cycle (and every confirmed
+        // colour) on the server's value exactly as before.
+        for ( int i = 0; i < MAX_PLAYERS; ++i )
+        {
+            ePlayer * me = ePlayer::PlayerConfig( i );
+            if ( me && me->netPlayer == player )
+            {
+                color_.r_ = ( me->rgb[0] & 0xFF ) / 15.0f;
+                color_.g_ = ( me->rgb[1] & 0xFF ) / 15.0f;
+                color_.b_ = ( me->rgb[2] & 0xFF ) / 15.0f;
+                trailColor_ = color_;
+
+                se_MakeColorValid( color_.r_, color_.g_, color_.b_, 1.0f );
+                se_MakeColorValid( trailColor_.r_, trailColor_.g_, trailColor_.b_, .5f );
+                break;
+            }
+        }
+    }
 
     // load model and texture
 #ifndef DEDICATED
@@ -2455,6 +2482,29 @@ void gCycle::MyInitAfterCreation(){
         std::ofstream h( Player()->GetUserName() + "_turn" );
         h << pos.x << " " << pos.y << "\n";
     }
+#endif
+}
+
+void gCycle::SetColor( gRealColor const & color )
+{
+    color_ = color;
+    trailColor_ = color;
+
+    se_MakeColorValid( color_.r_, color_.g_, color_.b_, 1.0f );
+    se_MakeColorValid( trailColor_.r_, trailColor_.g_, trailColor_.b_, .5f );
+
+#ifndef DEDICATED
+    // the bike's colour is baked into its textures, so refresh them
+    if ( customTexture )
+        customTexture->Recolor( color_ );
+    if ( bodyTex )
+        bodyTex->Recolor( color_ );
+    if ( wheelTex )
+        wheelTex->Recolor( color_ );
+
+    // walls bake their colour into display lists as they are built, so drop
+    // them and let the existing trail come back in the new colour too
+    rDisplayList::ClearAll();
 #endif
 }
 
@@ -4543,7 +4593,11 @@ void gCycle::Render(const eCamera *cam){
                 }
             }
 
-            if ( renderPyramid )
+            // A locally chosen colour the server has not confirmed yet gets its
+            // own white marker, a little smaller and higher than the chat one.
+            bool renderLocalSkin = bool(player) && player->LocalColorPending();
+
+            if ( renderPyramid || renderLocalSkin )
             {
                 GLfloat s=sin(lastTime);
                 GLfloat c=cos(lastTime);
@@ -4556,25 +4610,54 @@ void gCycle::Render(const eCamera *cam){
                 glPushMatrix();
 
                 glMultMatrixf(&m[0][0]);
-                glScalef(.5,.5,.5);
 
+                if ( renderPyramid )
+                {
+                    glPushMatrix();
+                    glScalef(.5,.5,.5);
 
-                BeginTriangles();
+                    BeginTriangles();
 
-                glColor4f( colorPyramid.r_,colorPyramid.g_,colorPyramid.b_, alpha );
-                glVertex3f(0,0,3);
-                glVertex3f(0,1,4.5);
-                glVertex3f(0,-1,4.5);
+                    glColor4f( colorPyramid.r_,colorPyramid.g_,colorPyramid.b_, alpha );
+                    glVertex3f(0,0,3);
+                    glVertex3f(0,1,4.5);
+                    glVertex3f(0,-1,4.5);
 
-                glColor4f( colorPyramid.r_ * .7f,colorPyramid.g_ * .7f,colorPyramid.b_ * .7f, alpha );
-                glVertex3f(0,0,3);
-                glVertex3f(1,0,4.5);
-                glVertex3f(-1,0,4.5);
+                    glColor4f( colorPyramid.r_ * .7f,colorPyramid.g_ * .7f,colorPyramid.b_ * .7f, alpha );
+                    glVertex3f(0,0,3);
+                    glVertex3f(1,0,4.5);
+                    glVertex3f(-1,0,4.5);
 
-                RenderEnd();
+                    RenderEnd();
+                    glPopMatrix();
+                }
+
+                if ( renderLocalSkin )
+                {
+                    glPushMatrix();
+                    glScalef(.35f,.35f,.35f);
+
+                    BeginTriangles();
+
+                    glColor4f( 1,1,1,1 );
+                    glVertex3f(0,0,7);
+                    glVertex3f(0,.7f,8.5f);
+                    glVertex3f(0,-.7f,8.5f);
+
+                    glColor4f( .75f,.75f,.75f,1 );
+                    glVertex3f(0,0,7);
+                    glVertex3f(.7f,0,8.5f);
+                    glVertex3f(-.7f,0,8.5f);
+
+                    RenderEnd();
+                    glPopMatrix();
+                }
 
                 glPopMatrix();
             }
+
+            // leave the colour as we found it
+            glColor3f(1,1,1);
         }
 
 #ifdef USE_HEADLIGHT

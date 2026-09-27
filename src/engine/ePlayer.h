@@ -291,6 +291,13 @@ public:
         
     tShortColor color; // our color
 
+    //! true while a locally chosen colour has not been confirmed by the server
+    //! (client only). Used to mark our own cycle with a small white triangle.
+    bool localColorPending_;
+
+    bool LocalColorPending() const { return localColorPending_; }
+    void SetLocalColorPending( bool pending ) { localColorPending_ = pending; }
+
     bool ready;
 
     unsigned short pingCharity; // max ping you are willing to take over
