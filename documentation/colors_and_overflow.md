@@ -20,10 +20,11 @@ If you only read one paragraph, read this:
 ## 1. What a saved colour is
 
 `Colors` in the modded settings are stored in `colors.txt` in the user config
-directory, one per line:
+directory, one per line. The optional trailing number is which of the three menu
+lists the colour belongs to (see [§9](#9-commands-and-file-format)):
 
 ```
-name red green blue
+name red green blue [column]
 ```
 
 Each channel is an integer. The menu lets you use **-255 … 255**, and values outside
