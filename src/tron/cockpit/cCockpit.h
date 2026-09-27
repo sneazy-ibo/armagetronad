@@ -76,12 +76,9 @@ public:
     //! widgets the player can toggle: those with a toggle key, plus the map
     void GetToggleWidgets( std::vector< cWidget::Base * > & out );
 
-    //! show or hide the map of the cockpit that has one. Used by the bindable
-    //! HUD_MAP action, so the minimap can be switched during a match.
+    //! show or hide the map of the cockpit that has one. Used by the cockpit
+    //! menu's M key, so the minimap is only switched while that menu is open.
     static bool ToggleMap();
-
-    //! the HUD_MAP action itself, so the settings menu can offer a binding for it
-    static class uActionGlobal & GetHudMapAction();
 
     enum cockpit_type {
         VIEWPORT_TOP,

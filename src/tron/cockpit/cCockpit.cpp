@@ -1005,21 +1005,10 @@ static uActionGlobalFunc ck4(&cockpitKey4, &cCockpit::ProcessKey4, true);
 static uActionGlobalFunc ck5(&cockpitKey5, &cCockpit::ProcessKey5, true);
 uActionTooltip sc_key1Tooltip(uActionTooltip::Level_Advanced, cockpitKey1, 1);
 
-//! Bindable map toggle, so hiding the minimap needs no menu.
+//! The HUD_MAP action is still declared so existing config bindings resolve, but
+//! it no longer toggles anything in game: the minimap is switched with M inside
+//! the cockpit menu instead, so it cannot be changed by accident while playing.
 static uActionGlobal hudMapAction( "HUD_MAP" );
-static bool sg_hudMapKey( REAL x )
-{
-    if ( x > 0 )
-        cCockpit::ToggleMap();
-
-    return true;
-}
-static uActionGlobalFunc hudMapActionFunc( &hudMapAction, &sg_hudMapKey, true );
-uActionTooltip sc_hudMapTooltip( uActionTooltip::Level_Advanced, hudMapAction, 1 );
-
-uActionGlobal & cCockpit::GetHudMapAction() {
-    return hudMapAction;
-}
 
 bool ProcessKey(float i, int num) {
     bool ret = false;

@@ -94,6 +94,10 @@ uMenu sg_moddedMenu("Modded Settings");
 //! entry added last appears first.
 uMenu sg_nativeRecorderMenu( "Native Recorder", false );
 
+//! Font options and the handful of leftover settings get their own submenus.
+uMenu sg_fontsMenu( "Font settings", false );
+uMenu sg_miscMenu( "Misc", false );
+
 //! The cockpit in use: what the menu was opened with, or what was last confirmed
 //! with enter. Hovering only previews, so this is both what the list marks and what
 //! a cancelled menu returns to.
@@ -154,10 +158,7 @@ static bool sg_moddedSettingsKey( REAL x )
 static uActionGlobalFunc moddedSettingsActionFunc( &moddedSettingsAction, &sg_moddedSettingsKey, true );
 
 //! Binding for the action above, in the menu it opens.
-static uMenuItemInput moddedSettingsBinding( &sg_moddedMenu, &moddedSettingsAction, 0, "Open this menu" );
-
-//! Binding for the in-game map toggle; H until the player changes it.
-static uMenuItemInput moddedHudMapBinding( &sg_moddedMenu, &cCockpit::GetHudMapAction(), 0 );
+static uMenuItemInput moddedSettingsBinding( &sg_miscMenu, &moddedSettingsAction, 0, "Open this menu" );
 
 // ---- Instant replay (the clipper) -----------------------------------------
 
@@ -376,10 +377,10 @@ public:
     }
 };
 
-static gAdvertisedVersionMenuItem moddedAdvertisedVersion( &sg_moddedMenu );
+static gAdvertisedVersionMenuItem moddedAdvertisedVersion( &sg_miscMenu );
 
 //! Horizontal stretch of all text; 1 is the engine default.
-static uMenuItemReal moddedTextWidth( &sg_moddedMenu,
+static uMenuItemReal moddedTextWidth( &sg_fontsMenu,
                                       "Text width",
                                       "Horizontal stretch of all text. 1 = normal",
                                       sr_fontStretch, 0.5, 2.5, 0.05 );
@@ -406,7 +407,7 @@ public:
     }
 };
 
-static gFontMenuItem moddedFont( &sg_moddedMenu );
+static gFontMenuItem moddedFont( &sg_fontsMenu );
 
 // Cockpits. The catalogue is the wiki's list, kept here in the source so it is
 // always there, and it supplies the prose that a cockpit XML cannot carry.
@@ -930,15 +931,10 @@ void uMenuItemCockpitBrowser::Render( REAL, REAL, REAL alpha, bool )
     if ( sg_cockpitSelected >= (int)sg_cockpitOrder.size() )
         sg_cockpitSelected = (int)sg_cockpitOrder.size() - 1;
 
-    // The key actually bound to HUD_MAP, or H when nothing is bound.
-    tString const boundKey = su_GetBoundKeyName( &cCockpit::GetHudMapAction() );
-    tString const mapKey = boundKey.size() > 0 ? boundKey : tString( "H" );
-
     // the key hint sits right under the title the menu draws
     SetColor( false, alpha * .7f );
     {
-        tString hint( "up/down choose   left/right version   enter use   " );
-        hint << mapKey << " map   R reload   (+ our version)";
+        tString hint( "up/down choose   left/right version   enter use   M map   R reload   (+ our version)" );
         ::DisplayText( left, .66f, sg_fitHeight( hint, hText, .94f - left ), hint, sr_fontMenu, -1 );
     }
 
@@ -1076,7 +1072,7 @@ void uMenuItemCockpitBrowser::Render( REAL, REAL, REAL alpha, bool )
     if ( inUse )
     {
         if ( map )
-            mapLine << ( map->Active() ? "shown" : "hidden" ) << "   [" << mapKey << "]";
+            mapLine << ( map->Active() ? "shown" : "hidden" );
         else
             mapLine << "none in this cockpit";
     }
@@ -2118,8 +2114,15 @@ static struct gColorApplyHook
     gColorApplyHook() { eColorPalette::SetApplyCallback( &sg_refreshLocalColor ); }
 } sg_colorApplyHook;
 
-//! Named colour palette entry. Declared before the cockpit entry on purpose:
-//! the menu draws its list upwards, so this appears below Cockpits.
+//! The entries below are declared bottom to top: the menu draws its list upwards,
+//! so the last one declared appears first. List order from the top:
+//! Native Recorder, Cockpits, Colors, Font settings, Misc.
+static uMenuItemSubmenu modded_miscEntry( &sg_moddedMenu, &sg_miscMenu,
+                                          "Ghost client, client version and the settings key" );
+
+static uMenuItemSubmenu modded_fontEntry( &sg_moddedMenu, &sg_fontsMenu,
+                                          "Text font and width" );
+
 static uMenuItemSubmenu modded_colorsEntry( &sg_moddedMenu, &sg_colorsMenu,
                                             "Saved player colours you can apply or cycle through" );
 
@@ -2129,9 +2132,9 @@ static uMenuItemSubmenu modded_cockpitEntry( &sg_moddedMenu, &sg_cockpitMenu,
                                              "Choose the HUD cockpit, its version and which parts of it to draw" );
 
 //! Ghost client: connect and observe without creating a player, so the other
-//! players see neither a list entry nor a join/leave message.
+//! players see neither a list entry nor a join/leave message. Lives in Misc.
 static uMenuItemToggle moddedGhostClient(
-    &sg_moddedMenu,
+    &sg_miscMenu,
     "Ghost client",
     "Connect without a player: no player list entry and no join or leave message",
     se_ghostClient );
