@@ -1076,7 +1076,7 @@ armagetron_last_screenmode_help Last screen resolution
 armagetron_windowsize_help    Window size
 armagetron_last_windowsize_help Last Window size
 armagetron_vsync_help       What to do with the monitor's vertical sync
-rmagetron_vsync_last_help  What to do with the monitor's vertical sync
+armagetron_vsync_last_help  What to do with the monitor's vertical sync
 fullscreen_help            Fullscreen or windowed mode?
 last_fullscreen_help        Fullscreen or windowed mode, last successful init
 check_errors_help        Listen to errors claiming a video mode does not exist
@@ -1089,6 +1089,7 @@ use_sdl_help            Use SDL to init OpenGL?
 last_use_sdl_help        Use SDL to init OpenGL, last successful init
 failed_attempts_help        Number of failed attempts to initialise graphics mode
 software_renderer_help        Is the OpenGL renderer not hardware accelerated?
+max_fps_help                If set to something greater than 0, keep framerate at or below this value
 
 #model
 use_displaylists_help        Use display lists for rendering the cycles?
@@ -2343,13 +2344,17 @@ screen_vsync_text		VSync:
 screen_vsync_help		What to do with the monitor's vertical sync signal.
 
 screen_vsync_on_text	Wait
-screen_vsync_on_help	Wait for it every frame. This usually results in very smooth animations at a frame rate limited by your monitor's refresh rate, and is the only way to make this game not use 100% CPU time. Recommended.
+screen_vsync_on_help	Wait for it every frame. This usually results in very smooth animations at a frame rate limited by your monitor's refresh rate, and is the best way to make this game not use 100% CPU time. Recommended.
 
 screen_vsync_default_text	Default
 screen_vsync_default_help	Do not touch the system defaults.
 
 screen_vsync_off_text	Don't wait
 screen_vsync_off_help	Ignore the signal. This results in higher frame rates, but you won't see most of these frames; your monitor can't display them all. Usually a waste of resources and causes tearing artefacts.
+
+screen_max_fps_text     FPS Limit:
+screen_max_fps_off_text Unlimited
+screen_max_fps_off_help No limit on the framerate.
 
 screen_grab_mouse_text        Grab Mouse:
 screen_grab_mouse_help        If activated, the mouse pointer is centered after every move; thus, it is unable to leave the window. This option is only useful when you play \g in a window.

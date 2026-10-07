@@ -98,7 +98,7 @@ STEAM_PACKAGE_NAME=retrocycles
 STEAM_PACKAGE_TITLE=Retrocycles
 
 # configurations for lean builds not supposed to be installed
-CONFIGURE_ARGUMENTS:=--disable-uninstall --disable-restoreold --enable-etc --enable-automakedefaults --disable-useradd --disable-sysinstall --disable-initscripts
+CONFIGURE_ARGUMENTS:=--disable-uninstall --disable-restoreold --enable-etc --enable-automakedefaults --disable-useradd --disable-sysinstall --disable-initscripts --enable-curl
 CONFIGURE_ARGUMENTS_SERVER:=--disable-glout --enable-armathentication
 
 # other directories
@@ -242,7 +242,7 @@ result.debsrc_%: context.debsrc_%
 	+$(srcdir)/context_to_result.sh $@.dir ./debian_source.sh $*
 	echo > $@
 
-# test build a debian package (with a really old ubuntu codename)
+# test build a debian package (with a really old ubuntu codename that does not appear anywhere else, or there will be deployment errors)
 context.debsrc_test: context.debsrc_dapper
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*'
 #	extract fake secrets
@@ -701,7 +701,7 @@ steam.tag: steam_windows.tag steam_linux.tag steam_macos.tag
 context.reformat: rootcontext.64 CI_pack.tag ${srcdir}/context/reformat.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' upload/*.md ${srcdir}/context/reformat.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
 	echo > $@
 result.reformat: context.reformat
 	+$(srcdir)/context_to_result.sh $@.dir ./reformat.sh $*
@@ -796,7 +796,7 @@ context.deploy_lp: context.deploy_base_lp ${srcdir}/../deploy/lp-project-upload
 context.update_zi: context.deploy_base_zeroinstall ${srcdir}/../deploy/*_zeroinstall.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/*_zeroinstall.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_20" > $@.dir/image
 	echo > $@
 result.update_zi: context.update_zi
 	+$(srcdir)/context_to_result.sh $@.dir ./update_zeroinstall.sh
@@ -804,7 +804,7 @@ result.update_zi: context.update_zi
 context.deploy_zi: context.deploy_base_zeroinstall result.update_zi ${srcdir}/../deploy/*_zeroinstall.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' result.update_zi.dir/zeroinstall ${srcdir}/../deploy/*_zeroinstall.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_20" > $@.dir/image
 	echo > $@
 result.deploy_zi: context.deploy_zi result.deploy_download
 	+$(srcdir)/context_to_result.sh $@.dir ./deploy_zeroinstall.sh
@@ -813,7 +813,7 @@ result.deploy_zi: context.deploy_zi result.deploy_download
 context.deploy_fp: context.deploy_base_flatpak ${srcdir}/../deploy/*_flatpak.sh
 	${srcdir}/prepare_context.sh $@.dir $<.dir/'*' ${srcdir}/../deploy/*_flatpak.sh
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
 	echo > $@
 result.deploy_fp: context.deploy_fp
 	+$(srcdir)/context_to_result.sh $@.dir ./deploy_flatpak.sh
@@ -826,7 +826,7 @@ context.deploy_itch: context.deploy_base_itch ${srcdir}/../deploy/*_itch.sh uplo
 	mkdir -p $@.dir/appdir_linux_32; cd $@.dir/appdir_linux_32; tar -xjf ../../upload/$(APPTAR_CLIENT_32)
 	mkdir -p $@.dir/appdir_windows; cd $@.dir/appdir_windows; unzip ../../$(WINZIP_CLIENT)
 	rm -f $@.dir/image
-	echo "armadeploy_64" > $@.dir/image
+	echo "armadeploy_24" > $@.dir/image
 	echo > $@
 result.deploy_itch: context.deploy_itch
 	+$(srcdir)/context_to_result.sh $@.dir ./deploy_itch.sh
@@ -842,9 +842,11 @@ deploy_fp: result.deploy_fp
 deploy_download: result.deploy_download
 deploy_itch: result.deploy_itch
 
+# current list of suppored releases is here: http://www.releases.ubuntu.com/
 deploy_ppa: \
+deploy_ppa_questing \
+deploy_ppa_plucky \
 deploy_ppa_noble \
-deploy_ppa_mantic \
 deploy_ppa_jammy \
 deploy_ppa_focal \
 deploy_ppa_bionic \
