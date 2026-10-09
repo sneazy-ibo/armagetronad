@@ -4,7 +4,8 @@
 
 set +x
 
-mv secrets/ssh ~/.ssh
+mkdir -p ~/.ssh
+mv secrets/ssh/* ~/.ssh/
 
 rm -rf secrets/*
 
@@ -16,7 +17,8 @@ set -x
 dd=`dirname $0`
 
 trust_gitlab || exit $?
-git clone ${FP_GIT} flatpak || exit $?
+ls -alt ~/.ssh
+git clone --recursive ${FP_GIT} flatpak || exit $?
 
 BRANCH_BASE=${ZI_SERIES}
 
@@ -25,14 +27,15 @@ pushd flatpak || exit $?
 # go back to last human edit
 git checkout ${BRANCH_BASE}_${VERSION_SERIES}_ci || exit $?
 git reset origin/${BRANCH_BASE}_${VERSION_SERIES} --hard || exit $?
+git submodule update --checkout || exit $?
 
 FILENAME=${PACKAGE_NAME}-${PACKAGE_VERSION}.tbz
 
-# scary SED patch in new package source
+# mildly scary SED patch in new package source
 SHA=`sha256sum ../upload/${FILENAME} | sed -e "s, .*,,"`
-sed -i org.armagetronad.ArmagetronAdvanced.json -e \
-"s~\\\"url\\\":.*armagetronad.*~\\\"url\\\": \\\"${DOWNLOAD_URI_BASE}${FILENAME}\\\",~" -e \
-"s~\\\"sha256\\\":.*~\\\"sha256\\\": \\\"${SHA}\\\"~" || exit $?
+sed -i org.armagetronad.ArmagetronAdvanced.yml -e \
+"s~url:.*armagetronad.*~url: ${DOWNLOAD_URI_BASE}${FILENAME}~" -e \
+"s~sha256:.*~sha256: ${SHA}~" || exit $?
 git diff
 
 CHANGED=`git status --short -uno | sed -e "s/^ . //"`
@@ -45,6 +48,8 @@ fi
 git commit . -m "Update to version ${PACKAGE_VERSION}" || exit $?
 if ! test ${STAGING} == true; then
     git push --force || exit $?
+else
+	git log -p -2
 fi
 popd
 

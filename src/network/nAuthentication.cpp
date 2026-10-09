@@ -913,7 +913,7 @@ bool nLoginProcess::FetchInfoFromAuthorityRemote()
             };
         }
 
-        if ( rc == -1 )
+        if (rc < 0)
         {
             std::ofstream o;
             if (tDirectories::Var().Open(o, loginErrorLogFile, std::ios::app))
@@ -1033,7 +1033,7 @@ bool nLoginProcess::FetchInfoFromAuthorityRemote()
 
         if ( rc != 200 )
         {
-            if ( rc == -1 )
+            if (rc < 0)
             {
                 std::ofstream o;
                 if (tDirectories::Var().Open(o, loginErrorLogFile, std::ios::app))

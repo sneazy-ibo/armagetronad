@@ -15,7 +15,9 @@ cp ${APPDIR}/org.armagetronad.${PACKAGE}.desktop ${APPDIR}/usr/share/application
 # add appinfo (noncanonical place, usually it goes to prefix/share/appdata)
 mkdir -p ${APPDIR}/usr/share/metainfo || exit $?
 cp ${APPDIR}/usr/share/games/${PACKAGE}/desktop/armagetronad.appdata.xml ${APPDIR}/usr/share/metainfo/org.armagetronad.${PACKAGE}.appdata.xml || exit $?
-#sed -i -e 's,type="desktop-id">,type="desktop-id">../../../,' ${APPDIR}/usr/share/metainfo/org.armagetronad.${PACKAGE}.appdata.xml || exit $?
+
+# we are dealing with older linters here that require the .desktop extension to the app id
+sed -i -e 's,</id>,.desktop</id>,' ${APPDIR}/usr/share/metainfo/org.armagetronad.${PACKAGE}.appdata.xml || exit $?
 
 # hack Icon
 ICON_NAME=`grep 'Icon=' ${APPDIR}/org.armagetronad.${PACKAGE}.desktop | sed -e 's,Icon=,,'`
@@ -47,6 +49,8 @@ function copylib()
       baselib=$(ls -l ${path}/${baselib} | grep -- "->" | sed -e "s,.*-> ,,")
     done
 }
+
+ldd ${APPDIR}/usr/bin/${PACKAGE}
 
 # dependency scrapyard
 # libstdc++ \
@@ -86,14 +90,43 @@ libvorbisenc \
 libwebp \
 libwrap \
 libxml2 \
+libcurl \
+libpsl \
+libicuuc \
+libicudata \
+libidn \
+librtmp \
+libssl \
+libcrypto \
+libgssapi_krb5 \
+libkrb5 \
+libk5crypto \
+libkrb5support \
+liblber-2.4 \
+libldap_r-2.4 \
+libhogweed \
+libnettle \
+libsasl2 \
+libgssapi \
+libkeyutils \
+libheimntlm \
+libheimbase \
+libasn1 \
+libhcrypto \
+libroken \
+libwind \
+libhx509 \
+libsqlite3 \
 libZThread-[0-9\.]* \
 ; do
   echo "Checking for library ${library}...."
-  baselib=$(ldd ${APPDIR}/usr/bin/${PACKAGE} | grep "${library}\.so[0-9\.]*" | sed -e "s,.*=> ,," -e "s, (.*,,")
-  if test -z "${baselib}"; then
+  baselibs=$(ldd ${APPDIR}/usr/bin/${PACKAGE} | grep "${library}\.so[0-9\.]*" | sed -e "s,.*=> ,," -e "s, (.*,,")
+  if test -z "${baselibs}"; then
     echo "Not linked."
   else
-    copylib ${baselib}
+    for l in ${baselibs}; do
+        copylib $l
+    done
   fi
 done
 

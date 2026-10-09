@@ -187,7 +187,7 @@ void gAITeam::BalanceWithAIs(bool balanceWithAIs)
     // set correct team number
     EnforceConstraints();
 
-    int numTeams = 0, numTeamsWithPlayers = 0;
+    int numTeamsWithPlayers = 0;
 
     // determine the maximum number of human players on a team
     int i;
@@ -197,9 +197,6 @@ void gAITeam::BalanceWithAIs(bool balanceWithAIs)
         eTeam *t = teams(i);
 
         t->UpdateProperties();
-
-        if ( t->BalanceThisTeam() )
-            numTeams++;
 
         if ( t->NumHumanPlayers() > 0 )
             numTeamsWithPlayers++;
@@ -363,7 +360,6 @@ static bool CheckLoop(const gCycle *a, const gCycle *b,
     tASSERT(0<= dir && 1 >= dir);
 
     int tries = 10;       // so long until we give up
-    int ends  = 0;
 
     bool bClosedIn    = false;
 
@@ -469,7 +465,6 @@ static bool CheckLoop(const gCycle *a, const gCycle *b,
 
                 end  = 1;
                 side = 1-side;
-                ends++;
                 dist = -2 * TOL;
             }
             else
@@ -2413,7 +2408,7 @@ bool gAIPlayer::EmergencySurvive( ThinkData & data, int enemyevade, int prefered
 
             // give us a chance to turn around:
             if (frontDanger[SPACELEVEL] * 2 < sideDanger[SPACELEVEL][i])
-                sideDanger[LOOPLEVEL][i-i] -= sideDanger[SPACELEVEL][i] * 2;
+                sideDanger[LOOPLEVEL][1-i] -= sideDanger[SPACELEVEL][i] * 2;
         }
     }
 
@@ -2530,8 +2525,8 @@ bool gAIPlayer::EmergencySurvive( ThinkData & data, int enemyevade, int prefered
                             bool canAccelerateByTurning =
                                 ( sides[1-i]->Hit() &&
                                   sides[1-i]->distance < Object()->Speed() * delay * 5 &&
-                                  sides[i-i]->distance > Object()->Speed() * delay &&
-                                  !sides[i-i]->frontLoop[i].loop) ;
+                                  sides[1-i]->distance > Object()->Speed() * delay &&
+                                  !sides[1-i]->frontLoop[i].loop) ;
 
                             bool ohShit = target->Speed() > Object()->Speed() + sqrt(closest);
 
@@ -2544,7 +2539,7 @@ bool gAIPlayer::EmergencySurvive( ThinkData & data, int enemyevade, int prefered
                             bool turningIsFutile =
                                 front.front.otherCycle == Object() &&
                                 sides[1-i]->front.otherCycle == Object() &&
-                                front.distance < sides[1-1]->distance * 10 ;
+                                front.distance < sides[1-i]->distance * 10 ;
 
                             if (
                                 x < 0 &&

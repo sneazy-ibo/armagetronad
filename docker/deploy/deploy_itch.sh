@@ -30,11 +30,13 @@ set -x
 # butler gets frequent updates, that is why we do not bake it into the docker images
 mkdir -p ~/bin || exit $?
 pushd ~/bin || exit $?
-if ! curl -k -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default; then
+BUTLER_VERSION=LATEST
+# BUTLER_VERSION=15.21.0
+if ! curl -k -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSION}/archive/default; then
  sleep 30
- curl -k -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default || exit $?
+ curl -k -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSION}/archive/default || exit $?
 fi
-unzip butler.zip || exit $?
+yes | unzip butler.zip || exit $?
 rm -f butler.zip || exit $?
 chmod +x butler || exit $?
 ./butler -V || exit $?
