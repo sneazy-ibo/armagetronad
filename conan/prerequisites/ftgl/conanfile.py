@@ -1,9 +1,9 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake
-from conan.tools.files import get
-from conan.tools.env import VirtualBuildEnv
+from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
 from conan.tools.scm import Git
+from conan.tools.files import load, save
 import os
+
 
 ##################
 # FTGL           #
@@ -17,35 +17,50 @@ class FtglConan(ConanFile):
     version = "2.3.0"
     description = "FTGL Font Rendering"
     settings = "os", "arch", "compiler", "build_type"
-    generators = "cmake"
+    package_type = "library"
+    options = {"shared": [True, False], "fPIC": [True, False]}
+    default_options = {"shared": False, "fPIC": True}
 
-    requires = \
-            "freetype/2.9.1@bincrafters/stable"
+    # FTGL can use freetype but it's optional
+    # For local builds, we'll skip it for now
 
-    default_options = {
-    }
+    def layout(self):
+        cmake_layout(self)
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
 
     def source(self):
         git = Git(self)
-        git.clone(url="https://github.com/ulrichard/ftgl.git", target=".")
+        git.clone(url="https://github.com/ulrichard/ftgl.git", target=self.source_folder)
         git.checkout("16f7667cbd4b1e988ae24128c5dea54479926f85")
-
-
-    def configure(self):
-        tc = CMake(self)
-        return tc
+        # Fix CMake minimum version requirement
+        cmake_file = os.path.join(self.source_folder, "CMakeLists.txt")
+        content = load(self, cmake_file)
+        content = content.replace("CMAKE_MINIMUM_REQUIRED(VERSION 2.8)", "CMAKE_MINIMUM_REQUIRED(VERSION 3.5)")
+        save(self, cmake_file, content)
+        # Fix unsigned char* to char* conversion issue in FTVectoriser.cpp
+        vectoriser_file = os.path.join(self.source_folder, "src", "FTVectoriser.cpp")
+        vcontent = load(self, vectoriser_file)
+        vcontent = vcontent.replace(
+            "char* tagList = &outline.tags[startIndex];",
+            "char* tagList = const_cast<char*>(reinterpret_cast<const char*>(&outline.tags[startIndex]));"
+        )
+        save(self, vectoriser_file, vcontent)
 
     def build(self):
-        tc = self.configure()
-        tc.build()
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
+
+    def package(self):
+        cmake = CMake(self)
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["FTGL"]
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libdirs = ["lib"]
         self.cpp_info.set_property("pkg_config_name", "ftgl")
-
-    def package(self):
-        tc = self.configure()
-        tc.install()
 
