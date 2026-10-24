@@ -21,24 +21,40 @@ class Pkg(ConanFile):
         "sdl": [True, False],
         "curl": [True, False],
         "xml2": [True, False],
+        "protobuf": [True, False],
+        "ftgl": [True, False],
+        "boost": [True, False],
+        "glew": [True, False],
     }
     default_options = {
         "sdl": True,
         "curl": True,
         "xml2": True,
+        "protobuf": True,
+        "ftgl": True,
+        "boost": True,
+        "glew": True,
     }
 
     keep_imports = True
 
     def requirements(self):
         if self.options.sdl:
-            self.requires("sdl_aa/[>=1.2.15 <2.0.0]")
-            self.requires("sdl_image_aa/[>=1.2.12 <2.0.0]")
-            self.tool_requires("sdl_aa/[>=1.2.15 <2.0.0]")
+            self.requires("sdl/[>=2.0.0 <3.0.0]")
+            self.requires("sdl_image/[>=2.0.0 <3.0.0]")
+            self.requires("sdl_mixer/[>=2.0.0 <3.0.0]")
         if self.options.curl:
             self.requires("libcurl/[>=7]")
         if self.options.xml2:
             self.requires("libxml2/[>=2.9.10]")
+        if self.options.protobuf:
+            self.requires("protobuf/[>=3.21.12]") # < 4.0.0 if we want to avoid abseil
+        if self.options.ftgl:
+            self.requires("ftgl_aa/[>=2.3.0]")
+        if self.options.boost:
+            self.requires("boost/[>=1.78]")
+        if self.options.glew:
+            self.requires("glew/[>=2.0.0]")
 
     def generate(self):
         pc = PkgConfigDeps(self)

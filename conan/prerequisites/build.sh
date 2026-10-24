@@ -4,9 +4,6 @@
 
 cd `dirname $0`
 
-conan install sdl --build=missing || exit $?
-conan create sdl --build=missing || exit $?
-
-conan install sdl_image --build=missing || exit $?
-conan create sdl_image --build=missing || exit $?
+conan install ftgl --build=missing || exit $?
+conan create ftgl --build=missing || exit $?
 
