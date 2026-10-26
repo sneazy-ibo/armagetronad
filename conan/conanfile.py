@@ -41,8 +41,8 @@ class Pkg(ConanFile):
     def requirements(self):
         if self.options.sdl:
             self.requires("sdl/[>=2.0.0 <3.0.0]")
-            #self.requires("sdl_image/[>=2.0.0 <3.0.0]")
-            #self.requires("sdl_mixer/[>=2.0.0 <3.0.0]")
+            self.requires("sdl_image/[>=2.0.0 <3.0.0]")
+            self.requires("sdl_mixer/[>=2.0.0 <3.0.0]")
             pass
         if self.options.curl:
             self.requires("libcurl/[>=7]")
