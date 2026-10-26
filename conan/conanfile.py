@@ -41,20 +41,27 @@ class Pkg(ConanFile):
     def requirements(self):
         if self.options.sdl:
             self.requires("sdl/[>=2.0.0 <3.0.0]")
-            self.requires("sdl_image/[>=2.0.0 <3.0.0]")
-            self.requires("sdl_mixer/[>=2.0.0 <3.0.0]")
+            #self.requires("sdl_image/[>=2.0.0 <3.0.0]")
+            #self.requires("sdl_mixer/[>=2.0.0 <3.0.0]")
+            pass
         if self.options.curl:
             self.requires("libcurl/[>=7]")
+            pass
         if self.options.xml2:
             self.requires("libxml2/[>=2.9.10]")
+            pass
         if self.options.protobuf:
             self.requires("protobuf/[>=3.21.12]") # < 4.0.0 if we want to avoid abseil
+            pass
         if self.options.ftgl:
             self.requires("ftgl_aa/[>=2.3.0]")
+            pass
         if self.options.boost:
-            self.requires("boost/[>=1.78]")
+            self.requires("boost/[>=1.78 <=1.91]") # upper bound, last version tested that does not add libraries we do not need
+            pass
         if self.options.glew:
             self.requires("glew/[>=2.0.0]")
+            pass
 
     def generate(self):
         pc = PkgConfigDeps(self)
@@ -81,7 +88,10 @@ Cflags:
             print(dirs)
             for dir in dirs:
                 for extension in [ "*.so", "*.so.*", "*.dylib", "*.dylib*", "*.dll" ]:
-                    copy(self, extension, dir, libs_path, keep_path=False)
+                    try:
+                        copy(self, extension, dir, libs_path, keep_path=False)
+                    except:
+                        pass
 
         # fix sdl pkg-config files; standard conan puts SDL2 config as sdl.pc, usually sdl.pc would be reserved for SDL 1.2
         # shutil.copy(os.path.join(self.build_folder, "sdl_aa.pc"), os.path.join(self.build_folder, "sdl.pc"))
