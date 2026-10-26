@@ -21,8 +21,9 @@ class FtglConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    # FTGL can use freetype but it's optional
-    # For local builds, we'll skip it for now
+    def requirements(self):
+        self.requires("freetype/[>=2.10.4]")
+        self.requires("opengl/system")
 
     def layout(self):
         cmake_layout(self)
