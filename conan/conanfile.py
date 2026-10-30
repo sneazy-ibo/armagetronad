@@ -51,8 +51,10 @@ class Pkg(ConanFile):
             self.requires("libxml2/[>=2.9.10]")
             pass
         if self.options.protobuf:
-            self.requires("protobuf/[>=3.21.12]")
-            #self.requires("protobuf/[>=3.21.12 <4.0.0]") # if we want to avoid abseil
+            protobuf = "protobuf/[>=3.21.12]"
+            protobuf = "protobuf/[>=3.21.12 <4.0.0]" # if we want to avoid abseil
+            self.requires(protobuf)
+            self.tool_requires(protobuf)
             pass
         if self.options.ftgl:
             self.requires("ftgl_aa/[>=2.3.0]")
