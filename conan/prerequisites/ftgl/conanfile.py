@@ -60,7 +60,7 @@ class FtglConan(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["FTGL"]
+        self.cpp_info.libs = ["ftgl"]
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libdirs = ["lib"]
         self.cpp_info.set_property("pkg_config_name", "ftgl")
