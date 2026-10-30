@@ -1276,6 +1276,7 @@ if test -z "$ARMAGETRONAD_OS_X_TOOLKIT"; then
 	# `pkg-config ftgl --cflags` doesn't reliably give the include path to FTGL itself, we are on our own finding the includes in some cases.
 	# look for FTGL headers in default system header locations and the prefixes of the libraries that do have a -config script
 	FTGL_HEADERS="/usr/include/FTGL /usr/local/include/FTGL `$FREETYPE_CONFIG --prefix`/include/FTGL `$SDL_CONFIG --prefix`/include/FTGL ${prefix}/include/FTGL "
+    #echo HEADERS=$FTGL_HEADERS
 
 	AC_ARG_WITH(ftgl,
 	    AC_HELP_STRING([--with-ftgl],
@@ -1290,7 +1291,7 @@ if test -z "$ARMAGETRONAD_OS_X_TOOLKIT"; then
 	# candidates are collected, walk through them
 	if test -z "`echo $FTGL_CFLAGS | grep FTGL`"; then
 	    found=false
-	    AC_MSG_CHECKING(for location of FTGL includes)
+	    AC_MSG_CHECKING(for alternative/real location of FTGL includes)
 	    for candidate in ${FTGL_HEADERS}; do
 	        if test -r ${candidate}/FTGL.h || test -r ${candidate}/ftgl.h; then
 	            AC_MSG_RESULT(${candidate})
@@ -1302,7 +1303,8 @@ if test -z "$ARMAGETRONAD_OS_X_TOOLKIT"; then
 
 	    if test ${found} = false; then
 	        AC_MSG_RESULT([not found])
-	        AC_MSG_ERROR([FTGL headers not found on your system. Please pass the correct location via --with-ftgl=<path to FTGL include directory>.])
+	        dnl AC_MSG_ERROR([FTGL headers not found on your system. Please pass the correct location via --with-ftgl=<path to FTGL include directory>.])
+            dnl the `pkg-config ftgl --cflags` will have to do
 	    fi
 	fi
 fi
