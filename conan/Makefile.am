@@ -4,5 +4,4 @@ conanfile.py \
 conanoptions.ini \
 prerequisites/build.sh \
 prerequisites/clean.sh \
-prerequisites/sdl/conanfile.py \
-prerequisites/sdl_image/conanfile.py
+prerequisites/ftgl/conanfile.py
