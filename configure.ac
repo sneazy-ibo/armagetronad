@@ -643,11 +643,11 @@ if test x$conan = xtrue; then
     pushd $(dirname $0)/conan
     if ! test -r ${conan_dir}/conanautotoolstoolchain.sh; then
         # naive attempt at building conan
-        if ! conan build ./conanfile.py -of ${conan_dir} --build=missing; then
+        if ! CFLAGS="" CXXFLAGS="" CPPFLAGS="" conan build ./conanfile.py -of ${conan_dir} --build=missing; then
             # we are probably missing prerequisites
 			./prerequisites/build.sh || exit $?
             # try again
-            conan build ./conanfile.py -of ${conan_dir} --build=missing || exit $?
+            CFLAGS="" CXXFLAGS="" CPPFLAGS="" conan build ./conanfile.py -of ${conan_dir} --build=missing || exit $?
         fi
     fi
     source ${conan_dir}/conanautotoolstoolchain.sh || exit $?
