@@ -2,13 +2,14 @@ include $(top_srcdir)/Makefile.paths
 
 # protocol buffer rules
 %.pb: ${srcdir}/%.proto
+	if test -r @conan_dir@/conanbuildenv.sh; then source @conan_dir@/conanbuildenv.sh; fi; \
 	${PROTOC} $< --cpp_out=./ --proto_path=${srcdir} 2>&1 | sed -e "s,^\(.*\).proto,${srcdir}/\1.proto,"
 
 %.pb.cc: %.pb
-	@true
+	test -r $@
 
 %.pb.h: %.pb
-	@true
+	test -r $@
 
 # protocol buffers. Need to be compiled first so the headers exist for the
 # other modules to include. No need to list the headers, though, we don't
