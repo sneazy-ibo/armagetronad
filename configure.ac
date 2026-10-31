@@ -1665,7 +1665,7 @@ for newlib in $ALL_LIBS; do
     for oldlib in $LIBS; do
         test "$oldlib" = "$newlib" && add=false
     done
-    if test $add = true; then
+    if test $add = true || test "$newlib" = "-framework"; then
         dnl echo add $newlib
         LIBS="$LIBS $newlib"
     fi
