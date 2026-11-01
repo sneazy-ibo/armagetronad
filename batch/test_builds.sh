@@ -243,7 +243,13 @@ if [ "$CONAN" = "1" ]; then
 	popd
 
 	# reconfigure to rebuild conan
-	test -r $CONAN_OUTPUT/conanrunenv.sh || FORCE_RECONFIGURE=1
+	if ! test -r $CONAN_OUTPUT/conanrunenv.sh; then
+        FORCE_RECONFIGURE=1
+
+        # rebuild. Purposeful difference to what configure.ac would do: build with strict lock files.
+        # We have the conan profile under control here and don't want unlocked dependencies to creep in.
+        $ROOT/conan/build.sh -of $CONAN_OUTPUT --build=missing
+    fi
 	# STRUCTURE: conan home in conan/.conan_home_*, output with configuration scripts in conan/.conan_home_*/output
 fi
 

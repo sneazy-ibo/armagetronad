@@ -59,7 +59,7 @@ purposes, you might want to trigger this.
 We need to build and install our own version of SDL and SDL_Image, they're
 too old to be included in the standard library. Just invoke
 
-`./prerequisites/build.sh`
+`./prerequisites/build.sh --build-missing --lockfile-partial`
 
 to build them and
 
