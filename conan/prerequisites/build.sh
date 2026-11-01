@@ -9,6 +9,14 @@ export CFLAGS=""
 
 cd `dirname $0`
 
+set -x
+
+# -of <output dir> does not apply here (and callers put it first)
+if test "$1" == "-of"; then
+    shift
+    shift
+fi
+
 conan install sdl "$@" || exit $?
 conan create sdl "$@" || exit $?
 
