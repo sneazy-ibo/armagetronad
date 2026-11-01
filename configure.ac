@@ -642,13 +642,7 @@ if test x$conan = xtrue; then
     AC_MSG_CHECKING(Conan)
     pushd $(dirname $0)/conan
     if ! test -r ${conan_dir}/conanautotoolstoolchain.sh; then
-        # naive attempt at building conan
-        if ! CFLAGS="" CXXFLAGS="" CPPFLAGS="" conan build ./conanfile.py -of ${conan_dir} --build=missing; then
-            # we are probably missing prerequisites
-			./prerequisites/build.sh || exit $?
-            # try again
-            CFLAGS="" CXXFLAGS="" CPPFLAGS="" conan build ./conanfile.py -of ${conan_dir} --build=missing || exit $?
-        fi
+        ./build.sh -of ${conan_dir} --build=missing --lockfile-partial
     fi
     source ${conan_dir}/conanautotoolstoolchain.sh || exit $?
     source ${conan_dir}/conanbuildenv.sh || exit $?
