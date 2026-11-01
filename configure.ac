@@ -642,7 +642,7 @@ if test x$conan = xtrue; then
     AC_MSG_CHECKING(Conan)
     pushd $(dirname $0)/conan
     if ! test -r ${conan_dir}/conanautotoolstoolchain.sh; then
-        ./build.sh -of ${conan_dir} --build=missing --lockfile-partial
+        ./build.sh -of ${conan_dir} --build=missing --lockfile-partial || exit $?
     fi
     source ${conan_dir}/conanautotoolstoolchain.sh || exit $?
     source ${conan_dir}/conanbuildenv.sh || exit $?
