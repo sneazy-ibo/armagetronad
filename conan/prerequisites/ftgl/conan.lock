@@ -1,0 +1,18 @@
+{
+    "version": "0.5",
+    "requires": [
+        "zlib/1.3.1#cac0f6daea041b0ccf42934163defb20%1765284699.337",
+        "opengl/system#cfcf523b9d2bad75cbf377f56562634c%1762526044.744",
+        "libpng/1.6.58#19cb72905ae54f54948401f753faa2c1%1776606503.628",
+        "freetype/2.15.0#c69c858d25bfda4d596621e876f5e094%1792600102.943",
+        "bzip2/1.0.8#c470882369c2d95c5c77e970c0c7e321%1762886692.465",
+        "brotli/1.1.0#3f631ef77008f7b5eb388780116371a3%1764862343.045"
+    ],
+    "build_requires": [
+        "pkgconf/2.5.1#93c2051284cba1279494a43a4fcfeae2%1757684701.089",
+        "ninja/1.13.2#c8c5dc2a52ed6e4e42a66d75b4717ceb%1764096931.974",
+        "meson/1.10.1#426d7d29e3e5f7285cb8398d84546734%1772032339.966"
+    ],
+    "python_requires": [],
+    "config_requires": []
+}
