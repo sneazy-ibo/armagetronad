@@ -238,7 +238,7 @@ if [ "$CONAN" = "1" ]; then
 
             # force rebuild
             rm -rf $CONAN_OUTPUT
-            $ROOT/conan/prerequisites/build.sh
+            $ROOT/conan/prerequisites/clean.sh
 		fi
 	popd
 
@@ -248,7 +248,7 @@ if [ "$CONAN" = "1" ]; then
 
         # rebuild. Purposeful difference to what configure.ac would do: build with strict lock files.
         # We have the conan profile under control here and don't want unlocked dependencies to creep in.
-        $ROOT/conan/build.sh -of $CONAN_OUTPUT --build=missing
+        $ROOT/conan/build.sh -of $CONAN_OUTPUT --build=missing # --lockfile-partial
     fi
 	# STRUCTURE: conan home in conan/.conan_home_*, output with configuration scripts in conan/.conan_home_*/output
 fi
